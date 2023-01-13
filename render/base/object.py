@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 from .properties import Space, Border
 from .image import RenderImage
-from .color import ColorMode
 
 
 class RenderObject(ABC):
@@ -46,7 +45,7 @@ class RenderObject(ABC):
         return height + self.margin.top + self.margin.bottom
 
     def render(self) -> RenderImage:
-        im = RenderImage.empty(self.width, self.height, ColorMode.RGBA)
+        im = RenderImage.empty(self.width, self.height)
         content = self.render_content()
         border_width = self.border.width if self.border is not None else 0
         if self.border is not None:
@@ -55,8 +54,7 @@ class RenderObject(ABC):
                 self.margin.top + border_width,
                 self.content_width + self.padding.left + self.padding.right,
                 self.content_height + self.padding.top + self.padding.bottom,
-                self.border.color,
-                self.border.width,
+                self.border,
             )
         return im.paste(
             content,

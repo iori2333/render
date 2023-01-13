@@ -1,10 +1,4 @@
 from typing import Self
-from enum import Enum
-
-
-class ColorMode(Enum):
-    RGB = 1
-    RGBA = 2
 
 
 class Color:
@@ -16,6 +10,10 @@ class Color:
         self.a = a
 
     @classmethod
+    def from_color(cls, color: Self, opacity: float) -> Self:
+        return cls(*color.to_rgb(), int(opacity * 255))
+
+    @classmethod
     def of(cls, r: int, g: int, b: int, a: int = 255) -> Self:
         return cls(r, g, b, a)
 
@@ -24,7 +22,7 @@ class Color:
         hex = hex.lstrip('#')
         return cls(*tuple(int(hex[i:i + 2], 16) for i in (0, 2, 4)))
 
-    def to_rgba(self) -> tuple[int, int, int, int]:
+    def as_tuple(self) -> tuple[int, int, int, int]:
         return self.r, self.g, self.b, self.a
 
     def to_rgb(self) -> tuple[int, int, int]:

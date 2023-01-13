@@ -1,6 +1,6 @@
 from .object import RenderImage, RenderObject
 from .properties import Alignment, Direction, Space, Border
-from .color import Color, Palette, ColorMode
+from .color import Color, Palette
 
 __all__ = [
     "RenderImage",
@@ -9,7 +9,6 @@ __all__ = [
     "Direction",
     "Space",
     "Border",
-    "ColorMode",
     "Color",
     "Palette",
 ]
