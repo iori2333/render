@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Self
 
-from .color import Color
+from .color import Color, Palette
 
 
 class Alignment(Enum):
@@ -22,7 +22,7 @@ class Border:
         self.width = width
 
     @classmethod
-    def of(cls, color: Color, width: int) -> Self:
+    def of(cls, width: int, color: Color = Palette.BLACK) -> Self:
         return cls(color, width)
 
 
