@@ -1,3 +1,4 @@
+from typing import Optional
 from typing_extensions import override, Self
 
 from render.base import RenderObject, RenderImage, RenderText, Color, Palette
@@ -20,7 +21,7 @@ class Text(RenderObject):
         text: str,
         font: str,
         size: int = 12,
-        color: Color | None = None,
+        color: Optional[Color] = None,
         background: Color = Palette.TRANSPARENT,
         **kwargs,
     ) -> Self:

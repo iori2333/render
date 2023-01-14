@@ -1,7 +1,7 @@
-from typing import Iterable
+from typing import Iterable, Optional
 from typing_extensions import override, Self
+
 from render.base import RenderObject, RenderImage, Alignment
-from ..base.color import Color, Palette
 
 
 class Stack(RenderObject):
@@ -23,8 +23,8 @@ class Stack(RenderObject):
         cls,
         children: Iterable[RenderObject],  # bottom to top
         alignment: Alignment = Alignment.START,
-        vertical_alignment: Alignment | None = None,
-        horizontal_alignment: Alignment | None = None,
+        vertical_alignment: Optional[Alignment] = None,
+        horizontal_alignment: Optional[Alignment] = None,
         **kwargs,
     ) -> Self:
         if vertical_alignment is None:
