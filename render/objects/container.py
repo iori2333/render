@@ -1,6 +1,6 @@
 from enum import Enum
-from typing import Iterable, Self
-from typing_extensions import override
+from typing import Iterable
+from typing_extensions import override, Self
 
 from render.base import RenderObject, RenderImage, Alignment, Direction, Color, Palette
 

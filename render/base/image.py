@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Generic, Iterable, Self, Sequence, TypeVar
-from typing_extensions import override
+from typing import Generic, Iterable, Sequence, TypeVar
+from typing_extensions import override, Self
 
 import cv2
 import numpy as np
@@ -36,6 +36,11 @@ class RawImage(ABC, Generic[T]):
     @classmethod
     def empty_like(cls, im: Self, color: Color = Palette.WHITE) -> Self:
         return cls.empty(im.width, im.height, color)
+
+    @classmethod
+    @abstractmethod
+    def from_raw(cls, im: T) -> Self:
+        raise NotImplementedError()
 
     @abstractmethod
     def paste(self, im: Self, x: int, y: int) -> Self:
@@ -143,6 +148,19 @@ class CVImage(RawImage[cv2.Mat]):
     ) -> Self:
         im = np.zeros((height, width, 4), dtype=np.uint8)
         im[:] = color.as_tuple()
+        return cls(width, height, im)
+
+    @classmethod
+    @override
+    def from_raw(cls, im: cv2.Mat) -> Self:
+        height, width, channels = im.shape
+        if channels == 3:
+            alpha = np.full((height, width, 1), 255, dtype=np.uint8)
+            im = np.concatenate((im, alpha), axis=2)
+        elif channels == 4:
+            pass
+        else:
+            raise ValueError(f"Invalid color mode: {channels}")
         return cls(width, height, im)
 
     @override

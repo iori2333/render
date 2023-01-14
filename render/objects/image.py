@@ -1,5 +1,4 @@
-from typing import Self
-from typing_extensions import override
+from typing_extensions import override, Self
 
 from render.base import RenderObject, RenderImage
 
