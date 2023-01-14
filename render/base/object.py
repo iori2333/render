@@ -2,16 +2,19 @@ from abc import ABC, abstractmethod
 
 from .properties import Space, Border
 from .image import RenderImage
+from .color import Color, Palette
 
 
 class RenderObject(ABC):
 
     def __init__(
             self,
+            background: Color = Palette.WHITE,
             border: Border | None = None,
             margin: Space = Space.zero(),
             padding: Space = Space.zero(),
     ) -> None:
+        self.background = background
         self.border = border
         self.margin = margin
         self.padding = padding
@@ -45,7 +48,7 @@ class RenderObject(ABC):
         return height + self.margin.top + self.margin.bottom
 
     def render(self) -> RenderImage:
-        im = RenderImage.empty(self.width, self.height)
+        im = RenderImage.empty(self.width, self.height, self.background)
         content = self.render_content()
         border_width = self.border.width if self.border is not None else 0
         if self.border is not None:

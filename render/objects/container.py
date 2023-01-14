@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Iterable
 from typing_extensions import override, Self
 
-from render.base import RenderObject, RenderImage, Alignment, Direction, Color, Palette
+from render.base import RenderObject, RenderImage, Alignment, Direction
 
 
 class Container(RenderObject):
@@ -11,7 +11,6 @@ class Container(RenderObject):
         self,
         alignment: Alignment,
         direction: Direction,
-        background: Color,
         children: Iterable[RenderObject],
         **kwargs,
     ) -> None:
@@ -19,7 +18,6 @@ class Container(RenderObject):
         self.alignment = alignment
         self.direction = direction
         self.children = list(children)
-        self.background = background
 
     @classmethod
     def from_children(
@@ -27,10 +25,9 @@ class Container(RenderObject):
         children: Iterable[RenderObject],
         alignment: Alignment = Alignment.START,
         direction: Direction = Direction.HORIZONTAL,
-        background: Color = Palette.WHITE,
         **kwargs,
     ) -> Self:
-        return cls(alignment, direction, background, children, **kwargs)
+        return cls(alignment, direction, children, **kwargs)
 
     @property
     @override
@@ -74,11 +71,10 @@ class FixedContainer(Container):
         justify_content: JustifyContent,
         alignment: Alignment,
         direction: Direction,
-        background: Color,
         children: Iterable[RenderObject],
         **kwargs,
     ) -> None:
-        super().__init__(alignment, direction, background, children, **kwargs)
+        super().__init__(alignment, direction, children, **kwargs)
         self._width = width
         self._height = height
         self.justifyContent = justify_content
@@ -102,7 +98,6 @@ class FixedContainer(Container):
         justify_content: JustifyContent = JustifyContent.START,
         alignment: Alignment = Alignment.START,
         direction: Direction = Direction.HORIZONTAL,
-        background: Color = Palette.WHITE,
         **kwargs,
     ) -> Self:
         if direction == Direction.HORIZONTAL:
@@ -116,7 +111,7 @@ class FixedContainer(Container):
             raise ValueError('Container is too small')
 
         return cls(width, height, justify_content, alignment, direction,
-                   background, children, **kwargs)
+                   children, **kwargs)
 
     @override
     def render_content(self) -> RenderImage:
