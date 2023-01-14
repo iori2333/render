@@ -10,7 +10,7 @@ class RenderObject(ABC):
 
     def __init__(
         self,
-        background: Color = Palette.WHITE,
+        background: Color = Palette.TRANSPARENT,
         border: Optional[Border] = None,
         margin: Space = Space.zero(),
         padding: Space = Space.zero(),
