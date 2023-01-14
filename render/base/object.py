@@ -1,18 +1,19 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 
-from .properties import Space, Border
-from .image import RenderImage
 from .color import Color, Palette
+from .image import RenderImage
+from .properties import Space, Border
 
 
 class RenderObject(ABC):
 
     def __init__(
-            self,
-            background: Color = Palette.WHITE,
-            border: Border | None = None,
-            margin: Space = Space.zero(),
-            padding: Space = Space.zero(),
+        self,
+        background: Color = Palette.WHITE,
+        border: Optional[Border] = None,
+        margin: Space = Space.zero(),
+        padding: Space = Space.zero(),
     ) -> None:
         self.background = background
         self.border = border

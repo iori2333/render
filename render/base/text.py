@@ -1,7 +1,8 @@
+from typing import Optional
 from typing_extensions import Self
 
-from PIL import ImageFont, ImageDraw, Image
 import numpy as np
+from PIL import ImageFont, ImageDraw, Image, features
 
 from .color import Color, Palette
 from .image import RenderImage
@@ -29,7 +30,7 @@ class RenderText:
         text: str,
         font: str,
         size: int = 12,
-        color: Color | None = None,
+        color: Optional[Color] = None,
         background: Color = Palette.TRANSPARENT,
     ) -> Self:
         if color is None:
@@ -49,6 +50,6 @@ class RenderText:
             self.color.as_tuple(),
             font=font,
             anchor="lt",
-            features=["-kern"],
+            features=["-kern"] if features.check("raqm") else None,
         )
-        return RenderImage.from_raw(np.array(im))
+        return RenderImage.from_raw(np.asarray(im))
