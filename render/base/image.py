@@ -172,10 +172,16 @@ class CVImage(RawImage[cv2.Mat]):
         paste_a = np.expand_dims(im.base_im[:, :, 3], 2)
         self_a = np.expand_dims(self.base_im[b:t, l:r, 3], 2)
 
-        a1 = paste_a / 255.0
-        a2 = self_a / 255.0
-        new_rgb = paste_rgb * a1 + self_rgb * a2 * (1 - a1)
-        new_a = paste_a + self_a * (1 - a1)
+        mask = (self_a == 0).squeeze(-1)
+        alpha = paste_a / 255.0
+        new_a = paste_a + self_a * (1 - alpha)
+        new_a[mask] = 1
+
+        coef = paste_a / new_a
+        new_rgb = paste_rgb * coef + self_rgb * (1 - coef)
+
+        new_rgb[mask] = paste_rgb[mask]
+        new_a[mask] = paste_a[mask]
 
         self.base_im[b:t, l:r, :3] = np.around(new_rgb).astype(np.uint8)
         self.base_im[b:t, l:r,
