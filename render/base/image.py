@@ -33,6 +33,10 @@ class RawImage(ABC, Generic[T]):
     ) -> Self:
         raise NotImplementedError()
 
+    @classmethod
+    def empty_like(cls, im: Self, color: Color = Palette.WHITE) -> Self:
+        return cls.empty(im.width, im.height, color)
+
     @abstractmethod
     def paste(self, im: Self, x: int, y: int) -> Self:
         raise NotImplementedError()
@@ -53,23 +57,29 @@ class RawImage(ABC, Generic[T]):
         raise NotImplementedError()
 
     @classmethod
-    def concat(cls, images: Iterable[Self], direction: Direction,
-               alignment: Alignment) -> Self:
+    def concat(
+        cls,
+        images: Iterable[Self],
+        direction: Direction,
+        alignment: Alignment,
+        color: Color = Palette.WHITE,
+    ) -> Self:
         images = list(images)
         if direction == Direction.HORIZONTAL:
-            return cls.concat_horizontal(images, alignment)
+            return cls.concat_horizontal(images, alignment, color)
         else:
-            return cls.concat_vertical(images, alignment)
+            return cls.concat_vertical(images, alignment, color)
 
     @classmethod
     def concat_horizontal(
         cls,
         images: Sequence[Self],
         alignment: Alignment,
+        color: Color = Palette.WHITE,
     ) -> Self:
         width = sum(im.width for im in images)
         height = max(im.height for im in images)
-        im = cls.empty(width, height)
+        im = cls.empty(width, height, color)
         x = 0
         for child in images:
             if alignment == Alignment.CENTER:
@@ -87,10 +97,11 @@ class RawImage(ABC, Generic[T]):
         cls,
         images: Sequence[Self],
         alignment: Alignment,
+        color: Color = Palette.WHITE,
     ) -> Self:
         width = max(im.width for im in images)
         height = sum(im.height for im in images)
-        im = cls.empty(width, height)
+        im = cls.empty(width, height, color)
         y = 0
         for child in images:
             if alignment == Alignment.CENTER:

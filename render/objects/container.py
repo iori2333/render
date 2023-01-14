@@ -71,7 +71,7 @@ class FixedContainer(Container):
         self,
         width: int,
         height: int,
-        justifyContent: JustifyContent,
+        justify_content: JustifyContent,
         alignment: Alignment,
         direction: Direction,
         background: Color,
@@ -81,7 +81,7 @@ class FixedContainer(Container):
         super().__init__(alignment, direction, background, children, **kwargs)
         self._width = width
         self._height = height
-        self.justifyContent = justifyContent
+        self.justifyContent = justify_content
 
     @property
     @override
@@ -99,7 +99,7 @@ class FixedContainer(Container):
         width: int,
         height: int,
         children: Iterable[RenderObject],
-        justifyContent: JustifyContent = JustifyContent.START,
+        justify_content: JustifyContent = JustifyContent.START,
         alignment: Alignment = Alignment.START,
         direction: Direction = Direction.HORIZONTAL,
         background: Color = Palette.WHITE,
@@ -115,7 +115,7 @@ class FixedContainer(Container):
         if width < min_width or height < min_height:
             raise ValueError('Container is too small')
 
-        return cls(width, height, justifyContent, alignment, direction,
+        return cls(width, height, justify_content, alignment, direction,
                    background, children, **kwargs)
 
     @override
