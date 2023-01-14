@@ -10,9 +10,18 @@ class Image(RenderObject):
         self.im = im
 
     @classmethod
-    def from_file(cls, path: str, **kwargs) -> Self:
+    def from_file(
+        cls,
+        path: str,
+        resize: float | tuple[int, int] | None = None,
+        **kwargs,
+    ) -> Self:
         im = RenderImage.from_file(path)
-        assert im is not None, f"Failed to load image from {path}"
+        if resize is not None:
+            if isinstance(resize, tuple):
+                im = im.resize(*resize)
+            else:
+                im = im.resize(int(im.width * resize), int(im.height * resize))
         return cls.from_image(im, **kwargs)
 
     @classmethod
