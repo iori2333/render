@@ -13,6 +13,10 @@ class Image(RenderObject):
     def from_file(cls, path: str, **kwargs) -> Self:
         im = RenderImage.from_file(path)
         assert im is not None, f"Failed to load image from {path}"
+        return cls.from_image(im, **kwargs)
+
+    @classmethod
+    def from_image(cls, im: RenderImage, **kwargs) -> Self:
         return Image(im, **kwargs)
 
     @property
