@@ -2,7 +2,7 @@ from typing import Optional
 from typing_extensions import Self
 
 import numpy as np
-from PIL import ImageFont, ImageDraw, Image
+from PIL import ImageFont, ImageDraw, Image, features
 
 from .color import Color, Palette
 from .image import RenderImage
@@ -50,6 +50,6 @@ class RenderText:
             self.color.as_tuple(),
             font=font,
             anchor="lt",
-            features=["-kern"],
+            features=["-kern"] if features.check("raqm") else None,
         )
         return RenderImage.from_raw(np.asarray(im))
