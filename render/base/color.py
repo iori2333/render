@@ -30,7 +30,7 @@ class Color:
 
 
 class Palette:
-    TRANSPARENT = Color.of(0, 0, 0, 0)
+    TRANSPARENT = Color.of(255, 255, 255, 0)
     WHITE = Color.of(255, 255, 255)
     BLACK = Color.of(0, 0, 0)
     RED = Color.of(255, 0, 0)

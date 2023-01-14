@@ -136,6 +136,7 @@ class CVImage(RawImage[cv2.Mat]):
             pass
         else:
             raise ValueError(f"Invalid color mode: {channels}")
+        im = cv2.cvtColor(im, cv2.COLOR_BGRA2RGBA)
         return cls(width, height, im)
 
     @classmethod
@@ -165,7 +166,21 @@ class CVImage(RawImage[cv2.Mat]):
 
     @override
     def paste(self, im: Self, x: int, y: int) -> Self:
-        self.base_im[y:y + im.height, x:x + im.width, :] = im.base_im
+        b, t, l, r = (y, y + im.height, x, x + im.width)
+        paste_rgb = im.base_im[:, :, :3]
+        self_rgb = self.base_im[b:t, l:r, :3]
+        paste_a = np.expand_dims(im.base_im[:, :, 3], 2)
+        self_a = np.expand_dims(self.base_im[b:t, l:r, 3], 2)
+
+        a1 = paste_a / 255.0
+        a2 = self_a / 255.0
+        new_rgb = paste_rgb * a1 + self_rgb * a2 * (1 - a1)
+        new_a = paste_a + self_a * (1 - a1)
+
+        self.base_im[b:t, l:r, :3] = np.around(new_rgb).astype(np.uint8)
+        self.base_im[b:t, l:r,
+                     3] = np.around(new_a).astype(np.uint8).squeeze(2)
+
         return self
 
     @override
@@ -189,7 +204,8 @@ class CVImage(RawImage[cv2.Mat]):
 
     @override
     def save(self, path: str) -> None:
-        cv2.imwrite(path, self.base_im)
+        save_im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2BGRA)
+        cv2.imwrite(path, save_im)
 
 
 RenderImage = CVImage
