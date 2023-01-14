@@ -19,7 +19,7 @@ class Color:
 
     @classmethod
     def of_hex(cls, hex: str) -> Self:
-        hex = hex.lstrip('#')
+        hex = hex.lstrip("#")
         return cls(*tuple(int(hex[i:i + 2], 16) for i in (0, 2, 4)))
 
     def as_tuple(self) -> tuple[int, int, int, int]:
