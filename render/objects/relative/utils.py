@@ -70,16 +70,13 @@ class LinearPolynomial:
             return NotImplemented
 
     def __lt__(self, other: Linear) -> bool:
-        """Note: This is not a total order. Just for finding the minimum."""
+        """Note: This is not exact. Just for finding the minimum."""
         if isinstance(other, (int, float)):
-            return len(self.symbols) == 0 and self.const < other
-        shared_symbols = set(self.symbols.keys()) & set(other.symbols.keys())
-        if all(self.symbols[key] == other.symbols[key]
-               for key in shared_symbols):
-            return self.const < other.const or self.const == other.const and len(
-                self.symbols) < len(other.symbols)
+            return self.const < other and all(c <= 0 for c in self.symbols.values())
+        elif isinstance(other, LinearPolynomial):
+            return self - other < 0
         else:
-            return False
+            return NotImplemented
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, LinearPolynomial):
