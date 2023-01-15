@@ -58,6 +58,10 @@ class RawImage(ABC, Generic[T]):
         raise NotImplementedError()
 
     @abstractmethod
+    def resize(self, width: int, height: int) -> Self:
+        raise NotImplementedError()
+
+    @abstractmethod
     def save(self, path: str) -> None:
         raise NotImplementedError()
 
@@ -218,6 +222,17 @@ class CVImage(RawImage[cv2.Mat]):
             border.width,
             lineType=cv2.LINE_AA,
         )
+        return self
+
+    @override
+    def resize(self, width: int, height: int) -> Self:
+        self.base_im = cv2.resize(
+            self.base_im,
+            (width, height),
+            interpolation=cv2.INTER_AREA,
+        )
+        self.width = width
+        self.height = height
         return self
 
     @override

@@ -1,5 +1,5 @@
 from typing_extensions import Self
-
+from typing import Tuple
 
 class Color:
 
@@ -22,10 +22,10 @@ class Color:
         hex = hex.lstrip("#")
         return cls(*tuple(int(hex[i:i + 2], 16) for i in (0, 2, 4)))
 
-    def as_tuple(self) -> tuple[int, int, int, int]:
+    def as_tuple(self) -> Tuple[int, int, int, int]:
         return self.r, self.g, self.b, self.a
 
-    def to_rgb(self) -> tuple[int, int, int]:
+    def to_rgb(self) -> Tuple[int, int, int]:
         return self.r, self.g, self.b
 
 

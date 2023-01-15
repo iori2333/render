@@ -1,9 +1,17 @@
 from abc import ABC, abstractmethod
+from typing_extensions import TypedDict
 from typing import Optional
 
 from .color import Color, Palette
 from .image import RenderImage
 from .properties import Space, Border
+
+
+class BaseStyle(TypedDict, total=False):
+    background: Color
+    border: Optional[Border]
+    margin: Space
+    padding: Space
 
 
 class RenderObject(ABC):

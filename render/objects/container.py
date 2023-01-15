@@ -1,8 +1,8 @@
 from enum import Enum
 from typing import Iterable
-from typing_extensions import override, Self
+from typing_extensions import override, Self, Unpack
 
-from render.base import RenderObject, RenderImage, Alignment, Direction
+from render.base import RenderObject, RenderImage, Alignment, Direction, BaseStyle
 
 
 class Container(RenderObject):
@@ -12,7 +12,7 @@ class Container(RenderObject):
         alignment: Alignment,
         direction: Direction,
         children: Iterable[RenderObject],
-        **kwargs,
+        **kwargs: Unpack[BaseStyle],
     ) -> None:
         super(Container, self).__init__(**kwargs)
         self.alignment = alignment
@@ -25,7 +25,7 @@ class Container(RenderObject):
         children: Iterable[RenderObject],
         alignment: Alignment = Alignment.START,
         direction: Direction = Direction.HORIZONTAL,
-        **kwargs,
+        **kwargs: Unpack[BaseStyle],
     ) -> Self:
         return cls(alignment, direction, children, **kwargs)
 
@@ -72,9 +72,10 @@ class FixedContainer(Container):
         alignment: Alignment,
         direction: Direction,
         children: Iterable[RenderObject],
-        **kwargs,
+        **kwargs: Unpack[BaseStyle],
     ) -> None:
-        super().__init__(alignment, direction, children, **kwargs)
+        super(FixedContainer, self).__init__(alignment, direction, children,
+                                             **kwargs)
         self._width = width
         self._height = height
         self.justifyContent = justify_content
@@ -98,7 +99,7 @@ class FixedContainer(Container):
         justify_content: JustifyContent = JustifyContent.START,
         alignment: Alignment = Alignment.START,
         direction: Direction = Direction.HORIZONTAL,
-        **kwargs,
+        **kwargs: Unpack[BaseStyle],
     ) -> Self:
         if direction == Direction.HORIZONTAL:
             min_width = sum(child.width for child in children)

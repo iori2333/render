@@ -1,7 +1,7 @@
 from typing import Iterable, Optional
-from typing_extensions import override, Self
+from typing_extensions import override, Self, Unpack
 
-from render.base import RenderObject, RenderImage, Alignment
+from render.base import RenderObject, RenderImage, Alignment, BaseStyle
 
 
 class Stack(RenderObject):
@@ -11,7 +11,7 @@ class Stack(RenderObject):
         children: Iterable[RenderObject],
         vertical_alignment: Alignment,
         horizontal_alignment: Alignment,
-        **kwargs,
+        **kwargs: Unpack[BaseStyle],
     ) -> None:
         super(Stack, self).__init__(**kwargs)
         self.children = list(children)
@@ -25,7 +25,7 @@ class Stack(RenderObject):
         alignment: Alignment = Alignment.START,
         vertical_alignment: Optional[Alignment] = None,
         horizontal_alignment: Optional[Alignment] = None,
-        **kwargs,
+        **kwargs: Unpack[BaseStyle],
     ) -> Self:
         if vertical_alignment is None:
             vertical_alignment = alignment
