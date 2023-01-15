@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Iterable
 from typing_extensions import TypedDict
 
-from .decorations import Decorations
+from .decorations import Decoration, Decorations
 from .color import Color, Palette
 from .image import RenderImage
 from .properties import Space, Border
@@ -13,7 +13,7 @@ class BaseStyle(TypedDict, total=False):
     border: Border
     margin: Space
     padding: Space
-    decorations: Decorations
+    decorations: Iterable[Decoration]
 
 
 class RenderObject(ABC):
@@ -23,13 +23,13 @@ class RenderObject(ABC):
         border: Border = Border.zero(),
         margin: Space = Space.zero(),
         padding: Space = Space.zero(),
-        decorations: Decorations = Decorations.of(),
+        decorations: Iterable[Decoration] = (),
         background: Color = Palette.TRANSPARENT,
     ) -> None:
         self.border = border
         self.margin = margin
         self.padding = padding
-        self.decorations = decorations
+        self.decorations = Decorations.of(*decorations)
         self.background = background
 
     @property
@@ -48,17 +48,13 @@ class RenderObject(ABC):
 
     @property
     def width(self) -> int:
-        width = self.content_width + self.padding.left + self.padding.right
-        if self.border is not None:
-            width += self.border.width * 2
-        return width + self.margin.left + self.margin.right
+        width = self.content_width + self.padding.width + self.margin.width + self.border.width * 2
+        return width
 
     @property
     def height(self) -> int:
-        height = self.content_height + self.padding.top + self.padding.bottom
-        if self.border is not None:
-            height += self.border.width * 2
-        return height + self.margin.top + self.margin.bottom
+        height = self.content_height + self.padding.height + self.margin.height + self.border.width * 2
+        return height
 
     def render(self) -> RenderImage:
         im = RenderImage.empty(self.width, self.height, self.background)
@@ -88,4 +84,12 @@ class RenderObject(ABC):
         )
 
         im = self.decorations.apply_full(im)
+        if self.decorations.has_bg_decorations:
+            bg = RenderImage.empty(
+                self.width,
+                self.height,
+                color=Palette.TRANSPARENT,
+            )
+            bg = self.decorations.apply_background(im, bg, self)
+            im = bg.paste(0, 0, im)
         return im

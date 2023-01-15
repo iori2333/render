@@ -5,10 +5,10 @@ from typing_extensions import override, Self
 import numpy as np
 import cv2
 
-from render.base import Decoration, RenderImage, ImageMask, BoxSizing
+from render.base import ForegroundDecoration, RenderImage, ImageMask, BoxSizing
 
 
-class Crop(Decoration):
+class Crop(ForegroundDecoration):
 
     @abstractmethod
     def get_mask(self, obj: RenderImage) -> ImageMask:
