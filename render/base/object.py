@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Optional, TypedDict
+from typing_extensions import TypedDict
+from typing import Optional
 
 from .color import Color, Palette
 from .image import RenderImage

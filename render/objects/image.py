@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Union, Optional, Tuple
 from typing_extensions import override, Self, Unpack
 
 from render.base import RenderObject, RenderImage, BaseStyle
@@ -14,7 +14,7 @@ class Image(RenderObject):
     def from_file(
         cls,
         path: str,
-        resize: Optional[Union[float, tuple[int, int]]] = None,
+        resize: Optional[Union[float, Tuple[int, int]]] = None,
         **kwargs: Unpack[BaseStyle],
     ) -> Self:
         im = RenderImage.from_file(path)
