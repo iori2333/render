@@ -21,6 +21,7 @@ class Relative(TypedDict, total=False):
 
 
 class RelativeContainer(RenderObject):
+
     def __init__(
         self,
         **kwargs: Unpack[BaseStyle],
@@ -137,7 +138,8 @@ class RelativeContainer(RenderObject):
     @override
     def render_content(self) -> RenderImage:
         if len(self.children) == 0:
-            raise ValueError("No children to render")
+            raise ValueError(
+                f"{self.__class__.__name__} must have at least one child")
 
         x = LinearPolynomial(x=1)
         y = LinearPolynomial(y=1)
