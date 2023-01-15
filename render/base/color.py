@@ -1,6 +1,7 @@
 from typing_extensions import Self
 from typing import Tuple
 
+
 class Color:
 
     def __init__(self, r: int, g: int, b: int, a: int) -> None:

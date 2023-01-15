@@ -58,7 +58,12 @@ class RawImage(ABC, Generic[T]):
         raise NotImplementedError()
 
     @abstractmethod
-    def resize(self, width: int, height: int) -> Self:
+    def resize(
+        self,
+        width: int = None,
+        height: int = None,
+        interpolation: Interpolation = Interpolation.BILINEAR
+    ) -> Self:
         raise NotImplementedError()
 
     @abstractmethod
@@ -67,15 +72,6 @@ class RawImage(ABC, Generic[T]):
 
     @abstractmethod
     def show(self) -> None:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def resize(
-        self,
-        width: int = None,
-        height: int = None,
-        interpolation: Interpolation = Interpolation.BILINEAR
-    ) -> Self:
         raise NotImplementedError()
 
     @classmethod
@@ -225,28 +221,6 @@ class CVImage(RawImage[cv2.Mat]):
         return self
 
     @override
-    def resize(self, width: int, height: int) -> Self:
-        self.base_im = cv2.resize(
-            self.base_im,
-            (width, height),
-            interpolation=cv2.INTER_AREA,
-        )
-        self.width = width
-        self.height = height
-        return self
-
-    @override
-    def save(self, path: str) -> None:
-        save_im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2BGRA)
-        cv2.imwrite(path, save_im)
-
-    @override
-    def show(self) -> None:
-        show_im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2BGR)
-        cv2.imshow("image", show_im)
-        cv2.waitKey(0)
-
-    @override
     def resize(
         self,
         width: int = None,
@@ -271,8 +245,25 @@ class CVImage(RawImage[cv2.Mat]):
             flag = cv2.INTER_AREA
         else:
             raise NotImplementedError()
-        self.base_im = cv2.resize(self.base_im, (width, height), interpolation=flag)
+        self.base_im = cv2.resize(
+            self.base_im,
+            (width, height),
+            interpolation=flag,
+        )
+        self.width = width
+        self.height = height
         return self
+
+    @override
+    def save(self, path: str) -> None:
+        save_im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2BGRA)
+        cv2.imwrite(path, save_im)
+
+    @override
+    def show(self) -> None:
+        show_im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2BGR)
+        cv2.imshow("image", show_im)
+        cv2.waitKey(0)
 
 
 RenderImage = CVImage

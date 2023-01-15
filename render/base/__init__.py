@@ -4,15 +4,15 @@ from .properties import Alignment, Direction, Space, Border, Interpolation
 from .text import RenderText
 
 __all__ = [
+    "Alignment",
+    "BaseStyle",
+    "Border",
+    "Color",
+    "Direction",
+    "Interpolation",
+    "Palette",
     "RenderImage",
     "RenderObject",
-    "BaseStyle",
-    "Alignment",
-    "Direction",
+    "RenderText",
     "Space",
-    "Border",
-    "Interpolation",
-    "Color",
-    "Palette",
-    "RenderText"
 ]
