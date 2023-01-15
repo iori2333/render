@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 from typing_extensions import TypedDict
 
+from .decorations import Decorations
 from .color import Color, Palette
 from .image import RenderImage
 from .properties import Space, Border
@@ -9,7 +10,7 @@ from .properties import Space, Border
 
 class BaseStyle(TypedDict, total=False):
     background: Color
-    border: Optional[Border]
+    border: Border
     margin: Space
     padding: Space
 
@@ -18,15 +19,17 @@ class RenderObject(ABC):
 
     def __init__(
         self,
-        background: Color = Palette.TRANSPARENT,
-        border: Optional[Border] = None,
+        border: Border = Border.zero(),
         margin: Space = Space.zero(),
         padding: Space = Space.zero(),
+        decorations: Decorations = Decorations.of(),
+        background: Color = Palette.TRANSPARENT,
     ) -> None:
-        self.background = background
         self.border = border
         self.margin = margin
         self.padding = padding
+        self.decorations = decorations
+        self.background = background
 
     @property
     @abstractmethod
@@ -59,17 +62,29 @@ class RenderObject(ABC):
     def render(self) -> RenderImage:
         im = RenderImage.empty(self.width, self.height, self.background)
         content = self.render_content()
-        border_width = self.border.width if self.border is not None else 0
-        if self.border is not None:
-            im = im.draw_border(
-                self.margin.left + border_width,
-                self.margin.top + border_width,
-                self.content_width + self.padding.left + self.padding.right,
-                self.content_height + self.padding.top + self.padding.bottom,
-                self.border,
-            )
-        return im.paste(
+        content = self.decorations.apply_content(content)
+
+        content_width = self.content_width + self.padding.width
+        content_height = self.content_height + self.padding.height
+        offset_x = self.margin.left + self.border.width
+        offset_y = self.margin.top + self.border.width
+        im = im.draw_border(
+            offset_x,
+            offset_y,
+            content_width - 1,
+            content_height - 1,
+            self.border,
+        ).fill(
+            offset_x,
+            offset_y,
+            content_width,
+            content_height,
+            self.background,
+        ).paste(
+            offset_x + self.padding.left,
+            offset_y + self.padding.top,
             content,
-            self.margin.left + border_width + self.padding.left,
-            self.margin.top + border_width + self.padding.top,
         )
+
+        im = self.decorations.apply_full(im)
+        return im
