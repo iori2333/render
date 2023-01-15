@@ -8,6 +8,7 @@ import numpy as np
 from .properties import Alignment, Border, Direction, Interpolation
 from .color import Color, Palette
 
+ImageMask = np.ndarray[int, np.dtype[np.uint8]]
 T = TypeVar("T")
 
 
@@ -43,7 +44,7 @@ class RawImage(ABC, Generic[T]):
         raise NotImplementedError()
 
     @abstractmethod
-    def paste(self, im: Self, x: int, y: int) -> Self:
+    def paste(self, x: int, y: int, im: Self) -> Self:
         raise NotImplementedError()
 
     @abstractmethod
@@ -62,8 +63,23 @@ class RawImage(ABC, Generic[T]):
         self,
         width: int = -1,
         height: int = -1,
-        interpolation: Interpolation = Interpolation.BILINEAR
+        interpolation: Interpolation = Interpolation.BILINEAR,
     ) -> Self:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def fill(
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        color: Color,
+    ) -> Self:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def mask(self, mask: ImageMask) -> Self:
         raise NotImplementedError()
 
     @abstractmethod
@@ -106,7 +122,7 @@ class RawImage(ABC, Generic[T]):
                 y = height - child.height
             else:
                 y = 0
-            im.paste(child, x, y)
+            im.paste(x, y, child)
             x += child.width
         return im
 
@@ -128,12 +144,12 @@ class RawImage(ABC, Generic[T]):
                 x = width - child.width
             else:
                 x = 0
-            im.paste(child, x, y)
+            im.paste(x, y, child)
             y += child.height
         return im
 
 
-class CVImage(RawImage[cv2.Mat]):
+class RenderImage(RawImage[cv2.Mat]):
 
     @classmethod
     @override
@@ -178,7 +194,7 @@ class CVImage(RawImage[cv2.Mat]):
         return cls(width, height, im)
 
     @override
-    def paste(self, im: Self, x: int, y: int) -> Self:
+    def paste(self, x: int, y: int, im: Self) -> Self:
         b, t, l, r = (y, y + im.height, x, x + im.width)
         paste_rgb = im.base_im[:, :, :3]
         self_rgb = self.base_im[b:t, l:r, :3]
@@ -210,12 +226,14 @@ class CVImage(RawImage[cv2.Mat]):
         height: int,
         border: Border,
     ) -> Self:
+        if border.width == 0:
+            return self
         self.base_im = cv2.rectangle(
             self.base_im,
             (x, y),
             (x + width, y + height),
             border.color.as_tuple(),
-            border.width,
+            border.width * 2,
             lineType=cv2.LINE_AA,
         )
         return self
@@ -227,12 +245,13 @@ class CVImage(RawImage[cv2.Mat]):
         height: int = -1,
         interpolation: Interpolation = Interpolation.BILINEAR,
     ) -> Self:
-        if width == -1 and height == -1:
+        if width < 0 and height < 0:
             raise ValueError("Either width or height must be specified")
-        elif width == -1:
+        if width < 0:
             width = round(self.width * height / self.height)
-        elif height == -1:
+        elif height < 0:
             height = round(self.height * width / self.width)
+
         if interpolation == Interpolation.NEAREST:
             flag = cv2.INTER_NEAREST_EXACT
         elif interpolation == Interpolation.BILINEAR:
@@ -255,6 +274,28 @@ class CVImage(RawImage[cv2.Mat]):
         return self
 
     @override
+    def fill(
+        self,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        color: Color = Palette.WHITE,
+    ) -> Self:
+        self.base_im[y:y + height, x:x + width] = color.as_tuple()
+        return self
+
+    @override
+    def mask(self, mask: ImageMask) -> Self:
+        h, w = mask.shape
+        if h != self.height or w != self.width:
+            raise ValueError("Mask size must be same as image size")
+        indices = mask != 255
+        coef = mask[indices] / 255.0
+        self.base_im[indices, 3] = self.base_im[indices, 3] * coef
+        return self
+
+    @override
     def save(self, path: str) -> None:
         save_im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2BGRA)
         cv2.imwrite(path, save_im)
@@ -264,6 +305,3 @@ class CVImage(RawImage[cv2.Mat]):
         show_im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2BGR)
         cv2.imshow("image", show_im)
         cv2.waitKey(0)
-
-
-RenderImage = CVImage

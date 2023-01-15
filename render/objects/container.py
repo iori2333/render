@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Iterable
+from typing import Iterable, Tuple
 from typing_extensions import override, Self, Unpack
 
 from render.base import RenderObject, RenderImage, Alignment, Direction, BaseStyle
@@ -114,12 +114,7 @@ class FixedContainer(Container):
         return cls(width, height, justify_content, alignment, direction,
                    children, **kwargs)
 
-    @override
-    def render_content(self) -> RenderImage:
-        rendered = list(map(lambda child: child.render(), self.children))
-        concat = RenderImage.empty(self.content_width, self.content_height,
-                                   self.background)
-
+    def _render_boundary(self) -> Tuple[int, int]:
         if self.direction == Direction.HORIZONTAL:
             space = self.content_width - sum(child.width
                                              for child in self.children)
@@ -148,6 +143,15 @@ class FixedContainer(Container):
             space = 0
             offset = 0
 
+        return space, offset
+
+    @override
+    def render_content(self) -> RenderImage:
+        rendered = list(map(lambda child: child.render(), self.children))
+        concat = RenderImage.empty(self.content_width, self.content_height,
+                                   self.background)
+
+        offset, space = self._render_boundary()
         for child in rendered:
             if self.direction == Direction.HORIZONTAL:
                 if self.alignment == Alignment.START:
@@ -156,7 +160,7 @@ class FixedContainer(Container):
                     y = (self.content_height - child.height) // 2
                 else:
                     y = self.content_height - child.height
-                concat = concat.paste(child, offset, y)
+                concat = concat.paste(offset, y, child)
                 offset += child.width + space
             else:
                 if self.alignment == Alignment.START:
@@ -165,6 +169,6 @@ class FixedContainer(Container):
                     x = (self.content_width - child.width) // 2
                 else:
                     x = self.content_width - child.width
-                concat = concat.paste(child, x, offset)
+                concat = concat.paste(x, offset, child)
                 offset += child.height + space
         return concat
