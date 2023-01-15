@@ -60,9 +60,9 @@ class RawImage(ABC, Generic[T]):
     @abstractmethod
     def resize(
         self,
-        width: int = None,
-        height: int = None,
-        interpolation: Interpolation = Interpolation.BILINEAR
+        width: int = -1,
+        height: int = -1,
+        interpolation: Interpolation = Interpolation.BILINEAR,
     ) -> Self:
         raise NotImplementedError()
 
@@ -197,7 +197,7 @@ class RenderImage(RawImage[cv2.Mat]):
         self_a = np.expand_dims(self.base_im[b:t, l:r, 3], 2)
 
         mask = (self_a == 0).squeeze(-1)
-        alpha = paste_a / 255.0
+        alpha = paste_a / 255.0 # type: ignore
         new_a = paste_a + self_a * (1 - alpha)
         new_a[mask] = 1
 
@@ -236,16 +236,17 @@ class RenderImage(RawImage[cv2.Mat]):
     @override
     def resize(
         self,
-        width: int = None,
-        height: int = None,
-        interpolation: Interpolation = Interpolation.BILINEAR
+        width: int = -1,
+        height: int = -1,
+        interpolation: Interpolation = Interpolation.BILINEAR,
     ) -> Self:
-        if width is None and height is None:
-            return self
-        elif width is None:
+        if width < 0 and height < 0:
+            raise ValueError("Either width or height must be specified")
+        if width < 0:
             width = round(self.width * height / self.height)
-        elif height is None:
+        elif height < 0:
             height = round(self.height * width / self.width)
+
         if interpolation == Interpolation.NEAREST:
             flag = cv2.INTER_NEAREST_EXACT
         elif interpolation == Interpolation.BILINEAR:
