@@ -63,5 +63,5 @@ class Stack(RenderObject):
             else:
                 x = self.width - child.width
 
-            im = im.paste(child, x, y)
+            im = im.paste(x, y, child)
         return im

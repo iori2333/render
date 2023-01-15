@@ -22,6 +22,10 @@ class Border:
         self.width = width
 
     @classmethod
+    def zero(cls) -> Self:
+        return cls.of(0)
+
+    @classmethod
     def of(cls, width: int, color: Color = Palette.BLACK) -> Self:
         return cls(color, width)
 
@@ -57,3 +61,11 @@ class Space:
     @classmethod
     def vertical(cls, width: int) -> Self:
         return cls(0, 0, width, width)
+
+    @property
+    def width(self) -> int:
+        return self.left + self.right
+
+    @property
+    def height(self) -> int:
+        return self.top + self.bottom
