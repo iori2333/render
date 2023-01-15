@@ -1,11 +1,12 @@
-from typing_extensions import override, Self
+from typing import Union, Optional
+from typing_extensions import override, Self, Unpack
 
-from render.base import RenderObject, RenderImage
+from render.base import RenderObject, RenderImage, BaseStyle
 
 
 class Image(RenderObject):
 
-    def __init__(self, im: RenderImage, **kwargs) -> None:
+    def __init__(self, im: RenderImage, **kwargs: Unpack[BaseStyle]) -> None:
         super(Image, self).__init__(**kwargs)
         self.im = im
 
@@ -13,8 +14,8 @@ class Image(RenderObject):
     def from_file(
         cls,
         path: str,
-        resize: float | tuple[int, int] | None = None,
-        **kwargs,
+        resize: Optional[Union[float, tuple[int, int]]] = None,
+        **kwargs: Unpack[BaseStyle],
     ) -> Self:
         im = RenderImage.from_file(path)
         if resize is not None:
@@ -25,7 +26,7 @@ class Image(RenderObject):
         return cls.from_image(im, **kwargs)
 
     @classmethod
-    def from_image(cls, im: RenderImage, **kwargs) -> Self:
+    def from_image(cls, im: RenderImage, **kwargs: Unpack[BaseStyle]) -> Self:
         return Image(im, **kwargs)
 
     @property

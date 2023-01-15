@@ -1,7 +1,7 @@
 from typing import Optional
-from typing_extensions import override, Self
+from typing_extensions import override, Self, Unpack
 
-from render.base import RenderObject, RenderImage, RenderText, Color, Palette
+from render.base import RenderObject, RenderImage, RenderText, Color, Palette, BaseStyle
 
 
 class Text(RenderObject):
@@ -9,9 +9,10 @@ class Text(RenderObject):
     def __init__(
         self,
         render_text: RenderText,
-        **kwargs,
+        **kwargs: Unpack[BaseStyle],
     ) -> None:
-        super(Text, self).__init__(background=render_text.background, **kwargs)
+        kwargs.setdefault("background", render_text.color)
+        super(Text, self).__init__(**kwargs)
         self.render_text = render_text
         self._pre_rendered = render_text.render()
 
@@ -23,7 +24,7 @@ class Text(RenderObject):
         size: int = 12,
         color: Optional[Color] = None,
         background: Color = Palette.TRANSPARENT,
-        **kwargs,
+        **kwargs: Unpack[BaseStyle],
     ) -> Self:
         render_text = RenderText.of(text, font, size, color, background)
         return cls(render_text, **kwargs)
@@ -32,7 +33,7 @@ class Text(RenderObject):
     def from_text(
         cls,
         render_text: RenderText,
-        **kwargs,
+        **kwargs: Unpack[BaseStyle],
     ) -> Self:
         return cls(render_text, **kwargs)
 
