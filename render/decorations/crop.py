@@ -109,38 +109,38 @@ class RectCrop(Crop):
             )
 
         if self.border_radius > min(width, height) // 2:
-            self.border_radius = min(width, height) // 2
+            border_radius = min(width, height) // 2
+        else:
+            border_radius = self.border_radius
 
         corners = [
-            (start_x + self.border_radius, start_y + self.border_radius),
-            (start_x + self.border_radius,
-             start_y + height - self.border_radius),
-            (start_x + width - self.border_radius,
-             start_y + self.border_radius),
-            (start_x + width - self.border_radius,
-             start_y + height - self.border_radius),
+            (start_x + border_radius, start_y + border_radius),
+            (start_x + border_radius, start_y + height - border_radius),
+            (start_x + width - border_radius, start_y + border_radius),
+            (start_x + width - border_radius,
+             start_y + height - border_radius),
         ]
         for corner in corners:
             mask = cv2.circle(
                 mask,
                 corner,
-                self.border_radius,
+                border_radius,
                 255,
                 thickness=-1,
                 lineType=cv2.LINE_AA,
             )
         mask = cv2.rectangle(
             mask,
-            (start_x, start_y + self.border_radius),
-            (start_x + width, start_y + height - self.border_radius),
+            (start_x, start_y + border_radius),
+            (start_x + width, start_y + height - border_radius),
             255,
             thickness=-1,
             lineType=cv2.LINE_AA,
         )
         mask = cv2.rectangle(
             mask,
-            (start_x + self.border_radius, start_y),
-            (start_x + width - self.border_radius, start_y + height),
+            (start_x + border_radius, start_y),
+            (start_x + width - border_radius, start_y + height),
             255,
             thickness=-1,
             lineType=cv2.LINE_AA,
