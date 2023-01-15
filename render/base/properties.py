@@ -15,6 +15,14 @@ class Direction(Enum):
     VERTICAL = 2
 
 
+class Interpolation(Enum):
+    NEAREST = 1
+    BILINEAR = 2
+    BICUBIC = 3
+    LANCZOS = 4
+    AREA = 5
+
+
 class Border:
 
     def __init__(self, color: Color, width: int) -> None:

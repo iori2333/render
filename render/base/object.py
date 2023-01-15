@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 from typing_extensions import TypedDict
 
 from .decorations import Decorations
