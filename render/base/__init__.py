@@ -1,5 +1,5 @@
 from .object import RenderImage, RenderObject
-from .properties import Alignment, Direction, Space, Border
+from .properties import Alignment, Direction, Space, Border, Interpolation
 from .color import Color, Palette
 from .text import RenderText
 
@@ -10,6 +10,7 @@ __all__ = [
     "Direction",
     "Space",
     "Border",
+    'Interpolation',
     "Color",
     "Palette",
     "RenderText"

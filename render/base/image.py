@@ -5,7 +5,7 @@ from typing_extensions import override, Self
 import cv2
 import numpy as np
 
-from .properties import Alignment, Border, Direction
+from .properties import Alignment, Border, Direction, Interpolation
 from .color import Color, Palette
 
 T = TypeVar("T")
@@ -59,6 +59,19 @@ class RawImage(ABC, Generic[T]):
 
     @abstractmethod
     def save(self, path: str) -> None:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def show(self) -> None:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def resize(
+        self,
+        width: int = None,
+        height: int = None,
+        interpolation: Interpolation = Interpolation.BILINEAR
+    ) -> Self:
         raise NotImplementedError()
 
     @classmethod
@@ -184,8 +197,7 @@ class CVImage(RawImage[cv2.Mat]):
         new_a[mask] = paste_a[mask]
 
         self.base_im[b:t, l:r, :3] = np.around(new_rgb).astype(np.uint8)
-        self.base_im[b:t, l:r,
-                     3] = np.around(new_a).astype(np.uint8).squeeze(2)
+        self.base_im[b:t, l:r, 3] = np.around(new_a).astype(np.uint8).squeeze(2)
 
         return self
 
@@ -212,6 +224,40 @@ class CVImage(RawImage[cv2.Mat]):
     def save(self, path: str) -> None:
         save_im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2BGRA)
         cv2.imwrite(path, save_im)
+
+    @override
+    def show(self) -> None:
+        show_im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2BGR)
+        cv2.imshow("image", show_im)
+        cv2.waitKey(0)
+
+    @override
+    def resize(
+        self,
+        width: int = None,
+        height: int = None,
+        interpolation: Interpolation = Interpolation.BILINEAR
+    ) -> Self:
+        if width is None and height is None:
+            return self
+        elif width is None:
+            width = round(self.width * height / self.height)
+        elif height is None:
+            height = round(self.height * width / self.width)
+        if interpolation == Interpolation.NEAREST:
+            flag = cv2.INTER_NEAREST_EXACT
+        elif interpolation == Interpolation.BILINEAR:
+            flag = cv2.INTER_LINEAR_EXACT
+        elif interpolation == Interpolation.BICUBIC:
+            flag = cv2.INTER_CUBIC
+        elif interpolation == Interpolation.LANCZOS:
+            flag = cv2.INTER_LANCZOS4
+        elif interpolation == Interpolation.AREA:
+            flag = cv2.INTER_AREA
+        else:
+            raise NotImplementedError()
+        self.base_im = cv2.resize(self.base_im, (width, height), interpolation=flag)
+        return self
 
 
 RenderImage = CVImage
