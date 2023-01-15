@@ -252,18 +252,7 @@ class RenderImage(RawImage[cv2.Mat]):
         elif height < 0:
             height = round(self.height * width / self.width)
 
-        if interpolation == Interpolation.NEAREST:
-            flag = cv2.INTER_NEAREST_EXACT
-        elif interpolation == Interpolation.BILINEAR:
-            flag = cv2.INTER_LINEAR_EXACT
-        elif interpolation == Interpolation.BICUBIC:
-            flag = cv2.INTER_CUBIC
-        elif interpolation == Interpolation.LANCZOS:
-            flag = cv2.INTER_LANCZOS4
-        elif interpolation == Interpolation.AREA:
-            flag = cv2.INTER_AREA
-        else:
-            raise NotImplementedError()
+        flag = interpolation.value
         self.base_im = cv2.resize(
             self.base_im,
             (width, height),

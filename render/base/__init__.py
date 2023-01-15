@@ -8,9 +8,12 @@ from .image import ImageMask, RenderImage
 __all__ = [
     "Alignment",
     "BaseStyle",
+    "BoxSizing",
     "Border",
     "Color",
+    "Decorations",
     "Direction",
+    "ImageMask",
     "Interpolation",
     "Palette",
     "RenderImage",
@@ -19,7 +22,4 @@ __all__ = [
     "Space",
     "ForegroundDecoration",
     "BackgroundDecoration",
-    "Decorations",
-    "BoxSizing",
-    "ImageMask",
 ]
