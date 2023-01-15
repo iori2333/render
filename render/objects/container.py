@@ -103,9 +103,9 @@ class FixedContainer(Container):
     ) -> Self:
         if direction == Direction.HORIZONTAL:
             min_width = sum(child.width for child in children)
-            min_height = max(child.height for child in children)
+            min_height = max(child.height for child in children) if children else 0
         else:
-            min_width = max(child.width for child in children)
+            min_width = max(child.width for child in children) if children else 0
             min_height = sum(child.height for child in children)
 
         if width < min_width or height < min_height:
