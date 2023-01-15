@@ -17,6 +17,7 @@ class Relative(TypedDict, total=False):
     center_vertical: RenderObject
     center_horizontal: RenderObject
     center: RenderObject
+    prior_to: RenderObject
 
 
 class RelativeContainer(RenderObject):

@@ -213,6 +213,10 @@ class Box:
         return Box.of_size(other.p1.x + (other.w - self.w) / 2,
                            other.p1.y + (other.h - self.h) / 2, self.w, self.h)
 
+    def prior_to(self, other: Self) -> Self:
+        """A dummy method to make self dependent on other so that other will be overlaid."""
+        return self
+
     def relative_to(self, other: Self, relative_type: str) -> Self:
         if not hasattr(self, relative_type):
             raise ValueError(f"Invalid relative type: {relative_type}")
