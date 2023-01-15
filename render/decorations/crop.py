@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from typing import Optional
-from typing_extensions import override
+from typing_extensions import override, Self
 
 import numpy as np
 import cv2
@@ -36,7 +36,7 @@ class RoundedCrop(Crop):
         cls,
         radius: Optional[int] = None,
         box_sizing: BoxSizing = BoxSizing.CONTENT_BOX,
-    ) -> "RoundedCrop":
+    ) -> Self:
         return cls(radius, box_sizing)
 
     @override
@@ -79,7 +79,7 @@ class RectCrop(Crop):
         height: Optional[int] = None,
         border_radius: int = 0,
         box_sizing: BoxSizing = BoxSizing.CONTENT_BOX,
-    ) -> "RectCrop":
+    ) -> Self:
         return cls(width, height, border_radius, box_sizing)
 
     @classmethod
@@ -88,7 +88,7 @@ class RectCrop(Crop):
         size: Optional[int] = None,
         border_radius: int = 0,
         box_sizing: BoxSizing = BoxSizing.CONTENT_BOX,
-    ) -> "RectCrop":
+    ) -> Self:
         return cls(size, size, border_radius, box_sizing)
 
     @override
