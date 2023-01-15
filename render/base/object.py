@@ -13,6 +13,7 @@ class BaseStyle(TypedDict, total=False):
     border: Border
     margin: Space
     padding: Space
+    decorations: Decorations
 
 
 class RenderObject(ABC):

@@ -8,6 +8,7 @@ import numpy as np
 from .properties import Alignment, Border, Direction, Interpolation
 from .color import Color, Palette
 
+ImageMask = np.ndarray[int, np.dtype[np.uint8]]
 T = TypeVar("T")
 
 
@@ -75,6 +76,10 @@ class RawImage(ABC, Generic[T]):
         height: int,
         color: Color,
     ) -> Self:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def mask(self, mask: ImageMask) -> Self:
         raise NotImplementedError()
 
     @abstractmethod
@@ -197,7 +202,7 @@ class RenderImage(RawImage[cv2.Mat]):
         self_a = np.expand_dims(self.base_im[b:t, l:r, 3], 2)
 
         mask = (self_a == 0).squeeze(-1)
-        alpha = paste_a / 255.0 # type: ignore
+        alpha = paste_a / 255.0  # type: ignore
         new_a = paste_a + self_a * (1 - alpha)
         new_a[mask] = 1
 
@@ -278,6 +283,16 @@ class RenderImage(RawImage[cv2.Mat]):
         color: Color = Palette.WHITE,
     ) -> Self:
         self.base_im[y:y + height, x:x + width] = color.as_tuple()
+        return self
+
+    @override
+    def mask(self, mask: ImageMask) -> Self:
+        h, w = mask.shape
+        if h != self.height or w != self.width:
+            raise ValueError("Mask size must be same as image size")
+        indices = mask != 255
+        coef = mask[indices] / 255.0
+        self.base_im[indices, 3] = self.base_im[indices, 3] * coef
         return self
 
     @override

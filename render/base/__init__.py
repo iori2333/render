@@ -1,7 +1,9 @@
 from .color import Color, Palette
-from .object import RenderImage, RenderObject, BaseStyle
+from .object import RenderObject, BaseStyle
 from .properties import Alignment, Direction, Space, Border, Interpolation
 from .text import RenderText
+from .decorations import Decoration, Decorations, BoxSizing
+from .image import ImageMask, RenderImage
 
 __all__ = [
     "Alignment",
@@ -15,4 +17,8 @@ __all__ = [
     "RenderObject",
     "RenderText",
     "Space",
+    "Decoration",
+    "Decorations",
+    "BoxSizing",
+    "ImageMask",
 ]
