@@ -11,7 +11,7 @@ class Text(RenderObject):
         render_text: RenderText,
         **kwargs: Unpack[BaseStyle],
     ) -> None:
-        kwargs.setdefault("background", render_text.color)
+        kwargs.setdefault("background", render_text.background)
         super(Text, self).__init__(**kwargs)
         self.render_text = render_text
         self._pre_rendered = render_text.render()
