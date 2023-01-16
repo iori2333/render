@@ -1,7 +1,9 @@
-from typing import Any, Dict, Generic, List, Set, Tuple, TypeVar, Union
+from typing import (Any, Callable, Dict, Generic, Iterable, List, Set, Tuple,
+                    TypeVar, Union)
 from typing_extensions import Self
 
 Linear = Union[int, float, "LinearPolynomial"]
+T = TypeVar("T")
 Node = TypeVar("Node")
 Edge = TypeVar("Edge")
 
@@ -68,16 +70,13 @@ class LinearPolynomial:
             return NotImplemented
 
     def __lt__(self, other: Linear) -> bool:
-        """Note: This is not a total order. Just for finding the minimum."""
+        """Note: This is not exact. Just for finding the minimum."""
         if isinstance(other, (int, float)):
-            return len(self.symbols) == 0 and self.const < other
-        shared_symbols = set(self.symbols.keys()) & set(other.symbols.keys())
-        if all(self.symbols[key] == other.symbols[key]
-               for key in shared_symbols):
-            return self.const < other.const or self.const == other.const and len(
-                self.symbols) < len(other.symbols)
+            return self.const < other and all(c <= 0 for c in self.symbols.values())
+        elif isinstance(other, LinearPolynomial):
+            return self - other < 0
         else:
-            return False
+            return NotImplemented
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, LinearPolynomial):
@@ -111,12 +110,28 @@ class LinearPolynomial:
         return self.const + sum(coef * values[key]
                                 for key, coef in self.symbols.items())
 
-    def contains_symbol(self, symbol: str) -> bool:
-        return symbol in self.symbols
+    def contains_symbol(self, symbol: Union[str, Self]) -> bool:
+        if isinstance(symbol, str):
+            return symbol in self.symbols
+        elif isinstance(symbol, LinearPolynomial):
+            return all(key in self.symbols for key in symbol.symbols)
+        else:
+            raise TypeError(f"Invalid type: {type(symbol)}")
 
     @property
     def is_const(self) -> bool:
         return len(self.symbols) == 0
+
+    @property
+    def is_variable(self) -> bool:
+        return (len(self.symbols) == 1 and self.const == 0
+                and next(iter(self.symbols.values())) == 1)
+
+    @property
+    def var(self) -> str:
+        if not self.is_variable:
+            raise ValueError("Not a variable")
+        return next(iter(self.symbols.keys()))
 
 
 class Point:
@@ -276,3 +291,13 @@ class DependencyGraph(Generic[Node, Edge]):
         if len(result) != len(self.graph):
             raise ValueError("Cyclic dependency graph")
         return result
+
+
+def partition(
+    predicate: Callable[[T], bool],
+    iterable: Iterable[T],
+) -> Tuple[List[T], List[T]]:
+    x, y = [], []
+    for item in iterable:
+        (x if predicate(item) else y).append(item)
+    return x, y
