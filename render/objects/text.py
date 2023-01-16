@@ -1,20 +1,76 @@
-from typing import Optional
+import bisect
+from functools import lru_cache
+from typing import Optional, Sequence
 from typing_extensions import override, Self, Unpack
 
-from render.base import RenderObject, RenderImage, RenderText, Color, Palette, BaseStyle
+from PIL.ImageFont import FreeTypeFont, truetype
+
+from render.base import (RenderObject, RenderImage, RenderText, Color,
+                         BaseStyle, Alignment, Direction)
 
 
 class Text(RenderObject):
 
+    MARKS = set("；：。，！？、.,!?”》;:")
+
     def __init__(
         self,
-        render_text: RenderText,
+        text: str,
+        font: str,
+        size: int,
+        max_width: Optional[int],
+        alignment: Alignment,
+        color: Optional[Color],
         **kwargs: Unpack[BaseStyle],
     ) -> None:
-        kwargs.setdefault("background", render_text.background)
         super(Text, self).__init__(**kwargs)
-        self.render_text = render_text
-        self._pre_rendered = render_text.render()
+
+        self.font = font
+        self.size = size
+        self.alignment = alignment
+        self.color = color
+        self.pre_rendered = [
+            RenderText.of(line, font, size, color).render()
+            for line in self.cut(text, max_width)
+        ]
+
+    @staticmethod
+    @lru_cache
+    def _calculate_width(font: FreeTypeFont, text: str):
+        w, _ = font.getsize(text)
+        return w
+
+    @classmethod
+    def _split_line(
+        cls,
+        font: FreeTypeFont,
+        text: str,
+        max_width: int,
+    ) -> Sequence[str]:
+        indices = list(range(len(text)))
+        bound = bisect.bisect_right(
+            indices,
+            max_width,
+            key=lambda k: cls._calculate_width(font, text[:k]),
+        )
+        if bound == 0:
+            raise ValueError("Text is too long to fit in the given width")
+        if bound == len(text):
+            return [text]
+        if text[bound] in cls.MARKS:
+            bound -= 1
+        return [text[:bound], *cls._split_line(font, text[bound:], max_width)]
+
+    def cut(self, text: str, max_width: Optional[int]) -> Sequence[str]:
+        lines = text.splitlines()
+        if max_width is None:
+            return lines
+        font = truetype(self.font, self.size)
+        res = list[str]()
+        for line in lines:
+            splitted = self._split_line(font, line, max_width)
+            res.extend(splitted)
+        return res
 
     @classmethod
     def of(
@@ -22,31 +78,28 @@ class Text(RenderObject):
         text: str,
         font: str,
         size: int = 12,
+        max_width: Optional[int] = None,
+        alignment: Alignment = Alignment.START,
         color: Optional[Color] = None,
-        background: Color = Palette.TRANSPARENT,
         **kwargs: Unpack[BaseStyle],
     ) -> Self:
-        render_text = RenderText.of(text, font, size, color, background)
-        return cls(render_text, **kwargs)
-
-    @classmethod
-    def from_text(
-        cls,
-        render_text: RenderText,
-        **kwargs: Unpack[BaseStyle],
-    ) -> Self:
-        return cls(render_text, **kwargs)
+        return cls(text, font, size, max_width, alignment, color, **kwargs)
 
     @property
     @override
     def content_width(self) -> int:
-        return self._pre_rendered.width
+        return max(rt.width for rt in self.pre_rendered)
 
     @property
     @override
     def content_height(self) -> int:
-        return self._pre_rendered.height
+        return sum(rt.height for rt in self.pre_rendered)
 
     @override
     def render_content(self) -> RenderImage:
-        return self._pre_rendered
+        return RenderImage.concat(
+            self.pre_rendered,
+            direction=Direction.VERTICAL,
+            alignment=self.alignment,
+            color=self.background,
+        )
