@@ -42,13 +42,12 @@ class RenderText:
     def render(self) -> RenderImage:
         font = ImageFont.truetype(self.font, self.size)
         width, height = font.getsize(self.text)
-        im = Image.new("RGBA", (width, height), self.background.as_tuple())
+        im = Image.new("RGBA", (width, height), self.background)
         draw = ImageDraw.Draw(im)
         draw.text(
             (0, 0),
             self.text,
-            self.color.as_tuple(),
+            self.color,
             font=font,
-            anchor="lt",
         )
         return RenderImage.from_raw(np.asarray(im))

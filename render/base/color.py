@@ -1,14 +1,13 @@
-from typing import Generator, Tuple
+from typing import Generator, Tuple, NamedTuple
 from typing_extensions import Self
 
 
-class Color:
+class Color(NamedTuple):
 
-    def __init__(self, r: int, g: int, b: int, a: int) -> None:
-        self.r = r
-        self.g = g
-        self.b = b
-        self.a = a
+    r: int
+    g: int
+    b: int
+    a: int
 
     @classmethod
     def from_color(cls, color: Self, opacity: float) -> Self:
@@ -19,9 +18,10 @@ class Color:
         return cls(r, g, b, a)
 
     @classmethod
-    def of_hex(cls, hex: str) -> Self:
+    def of_hex(cls, hex: str, opacity: float = 1.0) -> Self:
         hex = hex.lstrip("#")
-        return cls(*tuple(int(hex[i:i + 2], 16) for i in (0, 2, 4)))
+        r, g, b = (int(hex[i:i + 2], 16) for i in (0, 2, 4))
+        return cls(r, g, b, int(opacity * 255))
 
     def of_alpha(self, a: int) -> Self:
         return self.__class__(self.r, self.g, self.b, a)
@@ -31,9 +31,6 @@ class Color:
             return f"#{self.r:02x}{self.g:02x}{self.b:02x}"
         else:
             return f"#{self.r:02X}{self.g:02X}{self.b:02X}"
-
-    def as_tuple(self) -> Tuple[int, int, int, int]:
-        return self.r, self.g, self.b, self.a
 
     def to_rgb(self) -> Tuple[int, int, int]:
         return self.r, self.g, self.b

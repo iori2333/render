@@ -186,7 +186,7 @@ class RenderImage(RawImage[cv2.Mat]):
         color: Color = Palette.WHITE,
     ) -> Self:
         im = np.zeros((height, width, 4), dtype=np.uint8)
-        im[:] = color.as_tuple()
+        im[:] = color
         return cls(im)
 
     @classmethod
@@ -235,7 +235,7 @@ class RenderImage(RawImage[cv2.Mat]):
             self.base_im,
             (x, y),
             (x + width, y + height),
-            border.color.as_tuple(),
+            border.color,
             border.width * 2,
             lineType=cv2.LINE_AA,
         )
@@ -273,7 +273,7 @@ class RenderImage(RawImage[cv2.Mat]):
         height: int,
         color: Color = Palette.WHITE,
     ) -> Self:
-        self.base_im[y:y + height, x:x + width] = color.as_tuple()
+        self.base_im[y:y + height, x:x + width] = color
         return self
 
     @override
