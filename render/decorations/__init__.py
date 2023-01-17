@@ -1,4 +1,13 @@
-from .crop import RoundedCrop, RectCrop, Crop as BaseCrop
 from .blur import GaussianBlur
+from .contour import Contour, ContourType
+from .crop import Crop as BaseCrop
+from .crop import RectCrop, RoundedCrop
 
-__all__ = ["RoundedCrop", "RectCrop", "BaseCrop", "GaussianBlur"]
+__all__ = [
+    "BaseCrop",
+    "Contour",
+    "ContourType",
+    "GaussianBlur",
+    "RectCrop",
+    "RoundedCrop",
+]
