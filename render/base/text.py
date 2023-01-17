@@ -41,7 +41,11 @@ class RenderText:
 
     def render(self) -> RenderImage:
         font = ImageFont.truetype(self.font, self.size)
-        width, height = font.getsize(self.text)
+        width, _ = font.getsize(self.text)
+        ascent, descent = font.getmetrics()
+        # height always equals to max possible height of the font
+        # instead of actual height of the text for better alignment
+        height = ascent + descent  
         im = Image.new("RGBA", (width, height), self.background)
         draw = ImageDraw.Draw(im)
         draw.text(
