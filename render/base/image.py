@@ -141,22 +141,14 @@ class RenderImage:
 
     def cover(self, x: int, y: int, im: Self) -> Self:
         b, t, l, r = (y, y + im.height, x, x + im.width)
-        cover_rgb = im.base_im[:, :, :3]
-        self_rgb = self.base_im[b:t, l:r, :3]
-        cover_a = np.expand_dims(im.base_im[:, :, 3], 2)
-        self_a = np.expand_dims(self.base_im[b:t, l:r, 3], 2)
-
-        mask = (cover_a == 0).squeeze(-1)
-
-        new_rgb = cover_rgb
-        new_rgb[mask] = self_rgb[mask]
-
-        new_a = cover_a
-        new_a[mask] = self_a[mask]
-
-        self.base_im[b:t, l:r, :3] = np.around(new_rgb)
-        self.base_im[b:t, l:r, 3] = np.around(new_a).squeeze(2)
-
+        if b >= self.height or t < 0 or l >= self.width or r < 0:
+            return self
+        im_cropped = im.base_im[max(-b, 0):min(self.height - b, im.height),
+                                max(-l, 0):min(self.width - l, im.width)]
+        # only cover where the cover image is not transparent
+        mask = im_cropped[:, :, 3] != 0
+        self.base_im[max(b, 0):min(t, self.height),
+                     max(l, 0):min(r, self.width)][mask] = im_cropped[mask]
         return self
 
     def set_transparency(
