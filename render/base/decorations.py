@@ -17,6 +17,7 @@ class Decoration:
 
 
 class ForegroundDecoration(Decoration):
+    "Decorations that are applied on top of the content."
 
     def __init__(self, box_sizing: BoxSizing) -> None:
         super(ForegroundDecoration, self).__init__()
@@ -24,10 +25,22 @@ class ForegroundDecoration(Decoration):
 
     @abstractmethod
     def apply(self, obj: RenderImage) -> RenderImage:
-        raise NotImplementedError
+        """Apply foreground decoration
+
+        Foreground decoration is applied on the top of given image. Depending on the
+        box_sizing, the decoration is applied on the content layer or the full layer.
+
+        Args:
+            obj (RenderImage): image that the decoration is applied on
+
+        Returns:
+            RenderImage: rendered image
+        """
+        raise NotImplementedError()
 
 
 class BackgroundDecoration(Decoration):
+    "Decorations that are applied on the background."
 
     @abstractmethod
     def apply(
@@ -36,10 +49,26 @@ class BackgroundDecoration(Decoration):
         bg: RenderImage,
         context: "render.base.RenderObject",
     ) -> RenderImage:
-        raise NotImplementedError
+        """Apply background decoration
+
+        Background decoration is applied on the background layer of the rendering object.
+        The `apply` method is called after the content is rendered and before the background
+        is rendered. It changes the background layer of the rendering object using information
+        from the content layer and context object.
+
+        Args:
+            obj (RenderImage): rendered foreground layer of rendering object
+            bg (RenderImage): background layer in rendering
+            context (RenderObject): The rendering object
+
+        Returns:
+            RenderImage: rendered image of background layer
+        """
+        raise NotImplementedError()
 
 
 class Decorations:
+    "Collection of decorations."
 
     def __init__(self, decorations: Sequence[Decoration]) -> None:
         self._decorations = [

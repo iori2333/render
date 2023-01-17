@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from functools import lru_cache
 from typing import Iterable
 from typing_extensions import TypedDict
 
@@ -17,6 +18,33 @@ class BaseStyle(TypedDict, total=False):
 
 
 class RenderObject(ABC):
+    """
+    Base class of all renderable objects.
+
+    Box model:
+        margin -> border -> padding -> content
+        
+        +-------------------+
+        | margin            |
+        | +---------------+ |
+        | | border        | |
+        | | +-----------+ | |
+        | | | padding   | | |
+        | | | +-------+ | | |
+        | | | |       | | | |
+        | | | |content| | | |
+        | | | |       | | | |
+        | | | +-------+ | | |
+        | | +-----------+ | |
+        | +---------------+ |
+
+    Abstract Methods:
+        content_width: int - width of the object
+        content_height: int - height of the object
+        render_content(): RenderImage - render the object
+    
+    Content width and height must be determined before rendering.
+    """
 
     def __init__(
         self,
@@ -47,16 +75,29 @@ class RenderObject(ABC):
         raise NotImplementedError()
 
     @property
+    @lru_cache
     def width(self) -> int:
         width = self.content_width + self.padding.width + self.margin.width + self.border.width * 2
         return width
 
     @property
+    @lru_cache
     def height(self) -> int:
         height = self.content_height + self.padding.height + self.margin.height + self.border.width * 2
         return height
 
     def render(self) -> RenderImage:
+        """
+        Render an object to image.
+
+        Render process:
+        1. Render content (implemented by subclasses)
+        2. Apply content decorations
+        3. Draw border
+        4. Apply full decorations
+        5. Apply background decorations if needed
+        """
+
         im = RenderImage.empty(self.width, self.height, self.background)
         content = self.render_content()
         content = self.decorations.apply_content(content)
