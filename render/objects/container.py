@@ -50,8 +50,7 @@ class Container(RenderObject):
     @override
     def render_content(self) -> RenderImage:
         if not self.children:
-            raise ValueError(
-                f"{self.__class__.__name__} must have at least one child")
+            return RenderImage.empty(0, 0)
         rendered = map(lambda child: child.render(), self.children)
         concat = RenderImage.concat(rendered, self.direction, self.alignment,
                                     self.background)
@@ -68,6 +67,7 @@ class JustifyContent(Enum):
 
 
 class FixedContainer(Container):
+
     def __init__(
         self,
         width: int,
