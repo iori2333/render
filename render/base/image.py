@@ -61,11 +61,12 @@ class RawImage(ABC, Generic[T]):
         raise NotImplementedError()
 
     @abstractmethod
-    def set_transparent(self,
-        color_transparent_0: Color = Color.of(255, 255, 255),
-        color_transparent_100: Color = Color.of(0, 0, 0),
-        spill_compensation: bool = False
-        ) -> Self:
+    def set_transparency(
+        self,
+        start: Color = Palette.WHITE,
+        end: Color = Palette.BLACK,
+        spill_compensation: bool = False,
+    ) -> Self:
         raise NotImplementedError()
 
     @abstractmethod
@@ -254,36 +255,37 @@ class RenderImage(RawImage[cv2.Mat]):
         return self
 
     @override
-    def set_transparent(self,
-        color_transparent_0: Color = Color.of(255, 255, 255),
-        color_transparent_100: Color = Color.of(0, 0, 0),
+    def set_transparency(
+        self,
+        start: Color = Palette.WHITE,
+        end: Color = Palette.BLACK,
         spill_compensation: bool = False
-        ) -> Self:
+    ) -> Self:
         self_r = np.array(self.base_im[:, :, 0]).astype(np.int16)
         self_g = np.array(self.base_im[:, :, 1]).astype(np.int16)
         self_b = np.array(self.base_im[:, :, 2]).astype(np.int16)
         self_a = np.array(self.base_im[:, :, 3]).astype(np.int16)
-        transparent_diff = (color_transparent_100.r - color_transparent_0.r, \
-            color_transparent_100.g - color_transparent_0.g, \
-            color_transparent_100.b - color_transparent_0.b)
+        diff = (end.r - start.r, \
+            end.g - start.g, \
+            end.b - start.b)
 
-        transparent_r = np.zeros((self.height, self.width), dtype=np.int16) if transparent_diff[0] == 0 else np.array((self_r - color_transparent_0.r) / transparent_diff[0]).astype(np.int16)
-        transparent_g = np.zeros((self.height, self.width), dtype=np.int16) if transparent_diff[1] == 0 else np.array((self_g - color_transparent_0.g) / transparent_diff[1]).astype(np.int16)
-        transparent_b = np.zeros((self.height, self.width), dtype=np.int16) if transparent_diff[2] == 0 else np.array((self_b - color_transparent_0.b) / transparent_diff[2]).astype(np.int16)
+        transparency_r = np.zeros((self.height, self.width), dtype=np.int16) if diff[0] == 0 else np.array((self_r - start.r) / diff[0]).astype(np.int16)
+        transparency_g = np.zeros((self.height, self.width), dtype=np.int16) if diff[1] == 0 else np.array((self_g - start.g) / diff[1]).astype(np.int16)
+        transparency_b = np.zeros((self.height, self.width), dtype=np.int16) if diff[2] == 0 else np.array((self_b - start.b) / diff[2]).astype(np.int16)
         if not spill_compensation:
-            transparent_r = np.clip(np.array(transparent_r).astype(np.int16), 0, 1)
-            transparent_g = np.clip(np.array(transparent_g).astype(np.int16), 0, 1)
-            transparent_b = np.clip(np.array(transparent_b).astype(np.int16), 0, 1)
+            transparency_r = np.clip(np.array(transparency_r).astype(np.int16), 0, 1)
+            transparency_g = np.clip(np.array(transparency_g).astype(np.int16), 0, 1)
+            transparency_b = np.clip(np.array(transparency_b).astype(np.int16), 0, 1)
       
-        if (transparent_diff == (0, 0, 0)):
-            raise ValueError(f"Invalid colors: {color_transparent_0}, {color_transparent_100}")
-        transparent = (transparent_r + transparent_g + transparent_b) / \
-            ((0 if transparent_diff[0] == 0 else 1) + \
-            (0 if transparent_diff[1] == 0 else 1) + \
-            (0 if transparent_diff[2] == 0 else 1))
-        transparent = np.clip(np.array(transparent).astype(np.int16), 0, 1)
+        if (diff == (0, 0, 0)):
+            raise ValueError(f"Invalid colors: {start}, {end}")
+        transparency = (transparency_r + transparency_g + transparency_b) / \
+            ((0 if diff[0] == 0 else 1) + \
+            (0 if diff[1] == 0 else 1) + \
+            (0 if diff[2] == 0 else 1))
+        transparency = np.clip(np.array(transparency).astype(np.int16), 0, 1)
 
-        new_a = np.array(self_a - self_a * transparent).astype(np.uint8)
+        new_a = np.array(self_a - self_a * transparency).astype(np.uint8)
         mask = new_a == 0
         new_rgb = self.base_im[:, :, :3]
         new_rgb[mask] = (0, 0, 0)
