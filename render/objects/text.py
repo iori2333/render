@@ -1,12 +1,52 @@
 import bisect
 from functools import lru_cache
-from typing import Optional, Sequence
-from typing_extensions import override, Self, Unpack
+from typing import Callable, Generic, Optional, Sequence, TypeVar
+from typing_extensions import override, Self, Unpack, Protocol
 
 from PIL.ImageFont import FreeTypeFont, truetype
 
 from render.base import (RenderObject, RenderImage, RenderText, Color,
                          BaseStyle, Alignment, Direction)
+
+
+class Comparable(Protocol):
+    def __lt__(self, other: Self) -> bool:
+        ...
+
+    def __gt__(self, other: Self) -> bool:
+        ...
+
+    def __le__(self, other: Self) -> bool:
+        ...
+
+    def __ge__(self, other: Self) -> bool:
+        ...
+
+
+T = TypeVar('T')
+V = TypeVar('V', Comparable, int, float, str)
+
+
+class BisectKeyWrapper(Generic[T, V]):
+    """A wrapper class that allows to use a key function with bisect.
+    
+    Python 3.10 introduced the `key` parameter."""
+
+    def __init__(self, obj: V, key: Callable[[T], V]) -> None:
+        self.obj = obj
+        self.key = key
+
+    def __lt__(self, other: T) -> bool:
+        return self.obj < self.key(other)
+
+    def __gt__(self, other: T) -> bool:
+        return self.obj > self.key(other)
+
+    def __le__(self, other: T) -> bool:
+        return self.obj <= self.key(other)
+
+    def __ge__(self, other: T) -> bool:
+        return self.obj >= self.key(other)
 
 
 class Text(RenderObject):
@@ -50,9 +90,8 @@ class Text(RenderObject):
         indices = list(range(len(text)))
         bound = bisect.bisect_right(
             indices,
-            max_width,
-            key=lambda k: cls._calculate_width(font, text[:k]),
-        )
+            BisectKeyWrapper(
+                max_width, key=lambda k: cls._calculate_width(font, text[:k])))
         if bound == 0:
             raise ValueError("Text is too long to fit in the given width")
         if bound == len(text):
