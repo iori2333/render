@@ -34,7 +34,7 @@ class Stack(RenderObject):
             vertical_alignment = alignment
         if horizontal_alignment is None:
             horizontal_alignment = alignment
-        return cls(children, vertical_alignment, horizontal_alignment, paste
+        return cls(children, vertical_alignment, horizontal_alignment, paste,
                    **kwargs)
 
     @property
