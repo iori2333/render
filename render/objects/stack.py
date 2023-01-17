@@ -11,12 +11,14 @@ class Stack(RenderObject):
         children: Iterable[RenderObject],
         vertical_alignment: Alignment,
         horizontal_alignment: Alignment,
+        paste: bool = True,
         **kwargs: Unpack[BaseStyle],
     ) -> None:
         super(Stack, self).__init__(**kwargs)
         self.children = list(children)
         self.vertical_alignment = vertical_alignment
         self.horizontal_alignment = horizontal_alignment
+        self.paste = paste
 
     @classmethod
     def from_children(
@@ -25,13 +27,14 @@ class Stack(RenderObject):
         alignment: Alignment = Alignment.START,
         vertical_alignment: Optional[Alignment] = None,
         horizontal_alignment: Optional[Alignment] = None,
+        paste: bool = True,
         **kwargs: Unpack[BaseStyle],
     ) -> Self:
         if vertical_alignment is None:
             vertical_alignment = alignment
         if horizontal_alignment is None:
             horizontal_alignment = alignment
-        return cls(children, vertical_alignment, horizontal_alignment,
+        return cls(children, vertical_alignment, horizontal_alignment, paste
                    **kwargs)
 
     @property
@@ -45,7 +48,7 @@ class Stack(RenderObject):
         return max(child.height for child in self.children)
 
     @override
-    def render_content(self, paste: bool = True) -> RenderImage:
+    def render_content(self) -> RenderImage:
         rendered = map(lambda child: child.render(), self.children)
         im = RenderImage.empty(self.width, self.height, self.background)
         for child in rendered:
@@ -63,5 +66,5 @@ class Stack(RenderObject):
             else:
                 x = self.width - child.width
 
-            im = im.paste(x, y, child) if paste else im.cover(x, y, child)
+            im = im.paste(x, y, child) if self.paste else im.cover(x, y, child)
         return im
