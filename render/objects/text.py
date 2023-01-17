@@ -35,7 +35,7 @@ class Text(RenderObject):
         ]
 
     @staticmethod
-    @lru_cache
+    @lru_cache()
     def _calculate_width(font: FreeTypeFont, text: str):
         w, _ = font.getsize(text)
         return w

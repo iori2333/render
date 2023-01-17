@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Generic, Iterable, Sequence, TypeVar
 from typing_extensions import override, Self
+import sys
 
 import cv2
 import numpy as np
@@ -9,7 +10,10 @@ import PIL.Image as PILImage
 from .properties import Alignment, Border, Direction, Interpolation
 from .color import Color, Palette
 
-ImageMask = np.ndarray[int, np.dtype[np.uint8]]
+if sys.version_info >= (3, 9):
+    ImageMask = np.ndarray[int, np.dtype[np.uint8]]
+else:
+    ImageMask = np.ndarray
 T = TypeVar("T")
 
 
