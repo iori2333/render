@@ -1,6 +1,8 @@
 from enum import Enum
 from typing_extensions import Self
 
+import cv2
+
 from .color import Color, Palette
 
 
@@ -16,11 +18,11 @@ class Direction(Enum):
 
 
 class Interpolation(Enum):
-    NEAREST = 1
-    BILINEAR = 2
-    BICUBIC = 3
-    LANCZOS = 4
-    AREA = 5
+    NEAREST = cv2.INTER_NEAREST_EXACT
+    BILINEAR = cv2.INTER_LINEAR_EXACT
+    BICUBIC = cv2.INTER_CUBIC
+    LANCZOS = cv2.INTER_LANCZOS4
+    AREA = cv2.INTER_AREA
 
 
 class Border:

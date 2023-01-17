@@ -1,8 +1,16 @@
-from .image import Image
 from .container import Container, FixedContainer, JustifyContent
+from .image import Image
+from .relative import RelativeContainer
+from .stack import Stack
 from .text import Text
-from .stack import Stack, CoveredStack
 
 __all__ = [
-    "Image", "Container", "FixedContainer", "JustifyContent", "Text", "Stack", "CoveredStack"
+    "Container",
+    "CoveredStack",
+    "FixedContainer",
+    "Image",
+    "JustifyContent",
+    "RelativeContainer",
+    "Stack",
+    "Text",
 ]

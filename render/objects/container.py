@@ -35,18 +35,23 @@ class Container(RenderObject):
         if self.direction == Direction.HORIZONTAL:
             return sum(child.width for child in self.children)
         else:
-            return max(child.width for child in self.children)
+            return max(child.width
+                       for child in self.children) if self.children else 0
 
     @property
     @override
     def content_height(self) -> int:
         if self.direction == Direction.HORIZONTAL:
-            return max(child.height for child in self.children)
+            return max(child.height
+                       for child in self.children) if self.children else 0
         else:
             return sum(child.height for child in self.children)
 
     @override
     def render_content(self) -> RenderImage:
+        if not self.children:
+            raise ValueError(
+                f"{self.__class__.__name__} must have at least one child")
         rendered = map(lambda child: child.render(), self.children)
         concat = RenderImage.concat(rendered, self.direction, self.alignment,
                                     self.background)
@@ -63,7 +68,6 @@ class JustifyContent(Enum):
 
 
 class FixedContainer(Container):
-
     def __init__(
         self,
         width: int,
@@ -103,9 +107,11 @@ class FixedContainer(Container):
     ) -> Self:
         if direction == Direction.HORIZONTAL:
             min_width = sum(child.width for child in children)
-            min_height = max(child.height for child in children)
+            min_height = max(child.height
+                             for child in children) if children else 0
         else:
-            min_width = max(child.width for child in children)
+            min_width = max(child.width
+                            for child in children) if children else 0
             min_height = sum(child.height for child in children)
 
         if width < min_width or height < min_height:
@@ -151,7 +157,7 @@ class FixedContainer(Container):
         concat = RenderImage.empty(self.content_width, self.content_height,
                                    self.background)
 
-        offset, space = self._render_boundary()
+        space, offset = self._render_boundary()
         for child in rendered:
             if self.direction == Direction.HORIZONTAL:
                 if self.alignment == Alignment.START:

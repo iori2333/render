@@ -4,6 +4,7 @@ from typing_extensions import override, Self
 
 import cv2
 import numpy as np
+import PIL.Image as PILImage
 
 from .properties import Alignment, Border, Direction, Interpolation
 from .color import Color, Palette
@@ -14,10 +15,18 @@ T = TypeVar("T")
 
 class RawImage(ABC, Generic[T]):
 
-    def __init__(self, width: int, height: int, base_im: T) -> None:
-        self.width = width
-        self.height = height
+    def __init__(self, base_im: T) -> None:
         self.base_im = base_im
+
+    @property
+    @abstractmethod
+    def width(self) -> int:
+        raise NotImplementedError()
+
+    @property
+    @abstractmethod
+    def height(self) -> int:
+        raise NotImplementedError()
 
     @classmethod
     @abstractmethod
@@ -178,7 +187,7 @@ class RenderImage(RawImage[cv2.Mat]):
         else:
             raise ValueError(f"Invalid color mode: {channels}")
         im = cv2.cvtColor(im, cv2.COLOR_BGRA2RGBA)
-        return cls(width, height, im)
+        return cls(im)
 
     @classmethod
     @override
@@ -189,8 +198,8 @@ class RenderImage(RawImage[cv2.Mat]):
         color: Color = Palette.WHITE,
     ) -> Self:
         im = np.zeros((height, width, 4), dtype=np.uint8)
-        im[:] = color.as_tuple()
-        return cls(width, height, im)
+        im[:] = color
+        return cls(im)
 
     @classmethod
     @override
@@ -203,30 +212,24 @@ class RenderImage(RawImage[cv2.Mat]):
             pass
         else:
             raise ValueError(f"Invalid color mode: {channels}")
-        return cls(width, height, im)
+        return cls(im)
+
+    @property
+    @override
+    def width(self) -> int:
+        return self.base_im.shape[1]
+    
+    @property
+    @override
+    def height(self) -> int:
+        return self.base_im.shape[0]
 
     @override
     def paste(self, x: int, y: int, im: Self) -> Self:
-        b, t, l, r = (y, y + im.height, x, x + im.width)
-        paste_rgb = im.base_im[:, :, :3]
-        self_rgb = self.base_im[b:t, l:r, :3]
-        paste_a = np.expand_dims(im.base_im[:, :, 3], 2)
-        self_a = np.expand_dims(self.base_im[b:t, l:r, 3], 2)
-
-        mask = (self_a == 0).squeeze(-1)
-        alpha = paste_a / 255.0  # type: ignore
-        new_a = paste_a + self_a * (1 - alpha)
-        new_a[mask] = 1
-
-        coef = paste_a / new_a
-        new_rgb = paste_rgb * coef + self_rgb * (1 - coef)
-
-        new_rgb[mask] = paste_rgb[mask]
-        new_a[mask] = paste_a[mask]
-
-        self.base_im[b:t, l:r, :3] = np.around(new_rgb).astype(np.uint8)
-        self.base_im[b:t, l:r, 3] = np.around(new_a).astype(np.uint8).squeeze(2)
-
+        im_self = PILImage.fromarray(self.base_im)
+        im_paste = PILImage.fromarray(im.base_im)
+        im_self.alpha_composite(im_paste, (x, y))
+        self.base_im = np.array(im_self)
         return self
 
     @override
@@ -305,7 +308,7 @@ class RenderImage(RawImage[cv2.Mat]):
             self.base_im,
             (x, y),
             (x + width, y + height),
-            border.color.as_tuple(),
+            border.color,
             border.width * 2,
             lineType=cv2.LINE_AA,
         )
@@ -325,25 +328,13 @@ class RenderImage(RawImage[cv2.Mat]):
         elif height < 0:
             height = round(self.height * width / self.width)
 
-        if interpolation == Interpolation.NEAREST:
-            flag = cv2.INTER_NEAREST_EXACT
-        elif interpolation == Interpolation.BILINEAR:
-            flag = cv2.INTER_LINEAR_EXACT
-        elif interpolation == Interpolation.BICUBIC:
-            flag = cv2.INTER_CUBIC
-        elif interpolation == Interpolation.LANCZOS:
-            flag = cv2.INTER_LANCZOS4
-        elif interpolation == Interpolation.AREA:
-            flag = cv2.INTER_AREA
-        else:
-            raise NotImplementedError()
+        flag = interpolation.value
         self.base_im = cv2.resize(
             self.base_im,
             (width, height),
             interpolation=flag,
         )
-        self.width = width
-        self.height = height
+
         return self
 
     @override
@@ -355,7 +346,7 @@ class RenderImage(RawImage[cv2.Mat]):
         height: int,
         color: Color = Palette.WHITE,
     ) -> Self:
-        self.base_im[y:y + height, x:x + width] = color.as_tuple()
+        self.base_im[y:y + height, x:x + width] = color
         return self
 
     @override
