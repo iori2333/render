@@ -57,6 +57,19 @@ class RawImage(ABC, Generic[T]):
         raise NotImplementedError()
 
     @abstractmethod
+    def cover(self, x: int, y: int, im: Self) -> Self:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def set_transparency(
+        self,
+        start: Color = Palette.WHITE,
+        end: Color = Palette.BLACK,
+        spill_compensation: bool = False,
+    ) -> Self:
+        raise NotImplementedError()
+
+    @abstractmethod
     def draw_border(
         self,
         x: int,
@@ -218,6 +231,68 @@ class RenderImage(RawImage[cv2.Mat]):
         im_paste = PILImage.fromarray(im.base_im)
         im_self.alpha_composite(im_paste, (x, y))
         self.base_im = np.array(im_self)
+        return self
+
+    @override
+    def cover(self, x: int, y: int, im: Self) -> Self:
+        b, t, l, r = (y, y + im.height, x, x + im.width)
+        cover_rgb = im.base_im[:, :, :3]
+        self_rgb = self.base_im[b:t, l:r, :3]
+        cover_a = np.expand_dims(im.base_im[:, :, 3], 2)
+        self_a = np.expand_dims(self.base_im[b:t, l:r, 3], 2)
+
+        mask = (cover_a == 0).squeeze(-1)
+
+        new_rgb = cover_rgb
+        new_rgb[mask] = self_rgb[mask]
+
+        new_a = cover_a
+        new_a[mask] = self_a[mask]
+
+        self.base_im[b:t, l:r, :3] = np.around(new_rgb).astype(np.uint8)
+        self.base_im[b:t, l:r, 3] = np.around(new_a).astype(np.uint8).squeeze(2)
+
+        return self
+
+    @override
+    def set_transparency(
+        self,
+        start: Color = Palette.WHITE,
+        end: Color = Palette.BLACK,
+        spill_compensation: bool = False
+    ) -> Self:
+        self_r = np.array(self.base_im[:, :, 0]).astype(np.int16)
+        self_g = np.array(self.base_im[:, :, 1]).astype(np.int16)
+        self_b = np.array(self.base_im[:, :, 2]).astype(np.int16)
+        self_a = np.array(self.base_im[:, :, 3]).astype(np.int16)
+        diff = (end.r - start.r, \
+            end.g - start.g, \
+            end.b - start.b)
+
+        transparency_r = np.zeros((self.height, self.width), dtype=np.int16) if diff[0] == 0 else np.array((self_r - start.r) / diff[0]).astype(np.int16)
+        transparency_g = np.zeros((self.height, self.width), dtype=np.int16) if diff[1] == 0 else np.array((self_g - start.g) / diff[1]).astype(np.int16)
+        transparency_b = np.zeros((self.height, self.width), dtype=np.int16) if diff[2] == 0 else np.array((self_b - start.b) / diff[2]).astype(np.int16)
+        if not spill_compensation:
+            transparency_r = np.clip(np.array(transparency_r).astype(np.int16), 0, 1)
+            transparency_g = np.clip(np.array(transparency_g).astype(np.int16), 0, 1)
+            transparency_b = np.clip(np.array(transparency_b).astype(np.int16), 0, 1)
+      
+        if (diff == (0, 0, 0)):
+            raise ValueError(f"Invalid colors: {start}, {end}")
+        transparency = (transparency_r + transparency_g + transparency_b) / \
+            ((0 if diff[0] == 0 else 1) + \
+            (0 if diff[1] == 0 else 1) + \
+            (0 if diff[2] == 0 else 1))
+        transparency = np.clip(np.array(transparency).astype(np.int16), 0, 1)
+
+        new_a = np.array(self_a - self_a * transparency).astype(np.uint8)
+        mask = new_a == 0
+        new_rgb = self.base_im[:, :, :3]
+        new_rgb[mask] = (0, 0, 0)
+
+        self.base_im[:, :, :3] = np.around(new_rgb).astype(np.uint8)
+        self.base_im[:, :, 3] = np.around(new_a).astype(np.uint8)
+
         return self
 
     @override
