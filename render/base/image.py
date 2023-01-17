@@ -48,6 +48,10 @@ class RawImage(ABC, Generic[T]):
         raise NotImplementedError()
 
     @abstractmethod
+    def cover(self, x: int, y: int, im: Self) -> Self:
+        raise NotImplementedError()
+
+    @abstractmethod
     def draw_border(
         self,
         x: int,
@@ -211,6 +215,27 @@ class RenderImage(RawImage[cv2.Mat]):
 
         new_rgb[mask] = paste_rgb[mask]
         new_a[mask] = paste_a[mask]
+
+        self.base_im[b:t, l:r, :3] = np.around(new_rgb).astype(np.uint8)
+        self.base_im[b:t, l:r, 3] = np.around(new_a).astype(np.uint8).squeeze(2)
+
+        return self
+
+    @override
+    def cover(self, x: int, y: int, im: Self) -> Self:
+        b, t, l, r = (y, y + im.height, x, x + im.width)
+        cover_rgb = im.base_im[:, :, :3]
+        self_rgb = self.base_im[b:t, l:r, :3]
+        cover_a = np.expand_dims(im.base_im[:, :, 3], 2)
+        self_a = np.expand_dims(self.base_im[b:t, l:r, 3], 2)
+
+        mask = (cover_a == 0).squeeze(-1)
+
+        new_rgb = cover_rgb
+        new_rgb[mask] = self_rgb[mask]
+
+        new_a = cover_a
+        new_a[mask] = self_a[mask]
 
         self.base_im[b:t, l:r, :3] = np.around(new_rgb).astype(np.uint8)
         self.base_im[b:t, l:r, 3] = np.around(new_a).astype(np.uint8).squeeze(2)

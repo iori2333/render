@@ -65,3 +65,27 @@ class Stack(RenderObject):
 
             im = im.paste(x, y, child)
         return im
+
+class CoveredStack(Stack):
+
+    @override
+    def render_content(self) -> RenderImage:
+        rendered = map(lambda child: child.render(), self.children)
+        im = RenderImage.empty(self.width, self.height, self.background)
+        for child in rendered:
+            if self.vertical_alignment == Alignment.START:
+                y = 0
+            elif self.vertical_alignment == Alignment.CENTER:
+                y = (self.height - child.height) // 2
+            else:
+                y = self.height - child.height
+
+            if self.horizontal_alignment == Alignment.START:
+                x = 0
+            elif self.horizontal_alignment == Alignment.CENTER:
+                x = (self.width - child.width) // 2
+            else:
+                x = self.width - child.width
+
+            im = im.cover(x, y, child)
+        return im
