@@ -157,7 +157,7 @@ class FixedContainer(Container):
         concat = RenderImage.empty(self.content_width, self.content_height,
                                    self.background)
 
-        offset, space = self._render_boundary()
+        space, offset = self._render_boundary()
         for child in rendered:
             if self.direction == Direction.HORIZONTAL:
                 if self.alignment == Alignment.START:
