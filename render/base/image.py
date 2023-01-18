@@ -72,12 +72,13 @@ class RenderImage:
         direction: Direction,
         alignment: Alignment,
         color: Color = Palette.WHITE,
+        spacing: int = 0,
     ) -> Self:
         images = list(images)
         if direction == Direction.HORIZONTAL:
-            return cls.concat_horizontal(images, alignment, color)
+            return cls.concat_horizontal(images, alignment, color, spacing)
         else:
-            return cls.concat_vertical(images, alignment, color)
+            return cls.concat_vertical(images, alignment, color, spacing)
 
     @classmethod
     def concat_horizontal(
@@ -85,8 +86,10 @@ class RenderImage:
         images: Sequence[Self],
         alignment: Alignment,
         color: Color = Palette.WHITE,
+        spacing: int = 0,
     ) -> Self:
         width = sum(im.width for im in images)
+        width += max(0, len(images) - 1) * spacing
         height = max(im.height for im in images)
         im = cls.empty(width, height, color)
         x = 0
@@ -98,7 +101,7 @@ class RenderImage:
             else:
                 y = 0
             im.paste(x, y, child)
-            x += child.width
+            x += child.width + spacing
         return im
 
     @classmethod
@@ -107,9 +110,11 @@ class RenderImage:
         images: Sequence[Self],
         alignment: Alignment,
         color: Color = Palette.WHITE,
+        spacing: int = 0,
     ) -> Self:
         width = max(im.width for im in images)
         height = sum(im.height for im in images)
+        height += max(0, len(images) - 1) * spacing
         im = cls.empty(width, height, color)
         y = 0
         for child in images:
@@ -120,7 +125,7 @@ class RenderImage:
             else:
                 x = 0
             im.paste(x, y, child)
-            y += child.height
+            y += child.height + spacing
         return im
 
     @property

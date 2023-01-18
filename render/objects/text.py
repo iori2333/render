@@ -24,6 +24,7 @@ class Text(RenderObject):
         max_width: Optional[int],
         alignment: Alignment,
         color: Optional[Color],
+        spacing: int = 0,
         **kwargs: Unpack[BaseStyle],
     ) -> None:
         super(Text, self).__init__(**kwargs)
@@ -32,6 +33,7 @@ class Text(RenderObject):
         self.size = size
         self.alignment = alignment
         self.color = color
+        self.spacing = spacing
         self.pre_rendered = [
             RenderText.of(line, font, size, color).render()
             for line in self.cut(text, max_width)
@@ -62,9 +64,11 @@ class Text(RenderObject):
             raise ValueError("Text is too long to fit in the given width")
         if bound == len(text):
             return [text]
+
         original_bound = bound
+        # try to cut at a word boundary
         if text[bound] in string.ascii_letters:
-            # find the prev and next non-letter
+            # search for the word boundary
             prev = next = bound
             while prev >= 0 and text[prev] in string.ascii_letters:
                 prev -= 1
@@ -84,19 +88,21 @@ class Text(RenderObject):
                         text[:prev] + first,
                         *cls._split_line(font, second + text[next:], max_width)
                     ]
-        # if text[bound] in cls.MARKS and bound > 1:
-        #     bound -= 1
+
+        # try not to leave a mark at the beginning of the next line
         if text[bound] in cls.MARKS:
             if cls._calculate_width(font, text[:bound + 1]) <= max_width:
                 bound += 1
             else:
                 prev = bound - 1
+                # word followed by the mark should go with it to the next line
                 while prev >= 0 and text[prev] in string.ascii_letters:
                     prev -= 1
                 prev += 1
                 bound = prev
+        # failed somewhere, give up
         if bound == 0:
-            bound = original_bound  # force cut
+            bound = original_bound
         return [
             text[:bound].rstrip(" "),
             *cls._split_line(font, text[bound:].lstrip(" "), max_width)
@@ -139,9 +145,11 @@ class Text(RenderObject):
         max_width: Optional[int] = None,
         alignment: Alignment = Alignment.START,
         color: Optional[Color] = None,
+        spacing: int = 0,
         **kwargs: Unpack[BaseStyle],
     ) -> Self:
-        return cls(text, font, size, max_width, alignment, color, **kwargs)
+        return cls(text, font, size, max_width, alignment, color, spacing,
+                   **kwargs)
 
     @property
     @override
@@ -151,7 +159,8 @@ class Text(RenderObject):
     @property
     @override
     def content_height(self) -> int:
-        return sum(rt.height for rt in self.pre_rendered)
+        sp = max(0, len(self.pre_rendered) - 1) * self.spacing
+        return sum(rt.height for rt in self.pre_rendered) + sp
 
     @override
     def render_content(self) -> RenderImage:
@@ -160,4 +169,5 @@ class Text(RenderObject):
             direction=Direction.VERTICAL,
             alignment=self.alignment,
             color=self.background,
+            spacing=self.spacing,
         )
