@@ -52,6 +52,8 @@ class Text(RenderObject):
         text: str,
         max_width: int,
     ) -> Sequence[str]:
+        if len(text) == 0:
+            return []
         indices = list(range(len(text)))
         bound = find_rightmost(
             indices,
