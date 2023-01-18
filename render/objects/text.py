@@ -24,7 +24,8 @@ class Text(RenderObject):
         max_width: Optional[int],
         alignment: Alignment,
         color: Optional[Color],
-        spacing: int = 0,
+        spacing: int,
+        hyphenation: bool,
         **kwargs: Unpack[BaseStyle],
     ) -> None:
         super(Text, self).__init__(**kwargs)
@@ -34,6 +35,7 @@ class Text(RenderObject):
         self.alignment = alignment
         self.color = color
         self.spacing = spacing
+        self.hyphenation = hyphenation
         self.pre_rendered = [
             RenderText.of(line, font, size, color).render()
             for line in self.cut(text, max_width)
@@ -51,6 +53,7 @@ class Text(RenderObject):
         font: FreeTypeFont,
         text: str,
         max_width: int,
+        hyphenation: bool,
     ) -> Sequence[str]:
         if len(text) == 0:
             return []
@@ -79,17 +82,22 @@ class Text(RenderObject):
             prev += 1
             word = text[prev:next]
             if len(word) > 1:
-                first, second = cls._split_word(
-                    font, word,
-                    max_width - cls._calculate_width(font, text[:prev]))
-                if not first:
-                    # no possible cut, put the whole word in the next line
+                if not hyphenation:
+                    # simply put the whole word in the next line
                     bound = prev
                 else:
-                    return [
-                        text[:prev] + first,
-                        *cls._split_line(font, second + text[next:], max_width)
-                    ]
+                    first, second = cls._split_word(
+                        font, word,
+                        max_width - cls._calculate_width(font, text[:prev]))
+                    if not first:
+                        # no possible cut, put the whole word in the next line
+                        bound = prev
+                    else:
+                        return [
+                            text[:prev] + first,
+                            *cls._split_line(font, second + text[next:],
+                                             max_width, hyphenation)
+                        ]
 
         # try not to leave a mark at the beginning of the next line
         if text[bound] in cls.MARKS:
@@ -106,8 +114,8 @@ class Text(RenderObject):
         if bound == 0:
             bound = original_bound
         return [
-            text[:bound].rstrip(" "),
-            *cls._split_line(font, text[bound:].lstrip(" "), max_width)
+            text[:bound].rstrip(" "), *cls._split_line(
+                font, text[bound:].lstrip(" "), max_width, hyphenation)
         ]
 
     @classmethod
@@ -134,7 +142,8 @@ class Text(RenderObject):
         font = truetype(self.font, self.size)
         res = list[str]()
         for line in lines:
-            splitted = self._split_line(font, line, max_width)
+            splitted = self._split_line(font, line, max_width,
+                                        self.hyphenation)
             res.extend(splitted)
         return res
 
@@ -148,10 +157,11 @@ class Text(RenderObject):
         alignment: Alignment = Alignment.START,
         color: Optional[Color] = None,
         spacing: int = 0,
+        hyphenation: bool = True,
         **kwargs: Unpack[BaseStyle],
     ) -> Self:
         return cls(text, font, size, max_width, alignment, color, spacing,
-                   **kwargs)
+                   hyphenation, **kwargs)
 
     @property
     @override
