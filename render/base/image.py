@@ -1,20 +1,13 @@
-from typing import Iterable, Sequence, TypeVar
+from typing import Iterable, Sequence
 from typing_extensions import Self
-import sys
 
 import cv2
 import numpy as np
 import PIL.Image as PILImage
 
-from .properties import Alignment, Border, Direction, Interpolation
+from render.utils import ImageMask, PathLike
 from .color import Color, Palette
-
-if sys.version_info >= (3, 9):
-    ImageMask = np.ndarray[int, np.dtype[np.uint8]]
-else:
-    ImageMask = np.ndarray
-
-T = TypeVar("T")
+from .properties import Alignment, Border, Direction, Interpolation
 
 
 class RenderImage:
@@ -23,10 +16,10 @@ class RenderImage:
         self.base_im = base_im
 
     @classmethod
-    def from_file(cls, path: str) -> Self:
-        im = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+    def from_file(cls, path: PathLike) -> Self:
+        im = cv2.imread(str(path), cv2.IMREAD_UNCHANGED)
         if im is None:
-            raise ValueError(f"Invalid image path: {path}")
+            raise IOError(f"Invalid image path: {path}")
         height, width, channels = im.shape
         if channels == 3:
             alpha = np.full((height, width, 1), 255, dtype=np.uint8)
@@ -269,9 +262,10 @@ class RenderImage:
         self.base_im[indices, 3] = self.base_im[indices, 3] * coef
         return self
 
-    def save(self, path: str) -> None:
+    def save(self, path: PathLike) -> None:
         save_im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2BGRA)
-        cv2.imwrite(path, save_im)
+        if not cv2.imwrite(str(path), save_im):
+            raise IOError(f"Failed to save image to {path}")
 
     def show(self) -> None:
         show_im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2BGR)

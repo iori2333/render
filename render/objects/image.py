@@ -2,6 +2,7 @@ from typing import Union, Optional, Tuple
 from typing_extensions import override, Self, Unpack
 
 from render.base import RenderObject, RenderImage, BaseStyle
+from render.utils import PathLike
 
 
 class Image(RenderObject):
@@ -13,7 +14,7 @@ class Image(RenderObject):
     @classmethod
     def from_file(
         cls,
-        path: str,
+        path: PathLike,
         resize: Optional[Union[float, Tuple[int, int]]] = None,
         **kwargs: Unpack[BaseStyle],
     ) -> Self:

@@ -4,6 +4,7 @@ from typing_extensions import Self
 import numpy as np
 from PIL import ImageFont, ImageDraw, Image
 
+from render.utils import PathLike
 from .color import Color, Palette
 from .image import RenderImage
 
@@ -13,7 +14,7 @@ class RenderText:
     def __init__(
         self,
         text: str,
-        font: str,
+        font: PathLike,
         size: int,
         color: Color = Palette.BLACK,
         background: Color = Palette.TRANSPARENT,
@@ -28,7 +29,7 @@ class RenderText:
     def of(
         cls,
         text: str,
-        font: str,
+        font: PathLike,
         size: int = 12,
         color: Optional[Color] = None,
         background: Color = Palette.TRANSPARENT,
@@ -40,7 +41,7 @@ class RenderText:
         return cls(text, font, size, color, background)
 
     def render(self) -> RenderImage:
-        font = ImageFont.truetype(self.font, self.size)
+        font = ImageFont.truetype(str(self.font), self.size)
         width, _ = font.getsize(self.text)
         ascent, descent = font.getmetrics()
         # height always equals to max possible height of the font

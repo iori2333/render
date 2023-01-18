@@ -8,7 +8,7 @@ from PIL.ImageFont import FreeTypeFont, truetype
 
 from render.base import (RenderObject, RenderImage, RenderText, Color,
                          BaseStyle, Alignment, Direction)
-from render.utils import find_rightmost
+from render.utils import find_rightmost, PathLike
 
 
 class Text(RenderObject):
@@ -19,7 +19,7 @@ class Text(RenderObject):
     def __init__(
         self,
         text: str,
-        font: str,
+        font: PathLike,
         size: int,
         max_width: Optional[int],
         alignment: Alignment,
@@ -139,7 +139,7 @@ class Text(RenderObject):
         lines = text.splitlines()
         if max_width is None:
             return lines
-        font = truetype(self.font, self.size)
+        font = truetype(str(self.font), self.size)
         res = list[str]()
         for line in lines:
             splitted = self._split_line(font, line, max_width,
@@ -151,7 +151,7 @@ class Text(RenderObject):
     def of(
         cls,
         text: str,
-        font: str,
+        font: PathLike,
         size: int = 12,
         max_width: Optional[int] = None,
         alignment: Alignment = Alignment.START,

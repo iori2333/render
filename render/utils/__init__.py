@@ -7,7 +7,11 @@ if sys.version_info >= (3, 10):
 else:
     from .bisect import find_leftmost, find_rightmost
 
+from .typing import *
+
 __all__ = [
     "find_leftmost",
     "find_rightmost",
+    "ImageMask",
+    "PathLike",
 ]
