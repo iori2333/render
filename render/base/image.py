@@ -261,21 +261,21 @@ class RenderImage(RawImage[cv2.Mat]):
         end: Color = Palette.BLACK,
         spill_compensation: bool = False
     ) -> Self:
-        self_r = np.array(self.base_im[:, :, 0]).astype(np.int16)
-        self_g = np.array(self.base_im[:, :, 1]).astype(np.int16)
-        self_b = np.array(self.base_im[:, :, 2]).astype(np.int16)
-        self_a = np.array(self.base_im[:, :, 3]).astype(np.int16)
+        self_r = (self.base_im[:, :, 0]).astype(np.int16)
+        self_g = (self.base_im[:, :, 1]).astype(np.int16)
+        self_b = (self.base_im[:, :, 2]).astype(np.int16)
+        self_a = (self.base_im[:, :, 3]).astype(np.int16)
         diff = (end.r - start.r, \
             end.g - start.g, \
             end.b - start.b)
 
-        transparency_r = np.zeros((self.height, self.width), dtype=np.int16) if diff[0] == 0 else np.array((self_r - start.r) / diff[0]).astype(np.int16)
-        transparency_g = np.zeros((self.height, self.width), dtype=np.int16) if diff[1] == 0 else np.array((self_g - start.g) / diff[1]).astype(np.int16)
-        transparency_b = np.zeros((self.height, self.width), dtype=np.int16) if diff[2] == 0 else np.array((self_b - start.b) / diff[2]).astype(np.int16)
+        transparency_r = np.zeros((self.height, self.width), dtype=np.float32) if diff[0] == 0 else ((self_r - start.r) / diff[0]).astype(np.float32)
+        transparency_g = np.zeros((self.height, self.width), dtype=np.float32) if diff[1] == 0 else ((self_g - start.g) / diff[1]).astype(np.float32)
+        transparency_b = np.zeros((self.height, self.width), dtype=np.float32) if diff[2] == 0 else ((self_b - start.b) / diff[2]).astype(np.float32)
         if not spill_compensation:
-            transparency_r = np.clip(np.array(transparency_r).astype(np.int16), 0, 1)
-            transparency_g = np.clip(np.array(transparency_g).astype(np.int16), 0, 1)
-            transparency_b = np.clip(np.array(transparency_b).astype(np.int16), 0, 1)
+            transparency_r = np.clip(transparency_r.astype(np.float32), 0, 1)
+            transparency_g = np.clip(transparency_g.astype(np.float32), 0, 1)
+            transparency_b = np.clip(transparency_b.astype(np.float32), 0, 1)
       
         if (diff == (0, 0, 0)):
             raise ValueError(f"Invalid colors: {start}, {end}")
@@ -283,9 +283,9 @@ class RenderImage(RawImage[cv2.Mat]):
             ((0 if diff[0] == 0 else 1) + \
             (0 if diff[1] == 0 else 1) + \
             (0 if diff[2] == 0 else 1))
-        transparency = np.clip(np.array(transparency).astype(np.int16), 0, 1)
+        transparency = np.clip(transparency.astype(np.float32), 0, 1)
 
-        new_a = np.array(self_a - self_a * transparency).astype(np.uint8)
+        new_a = (self_a - self_a * transparency).astype(np.uint8)
         mask = new_a == 0
         new_rgb = self.base_im[:, :, :3]
         new_rgb[mask] = (0, 0, 0)
