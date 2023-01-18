@@ -1,6 +1,6 @@
-from abc import ABC, abstractmethod
-from typing import Generic, Iterable, Sequence, TypeVar
-from typing_extensions import override, Self
+from typing import Iterable, Sequence, TypeVar
+from typing_extensions import Self
+import sys
 
 import cv2
 import numpy as np
@@ -9,172 +9,20 @@ import PIL.Image as PILImage
 from .properties import Alignment, Border, Direction, Interpolation
 from .color import Color, Palette
 
-ImageMask = np.ndarray[int, np.dtype[np.uint8]]
+if sys.version_info >= (3, 9):
+    ImageMask = np.ndarray[int, np.dtype[np.uint8]]
+else:
+    ImageMask = np.ndarray
+
 T = TypeVar("T")
 
 
-class RawImage(ABC, Generic[T]):
+class RenderImage:
 
-    def __init__(self, base_im: T) -> None:
+    def __init__(self, base_im: cv2.Mat) -> None:
         self.base_im = base_im
 
-    @property
-    @abstractmethod
-    def width(self) -> int:
-        raise NotImplementedError()
-
-    @property
-    @abstractmethod
-    def height(self) -> int:
-        raise NotImplementedError()
-
     @classmethod
-    @abstractmethod
-    def from_file(cls, path: str) -> Self:
-        raise NotImplementedError()
-
-    @classmethod
-    @abstractmethod
-    def empty(
-        cls,
-        width: int,
-        height: int,
-        color: Color = Palette.WHITE,
-    ) -> Self:
-        raise NotImplementedError()
-
-    @classmethod
-    def empty_like(cls, im: Self, color: Color = Palette.WHITE) -> Self:
-        return cls.empty(im.width, im.height, color)
-
-    @classmethod
-    @abstractmethod
-    def from_raw(cls, im: T) -> Self:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def paste(self, x: int, y: int, im: Self) -> Self:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def cover(self, x: int, y: int, im: Self) -> Self:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def set_transparency(
-        self,
-        start: Color = Palette.WHITE,
-        end: Color = Palette.BLACK,
-        spill_compensation: bool = False,
-    ) -> Self:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def draw_border(
-        self,
-        x: int,
-        y: int,
-        width: int,
-        height: int,
-        border: Border,
-    ) -> Self:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def resize(
-        self,
-        width: int = -1,
-        height: int = -1,
-        interpolation: Interpolation = Interpolation.BILINEAR,
-    ) -> Self:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def fill(
-        self,
-        x: int,
-        y: int,
-        width: int,
-        height: int,
-        color: Color,
-    ) -> Self:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def mask(self, mask: ImageMask) -> Self:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def save(self, path: str) -> None:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def show(self) -> None:
-        raise NotImplementedError()
-
-    @classmethod
-    def concat(
-        cls,
-        images: Iterable[Self],
-        direction: Direction,
-        alignment: Alignment,
-        color: Color = Palette.WHITE,
-    ) -> Self:
-        images = list(images)
-        if direction == Direction.HORIZONTAL:
-            return cls.concat_horizontal(images, alignment, color)
-        else:
-            return cls.concat_vertical(images, alignment, color)
-
-    @classmethod
-    def concat_horizontal(
-        cls,
-        images: Sequence[Self],
-        alignment: Alignment,
-        color: Color = Palette.WHITE,
-    ) -> Self:
-        width = sum(im.width for im in images)
-        height = max(im.height for im in images)
-        im = cls.empty(width, height, color)
-        x = 0
-        for child in images:
-            if alignment == Alignment.CENTER:
-                y = (height - child.height) // 2
-            elif alignment == Alignment.END:
-                y = height - child.height
-            else:
-                y = 0
-            im.paste(x, y, child)
-            x += child.width
-        return im
-
-    @classmethod
-    def concat_vertical(
-        cls,
-        images: Sequence[Self],
-        alignment: Alignment,
-        color: Color = Palette.WHITE,
-    ) -> Self:
-        width = max(im.width for im in images)
-        height = sum(im.height for im in images)
-        im = cls.empty(width, height, color)
-        y = 0
-        for child in images:
-            if alignment == Alignment.CENTER:
-                x = (width - child.width) // 2
-            elif alignment == Alignment.END:
-                x = width - child.width
-            else:
-                x = 0
-            im.paste(x, y, child)
-            y += child.height
-        return im
-
-
-class RenderImage(RawImage[cv2.Mat]):
-
-    @classmethod
-    @override
     def from_file(cls, path: str) -> Self:
         im = cv2.imread(path, cv2.IMREAD_UNCHANGED)
         if im is None:
@@ -191,7 +39,6 @@ class RenderImage(RawImage[cv2.Mat]):
         return cls(im)
 
     @classmethod
-    @override
     def empty(
         cls,
         width: int,
@@ -203,7 +50,10 @@ class RenderImage(RawImage[cv2.Mat]):
         return cls(im)
 
     @classmethod
-    @override
+    def empty_like(cls, im: Self, color: Color = Palette.WHITE) -> Self:
+        return cls.empty(im.width, im.height, color)
+
+    @classmethod
     def from_raw(cls, im: cv2.Mat) -> Self:
         height, width, channels = im.shape
         if channels == 3:
@@ -215,17 +65,77 @@ class RenderImage(RawImage[cv2.Mat]):
             raise ValueError(f"Invalid color mode: {channels}")
         return cls(im)
 
+    @classmethod
+    def concat(
+        cls,
+        images: Iterable[Self],
+        direction: Direction,
+        alignment: Alignment,
+        color: Color = Palette.WHITE,
+        spacing: int = 0,
+    ) -> Self:
+        images = list(images)
+        if direction == Direction.HORIZONTAL:
+            return cls.concat_horizontal(images, alignment, color, spacing)
+        else:
+            return cls.concat_vertical(images, alignment, color, spacing)
+
+    @classmethod
+    def concat_horizontal(
+        cls,
+        images: Sequence[Self],
+        alignment: Alignment,
+        color: Color = Palette.WHITE,
+        spacing: int = 0,
+    ) -> Self:
+        width = sum(im.width for im in images)
+        width += max(0, len(images) - 1) * spacing
+        height = max(im.height for im in images)
+        im = cls.empty(width, height, color)
+        x = 0
+        for child in images:
+            if alignment == Alignment.CENTER:
+                y = (height - child.height) // 2
+            elif alignment == Alignment.END:
+                y = height - child.height
+            else:
+                y = 0
+            im.paste(x, y, child)
+            x += child.width + spacing
+        return im
+
+    @classmethod
+    def concat_vertical(
+        cls,
+        images: Sequence[Self],
+        alignment: Alignment,
+        color: Color = Palette.WHITE,
+        spacing: int = 0,
+    ) -> Self:
+        width = max(im.width for im in images)
+        height = sum(im.height for im in images)
+        height += max(0, len(images) - 1) * spacing
+        im = cls.empty(width, height, color)
+        y = 0
+        for child in images:
+            if alignment == Alignment.CENTER:
+                x = (width - child.width) // 2
+            elif alignment == Alignment.END:
+                x = width - child.width
+            else:
+                x = 0
+            im.paste(x, y, child)
+            y += child.height + spacing
+        return im
+
     @property
-    @override
     def width(self) -> int:
         return self.base_im.shape[1]
-    
+
     @property
-    @override
     def height(self) -> int:
         return self.base_im.shape[0]
 
-    @override
     def paste(self, x: int, y: int, im: Self) -> Self:
         im_self = PILImage.fromarray(self.base_im)
         im_paste = PILImage.fromarray(im.base_im)
@@ -233,33 +143,23 @@ class RenderImage(RawImage[cv2.Mat]):
         self.base_im = np.array(im_self)
         return self
 
-    @override
     def cover(self, x: int, y: int, im: Self) -> Self:
         b, t, l, r = (y, y + im.height, x, x + im.width)
-        cover_rgb = im.base_im[:, :, :3]
-        self_rgb = self.base_im[b:t, l:r, :3]
-        cover_a = np.expand_dims(im.base_im[:, :, 3], 2)
-        self_a = np.expand_dims(self.base_im[b:t, l:r, 3], 2)
-
-        mask = (cover_a == 0).squeeze(-1)
-
-        new_rgb = cover_rgb
-        new_rgb[mask] = self_rgb[mask]
-
-        new_a = cover_a
-        new_a[mask] = self_a[mask]
-
-        self.base_im[b:t, l:r, :3] = np.around(new_rgb).astype(np.uint8)
-        self.base_im[b:t, l:r, 3] = np.around(new_a).astype(np.uint8).squeeze(2)
-
+        if b >= self.height or t < 0 or l >= self.width or r < 0:
+            return self
+        im_cropped = im.base_im[max(-b, 0):min(self.height - b, im.height),
+                                max(-l, 0):min(self.width - l, im.width)]
+        # only cover where the cover image is not transparent
+        mask = im_cropped[:, :, 3] != 0
+        self.base_im[max(b, 0):min(t, self.height),
+                     max(l, 0):min(r, self.width)][mask] = im_cropped[mask]
         return self
 
-    @override
     def set_transparency(
         self,
         start: Color = Palette.WHITE,
         end: Color = Palette.BLACK,
-        spill_compensation: bool = False
+        spill_compensation: bool = False,
     ) -> Self:
         self_r = (self.base_im[:, :, 0]).astype(np.int16)
         self_g = (self.base_im[:, :, 1]).astype(np.int16)
@@ -290,12 +190,11 @@ class RenderImage(RawImage[cv2.Mat]):
         new_rgb = self.base_im[:, :, :3]
         new_rgb[mask] = (0, 0, 0)
 
-        self.base_im[:, :, :3] = np.around(new_rgb).astype(np.uint8)
-        self.base_im[:, :, 3] = np.around(new_a).astype(np.uint8)
+        self.base_im[:, :, :3] = np.around(new_rgb)
+        self.base_im[:, :, 3] = np.around(new_a)
 
         return self
 
-    @override
     def draw_border(
         self,
         x: int,
@@ -316,7 +215,6 @@ class RenderImage(RawImage[cv2.Mat]):
         )
         return self
 
-    @override
     def resize(
         self,
         width: int = -1,
@@ -339,7 +237,6 @@ class RenderImage(RawImage[cv2.Mat]):
 
         return self
 
-    @override
     def fill(
         self,
         x: int,
@@ -351,7 +248,6 @@ class RenderImage(RawImage[cv2.Mat]):
         self.base_im[y:y + height, x:x + width] = color
         return self
 
-    @override
     def mask(self, mask: ImageMask) -> Self:
         h, w = mask.shape
         if h != self.height or w != self.width:
@@ -361,13 +257,15 @@ class RenderImage(RawImage[cv2.Mat]):
         self.base_im[indices, 3] = self.base_im[indices, 3] * coef
         return self
 
-    @override
     def save(self, path: str) -> None:
         save_im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2BGRA)
         cv2.imwrite(path, save_im)
 
-    @override
     def show(self) -> None:
         show_im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2BGR)
         cv2.imshow("image", show_im)
         cv2.waitKey(0)
+
+    def to_rgb(self) -> Self:
+        im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2RGB)
+        return self.__class__.from_raw(im)
