@@ -115,7 +115,9 @@ class FixedContainer(Container):
             min_height = sum(child.height for child in children)
 
         if width < min_width or height < min_height:
-            raise ValueError("Container is too small")
+            raise ValueError(
+                f"Container is too small, expect at least {(min_width, min_height)}, got {(width, height)}"
+            )
 
         return cls(width, height, justify_content, alignment, direction,
                    children, **kwargs)

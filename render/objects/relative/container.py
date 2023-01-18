@@ -46,12 +46,12 @@ class RelativeContainer(RenderObject):
     @property
     @override
     def content_width(self) -> int:
-        return self.infer_size()[0]
+        return self.infer_size()[0] if self.children else 0
 
     @property
     @override
     def content_height(self) -> int:
-        return self.infer_size()[1]
+        return self.infer_size()[1] if self.children else 0
 
     def infer_size(self) -> Tuple[int, int]:
         boxes = self._setup_boxes().values()
@@ -138,8 +138,7 @@ class RelativeContainer(RenderObject):
     @override
     def render_content(self) -> RenderImage:
         if len(self.children) == 0:
-            raise ValueError(
-                f"{self.__class__.__name__} must have at least one child")
+            return RenderImage.empty(0, 0)
 
         x = LinearPolynomial(x=1)
         y = LinearPolynomial(y=1)
