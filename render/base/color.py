@@ -23,6 +23,12 @@ class Color(NamedTuple):
         r, g, b = (int(hex[i:i + 2], 16) for i in (0, 2, 4))
         return cls(r, g, b, int(opacity * 255))
 
+    @classmethod
+    def rand(cls, rand_alpha: bool = False) -> Self:
+        from random import randint
+        return cls(randint(0, 255), randint(0, 255), randint(0, 255),
+                   randint(0, 255) if rand_alpha else 255)
+
     def of_alpha(self, a: int) -> Self:
         return self.__class__(self.r, self.g, self.b, a)
 
