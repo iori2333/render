@@ -20,7 +20,12 @@ class Font:
 
     @classmethod
     def get(cls, name: str) -> Path:
-        return cls.FontDict[name]
+        return cls.FontDict.get(name, cls.one())
+
+    @classmethod
+    def rand(cls) -> Path:
+        import random
+        return random.choice(cls.FontPaths)
 
     @classmethod
     def one(cls) -> Path:

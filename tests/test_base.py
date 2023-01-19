@@ -8,18 +8,19 @@ def make_color_rect(name: str,
                     color: Color,
                     size: int = 160,
                     use_stack: bool = True) -> RenderObject:
+    font = Font.get("Genshin")
     name = name.replace("_", " ").title()
     name = name or str(color.to_rgb())
     color_rect = TestRect.of(size, size, color)
     color_name = Text.of(name.replace("_", " ").title(),
-                         font=Font.one(),
+                         font=font,
                          size=18,
                          alignment=Alignment.CENTER,
                          background=color,
                          hyphenation=False,
                          max_width=size - 10)
     color_hex = Text.of(color.as_hex(),
-                        font=Font.one(),
+                        font=font,
                         size=8,
                         background=color)
     if use_stack:
