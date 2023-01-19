@@ -22,7 +22,7 @@ def test_text():
                             size=sz,
                             max_width=max_width,
                             color=Palette.BLACK,
-                            spacing=sz // 4,
+                            line_spacing=sz // 4,
                             hyphenation=True,
                             alignment=Alignment.START) for sz in [32]
                     for font in Font.fonts()

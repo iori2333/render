@@ -24,7 +24,7 @@ class Text(RenderObject):
         max_width: Optional[int],
         alignment: Alignment,
         color: Optional[Color],
-        spacing: int,
+        line_spacing: int,
         hyphenation: bool,
         **kwargs: Unpack[BaseStyle],
     ) -> None:
@@ -34,7 +34,7 @@ class Text(RenderObject):
         self.size = size
         self.alignment = alignment
         self.color = color
-        self.spacing = spacing
+        self.line_spacing = line_spacing
         self.hyphenation = hyphenation
         self.pre_rendered = [
             RenderText.of(line, font, size, color, self.background).render()
@@ -156,11 +156,11 @@ class Text(RenderObject):
         max_width: Optional[int] = None,
         alignment: Alignment = Alignment.START,
         color: Optional[Color] = None,
-        spacing: int = 0,
+        line_spacing: int = 0,
         hyphenation: bool = True,
         **kwargs: Unpack[BaseStyle],
     ) -> Self:
-        return cls(text, font, size, max_width, alignment, color, spacing,
+        return cls(text, font, size, max_width, alignment, color, line_spacing,
                    hyphenation, **kwargs)
 
     @property
@@ -171,7 +171,7 @@ class Text(RenderObject):
     @property
     @override
     def content_height(self) -> int:
-        sp = max(0, len(self.pre_rendered) - 1) * self.spacing
+        sp = max(0, len(self.pre_rendered) - 1) * self.line_spacing
         return sum(rt.height for rt in self.pre_rendered) + sp
 
     @override
@@ -181,5 +181,5 @@ class Text(RenderObject):
             direction=Direction.VERTICAL,
             alignment=self.alignment,
             color=self.background,
-            spacing=self.spacing,
+            spacing=self.line_spacing,
         )
