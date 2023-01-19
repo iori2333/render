@@ -195,7 +195,7 @@ class RenderImage:
         new_rgb = self.base_im[:, :, :3]
         new_rgb[mask] = (0, 0, 0)
 
-        self.base_im[:, :, :3] = np.around(new_rgb)
+        self.base_im[:, :, :3] = np.around(new_rgb)  # type: ignore
         self.base_im[:, :, 3] = np.around(new_a)
 
         return self
@@ -241,6 +241,37 @@ class RenderImage:
         )
 
         return self
+
+    def rescale(
+        self,
+        scale: float,
+        interpolation: Interpolation = Interpolation.BILINEAR,
+    ) -> Self:
+        return self.resize(
+            width=round(self.width * scale),
+            height=round(self.height * scale),
+            interpolation=interpolation,
+        )
+
+    def thumbnail(
+        self,
+        max_width: int = -1,
+        max_height: int = -1,
+        interpolation: Interpolation = Interpolation.BILINEAR,
+    ) -> Self:
+        if max_width < 0 and max_height < 0:
+            raise ValueError(
+                "Either max_width or max_height must be specified")
+        if max_width < 0:
+            max_width = self.width
+        elif max_height < 0:
+            max_height = self.height
+
+        if self.width <= max_width and self.height <= max_height:
+            return self
+
+        scale = min(max_width / self.width, max_height / self.height)
+        return self.rescale(scale, interpolation)
 
     def fill(
         self,
