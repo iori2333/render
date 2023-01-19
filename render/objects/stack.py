@@ -1,5 +1,5 @@
 from typing import Iterable, Optional
-from typing_extensions import override, Self, Unpack
+from typing_extensions import override, Self, Unpack, Literal
 
 from render.base import RenderObject, RenderImage, Alignment, BaseStyle
 
@@ -11,14 +11,14 @@ class Stack(RenderObject):
         children: Iterable[RenderObject],
         vertical_alignment: Alignment,
         horizontal_alignment: Alignment,
-        paste: bool = True,
+        paste_mode: Literal["paste", "overlay", "cover"],
         **kwargs: Unpack[BaseStyle],
     ) -> None:
         super(Stack, self).__init__(**kwargs)
         self.children = list(children)
         self.vertical_alignment = vertical_alignment
         self.horizontal_alignment = horizontal_alignment
-        self.paste = paste
+        self.paste_mode = paste_mode
 
     @classmethod
     def from_children(
@@ -27,15 +27,15 @@ class Stack(RenderObject):
         alignment: Alignment = Alignment.START,
         vertical_alignment: Optional[Alignment] = None,
         horizontal_alignment: Optional[Alignment] = None,
-        paste: bool = True,
+        paste_mode: Literal["paste", "overlay", "cover"] = "paste",
         **kwargs: Unpack[BaseStyle],
     ) -> Self:
         if vertical_alignment is None:
             vertical_alignment = alignment
         if horizontal_alignment is None:
             horizontal_alignment = alignment
-        return cls(children, vertical_alignment, horizontal_alignment, paste,
-                   **kwargs)
+        return cls(children, vertical_alignment, horizontal_alignment,
+                   paste_mode, **kwargs)
 
     @property
     @override
@@ -66,5 +66,12 @@ class Stack(RenderObject):
             else:
                 x = self.width - child.width
 
-            im = im.paste(x, y, child) if self.paste else im.cover(x, y, child)
+            if self.paste_mode == "paste":
+                im = im.paste(x, y, child)
+            elif self.paste_mode == "overlay":
+                im = im.overlay(x, y, child)
+            elif self.paste_mode == "cover":
+                im = im.cover(x, y, child)
+            else:
+                raise ValueError(f"Unknown paste mode: {self.paste_mode}")
         return im

@@ -130,6 +130,10 @@ class RenderImage:
         return self.base_im.shape[0]
 
     def paste(self, x: int, y: int, im: Self) -> Self:
+        """Pastes the image onto this image at the given coordinates.
+        Considering alpha channels of both images.
+        
+        Based on PIL.Image.alpha_composite."""
         im_self = PILImage.fromarray(self.base_im)
         im_paste = PILImage.fromarray(im.base_im)
         im_self.alpha_composite(im_paste, (x, y))
@@ -137,6 +141,10 @@ class RenderImage:
         return self
 
     def cover(self, x: int, y: int, im: Self) -> Self:
+        """Pastes the image onto this image at the given coordinates 
+        only where the cover image is not transparent.
+
+        If the cover pixel is transparent, the pixel in the base image is not changed."""
         b, t, l, r = (y, y + im.height, x, x + im.width)
         if b >= self.height or t < 0 or l >= self.width or r < 0:
             return self
@@ -146,6 +154,18 @@ class RenderImage:
         mask = im_cropped[:, :, 3] != 0
         self.base_im[max(b, 0):min(t, self.height),
                      max(l, 0):min(r, self.width)][mask] = im_cropped[mask]
+        return self
+
+    def overlay(self, x: int, y: int, im: Self) -> Self:
+        """Pastes the image onto this image at the given coordinates 
+        no matter what the alpha channel is."""
+        b, t, l, r = (y, y + im.height, x, x + im.width)
+        if b >= self.height or t < 0 or l >= self.width or r < 0:
+            return self
+        im_cropped = im.base_im[max(-b, 0):min(self.height - b, im.height),
+                                max(-l, 0):min(self.width - l, im.width)]
+        self.base_im[max(b, 0):min(t, self.height),
+                     max(l, 0):min(r, self.width)] = im_cropped
         return self
 
     def set_transparency(
