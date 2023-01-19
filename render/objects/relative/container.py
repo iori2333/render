@@ -20,6 +20,9 @@ class Relative(TypedDict, total=False):
     prior_to: RenderObject
 
 
+Offset = Tuple[int, int]
+
+
 class RelativeContainer(RenderObject):
 
     def __init__(
@@ -29,11 +32,13 @@ class RelativeContainer(RenderObject):
         super(RelativeContainer, self).__init__(**kwargs)
         self.children: List[RenderObject] = []
         self.graph = DependencyGraph[RenderObject, str]().add_node(self)
+        self.offsets: Dict[RenderObject, Offset] = {}
 
     def add_child(
-        self,
-        child: RenderObject,
-        **kwargs: Unpack[Relative],
+            self,
+            child: RenderObject,
+            offset: Offset = (0, 0),
+            **kwargs: Unpack[Relative],
     ) -> Self:
         if child in self.children:
             raise ValueError("Child already added")
@@ -41,6 +46,7 @@ class RelativeContainer(RenderObject):
         self.children.append(child)
         for relation, target in kwargs.items():
             self.graph.add_edge(target, child, relation)  # type: ignore
+        self.offsets[child] = offset
         return self
 
     @property
@@ -88,7 +94,8 @@ class RelativeContainer(RenderObject):
             if obj_box.x1 is undef or obj_box.y1 is undef:
                 raise ValueError(f"Could not resolve position of object: "
                                  f"{obj}(x={obj_box.x1}, y={obj_box.y1})")
-            boxes[obj] = obj_box
+            # apply offset
+            boxes[obj] = obj_box.offset(*self.offsets.get(obj, (0, 0)))
 
         # remove temporary self box
         del boxes[self]

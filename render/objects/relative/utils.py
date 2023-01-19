@@ -9,6 +9,7 @@ Edge = TypeVar("Edge")
 
 
 class LinearPolynomial:
+
     def __init__(self, const: float = 0.0, **coef: float) -> None:
         self.const = const
         self.symbols = coef
@@ -72,7 +73,8 @@ class LinearPolynomial:
     def __lt__(self, other: Linear) -> bool:
         """Note: This is not exact. Just for finding the minimum."""
         if isinstance(other, (int, float)):
-            return self.const < other and all(c <= 0 for c in self.symbols.values())
+            return self.const < other and all(c <= 0
+                                              for c in self.symbols.values())
         elif isinstance(other, LinearPolynomial):
             return self - other < 0
         else:
@@ -135,6 +137,7 @@ class LinearPolynomial:
 
 
 class Point:
+
     def __init__(self, x: LinearPolynomial, y: LinearPolynomial) -> None:
         self.x = x
         self.y = y
@@ -154,6 +157,7 @@ class Point:
 
 
 class Box:
+
     def __init__(self, p1: Point, p2: Point) -> None:
         self.p1 = p1
         self.p2 = p2
@@ -232,10 +236,17 @@ class Box:
         """A dummy method to make self dependent on other so that other will be overlaid."""
         return self
 
-    def relative_to(self, other: Self, relative_type: str) -> Self:
+    def relative_to(
+        self,
+        other: Self,
+        relative_type: str,
+    ) -> Self:
         if not hasattr(self, relative_type):
             raise ValueError(f"Invalid relative type: {relative_type}")
         return getattr(self, relative_type)(other)
+
+    def offset(self, x: Linear, y: Linear) -> Self:
+        return Box.of_size(self.p1.x + x, self.p1.y + y, self.w, self.h)
 
     def __str__(self) -> str:
         return f"Box({self.p1}, {self.p2})"
@@ -243,6 +254,7 @@ class Box:
 
 class DependencyGraph(Generic[Node, Edge]):
     """A dependency graph between objects. Performs topological sorting."""
+
     def __init__(self) -> None:
         # node -> successors
         self.graph: Dict[Any, Set[Any]] = {}
