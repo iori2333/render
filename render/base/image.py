@@ -36,14 +36,14 @@ class RenderImage:
         cls,
         width: int,
         height: int,
-        color: Color = Palette.WHITE,
+        color: Color = Palette.TRANSPARENT,
     ) -> Self:
         im = np.zeros((height, width, 4), dtype=np.uint8)
         im[:] = color
         return cls(im)
 
     @classmethod
-    def empty_like(cls, im: Self, color: Color = Palette.WHITE) -> Self:
+    def empty_like(cls, im: Self, color: Color = Palette.TRANSPARENT) -> Self:
         return cls.empty(im.width, im.height, color)
 
     @classmethod
