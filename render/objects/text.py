@@ -1,6 +1,6 @@
 import string
 from functools import lru_cache
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Tuple
 from typing_extensions import override, Self, Unpack
 
 import pyphen
@@ -48,15 +48,15 @@ class Text(RenderObject):
         return w
 
     @classmethod
-    def _split_line(
+    def _split_once(
         cls,
         font: FreeTypeFont,
         text: str,
         max_width: int,
         hyphenation: bool,
-    ) -> Sequence[str]:
+    ) -> Tuple[str, str]:
         if len(text) == 0:
-            return []
+            return "", ""
         indices = list(range(len(text)))
         bound = find_rightmost(
             indices,
@@ -68,7 +68,7 @@ class Text(RenderObject):
         if bound <= 0:
             raise ValueError("Text is too long to fit in the given width")
         if bound == len(text):
-            return [text]
+            return text, ""
 
         original_bound = bound
         # try to cut at a word boundary
@@ -93,11 +93,7 @@ class Text(RenderObject):
                         # no possible cut, put the whole word in the next line
                         bound = prev
                     else:
-                        return [
-                            text[:prev] + first,
-                            *cls._split_line(font, second + text[next:],
-                                             max_width, hyphenation)
-                        ]
+                        return text[:prev] + first, second + text[next:]
 
         # try not to leave a mark at the beginning of the next line
         if text[bound] in cls.MARKS:
@@ -113,9 +109,30 @@ class Text(RenderObject):
         # failed somewhere, give up
         if bound == 0:
             bound = original_bound
+        return text[:bound].rstrip(" "), text[bound:].lstrip(" ")
+
+    @classmethod
+    def _split_line(
+        cls,
+        font: FreeTypeFont,
+        text: str,
+        max_width: int,
+        hyphenation: bool,
+        start_width: Optional[int] = None,
+    ) -> Sequence[str]:
+        if start_width is not None:
+            try:
+                line, remaining = cls._split_once(font, text, start_width, hyphenation)
+            except ValueError:
+                line, remaining = cls._split_once(font, text, max_width, hyphenation)
+        else:
+            line, remaining = cls._split_once(font, text, max_width, hyphenation)
+        if not line and not remaining:
+            return []
+        if not remaining:
+            return [line]
         return [
-            text[:bound].rstrip(" "), *cls._split_line(
-                font, text[bound:].lstrip(" "), max_width, hyphenation)
+            line, *cls._split_line(font, remaining, max_width, hyphenation, None)
         ]
 
     @classmethod

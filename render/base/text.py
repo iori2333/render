@@ -46,7 +46,7 @@ class RenderText:
         ascent, descent = font.getmetrics()
         # height always equals to max possible height of the font
         # instead of actual height of the text for better alignment
-        height = ascent + descent  
+        height = ascent + descent
         im = Image.new("RGBA", (width, height), self.background)
         draw = ImageDraw.Draw(im)
         draw.text(
@@ -56,3 +56,16 @@ class RenderText:
             font=font,
         )
         return RenderImage.from_raw(np.asarray(im))
+
+    @property
+    def baseline(self) -> int:
+        """Distance from the top to the baseline of the text."""
+        font = ImageFont.truetype(str(self.font), self.size)
+        ascent, _ = font.getmetrics()
+        return ascent
+
+    @property
+    def width(self) -> int:
+        font = ImageFont.truetype(str(self.font), self.size)
+        width, _ = font.getsize(self.text)
+        return width
