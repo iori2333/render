@@ -24,6 +24,8 @@ class Text(RenderObject):
         max_width: Optional[int],
         alignment: Alignment,
         color: Optional[Color],
+        stroke_width: int,
+        stroke_color: Optional[Color],
         line_spacing: int,
         hyphenation: bool,
         **kwargs: Unpack[BaseStyle],
@@ -33,18 +35,18 @@ class Text(RenderObject):
         self.font = font
         self.size = size
         self.alignment = alignment
-        self.color = color
         self.line_spacing = line_spacing
         self.hyphenation = hyphenation
         self.pre_rendered = [
-            RenderText.of(line, font, size, color, self.background).render()
-            for line in self.cut(text, max_width)
+            RenderText.of(line, font, size, color, stroke_width, stroke_color,
+                          self.background).render()
+            for line in self.cut(text, stroke_width, max_width)
         ]
 
     @staticmethod
     @lru_cache()
-    def _calculate_width(font: FreeTypeFont, text: str):
-        w, _ = font.getsize(text)
+    def _calculate_width(font: FreeTypeFont, text: str, stroke: int):
+        w, _ = font.getsize(text, stroke_width=stroke)
         return w
 
     @classmethod
@@ -52,6 +54,7 @@ class Text(RenderObject):
         cls,
         font: FreeTypeFont,
         text: str,
+        stroke_width: int,
         max_width: int,
         hyphenation: bool,
     ) -> Tuple[str, str]:
@@ -61,9 +64,9 @@ class Text(RenderObject):
         bound = find_rightmost(
             indices,
             max_width,
-            key=lambda k: cls._calculate_width(font, text[:k]),
+            key=lambda k: cls._calculate_width(font, text[:k], stroke_width),
         )
-        if cls._calculate_width(font, text[:bound]) > max_width:
+        if cls._calculate_width(font, text[:bound], stroke_width) > max_width:
             bound -= 1
         if bound <= 0:
             raise ValueError("Text is too long to fit in the given width")
@@ -87,8 +90,8 @@ class Text(RenderObject):
                     bound = prev
                 else:
                     first, second = cls._split_word(
-                        font, word,
-                        max_width - cls._calculate_width(font, text[:prev]))
+                        font, word, stroke_width, max_width -
+                        cls._calculate_width(font, text[:prev], stroke_width))
                     if not first:
                         # no possible cut, put the whole word in the next line
                         bound = prev
@@ -97,7 +100,8 @@ class Text(RenderObject):
 
         # try not to leave a mark at the beginning of the next line
         if text[bound] in cls.MARKS:
-            if cls._calculate_width(font, text[:bound + 1]) <= max_width:
+            if cls._calculate_width(font, text[:bound + 1],
+                                    stroke_width) <= max_width:
                 bound += 1
             else:
                 prev = bound - 1
@@ -116,23 +120,28 @@ class Text(RenderObject):
         cls,
         font: FreeTypeFont,
         text: str,
+        stroke_width: int,
         max_width: int,
         hyphenation: bool,
         start_width: Optional[int] = None,
     ) -> Sequence[str]:
         if start_width is not None:
             try:
-                line, remaining = cls._split_once(font, text, start_width, hyphenation)
+                line, remaining = cls._split_once(font, text, stroke_width,
+                                                  start_width, hyphenation)
             except ValueError:
-                line, remaining = cls._split_once(font, text, max_width, hyphenation)
+                line, remaining = cls._split_once(font, text, stroke_width,
+                                                  max_width, hyphenation)
         else:
-            line, remaining = cls._split_once(font, text, max_width, hyphenation)
+            line, remaining = cls._split_once(font, text, stroke_width,
+                                              max_width, hyphenation)
         if not line and not remaining:
             return []
         if not remaining:
             return [line]
         return [
-            line, *cls._split_line(font, remaining, max_width, hyphenation, None)
+            line, *cls._split_line(font, remaining, stroke_width, max_width,
+                                   hyphenation, None)
         ]
 
     @classmethod
@@ -140,26 +149,28 @@ class Text(RenderObject):
         cls,
         font: FreeTypeFont,
         word: str,
+        stroke_width: int,
         max_width: int,
     ):
         cuts = list(cls._dict.iterate(word))
         cuts.sort(key=lambda k: len(k[0]))
-        cut_bound = find_rightmost(
-            range(len(cuts)),
-            max_width,
-            key=lambda k: cls._calculate_width(font, cuts[k][0] + "-"))
+        cut_bound = find_rightmost(range(len(cuts)),
+                                   max_width,
+                                   key=lambda k: cls._calculate_width(
+                                       font, cuts[k][0] + "-", stroke_width))
         if cut_bound == 0 or not cuts:
             return "", word
         return cuts[cut_bound - 1][0] + "-", cuts[cut_bound - 1][1]
 
-    def cut(self, text: str, max_width: Optional[int]) -> Sequence[str]:
+    def cut(self, text: str, stroke_width: int,
+            max_width: Optional[int]) -> Sequence[str]:
         lines = text.splitlines()
         if max_width is None:
             return lines
         font = truetype(str(self.font), self.size)
         res = list[str]()
         for line in lines:
-            splitted = self._split_line(font, line, max_width,
+            splitted = self._split_line(font, line, stroke_width, max_width,
                                         self.hyphenation)
             res.extend(splitted)
         return res
@@ -173,12 +184,14 @@ class Text(RenderObject):
         max_width: Optional[int] = None,
         alignment: Alignment = Alignment.START,
         color: Optional[Color] = None,
+        stroke_width: int = 0,
+        stroke_color: Optional[Color] = None,
         line_spacing: int = 0,
         hyphenation: bool = True,
         **kwargs: Unpack[BaseStyle],
     ) -> Self:
-        return cls(text, font, size, max_width, alignment, color, line_spacing,
-                   hyphenation, **kwargs)
+        return cls(text, font, size, max_width, alignment, color, stroke_width,
+                   stroke_color, line_spacing, hyphenation, **kwargs)
 
     @property
     @override

@@ -14,6 +14,8 @@ class TextStyle(TypedDict, total=False):
     font: PathLike
     size: int
     color: Optional[Color]
+    stroke_width: int
+    stroke_color: Optional[Color]
     background: Optional[Color]
     hyphenation: bool
 
@@ -100,6 +102,8 @@ class StyledText(RenderObject):
             font_path = str(style.get("font", ""))
             font_size = style.get("size", 0)
             font = ImageFont.truetype(font_path, font_size)
+            stroke_width = style.get("stroke_width", 0)
+            stroke_color = style.get("stroke_color", None)
             hyphenation = style.get("hyphenation", True)
 
             natural_lines = block.splitlines()
@@ -110,6 +114,7 @@ class StyledText(RenderObject):
                 else:
                     splitted = Text._split_line(font,
                                                 line,
+                                                stroke_width,
                                                 max_width,
                                                 hyphenation,
                                                 start_width=max_width -
@@ -122,6 +127,8 @@ class StyledText(RenderObject):
                         font_path,
                         font_size,
                         style.get("color"),
+                        stroke_width,
+                        stroke_color,
                         style.get("background") or self.background,
                     ) for s in splitted
                 ]
