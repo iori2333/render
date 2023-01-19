@@ -26,6 +26,37 @@ def test_paste_performance():
             print(f"{method}: {t:.3f} ms")
 
 
+def test_paste_overlay():
+    n = 10
+    d = 100
+    sp = 10
+    images = [
+        RenderImage.empty(d, d, Palette.AQUA.of_alpha(128)) for _ in range(n)
+    ]
+
+    def f1():
+        """Initialize with a transparent background and overlay images on top of it. 
+        And finally paste on a red background."""
+        bg = RenderImage.empty(d * n + sp * (n - 1), d, Palette.TRANSPARENT)
+        for i, im in enumerate(images):
+            bg = bg.overlay(i * (d + sp) - sp, 0, im)
+        x = RenderImage.empty_like(bg, Palette.RED.of_alpha(128))
+        return x.paste(0, 0, bg)
+
+    def f2():
+        """Initialize with a background color and paste images on top of it."""
+        bg = RenderImage.empty(d * n + sp * (n - 1), d,
+                               Palette.RED.of_alpha(128))
+        for i, im in enumerate(images):
+            bg = bg.paste(i * (d + sp) - sp, 0, im)
+        return bg
+
+    t1 = timeit.timeit(f1, number=1000)
+    t2 = timeit.timeit(f2, number=1000)
+    print(f"n-overlay-1-paste: {t1:.3f} ms")
+    print(f"n-paste: {t2:.3f} ms")
+
+
 def test_paste_compare():
     x, y = 250, 250
 
