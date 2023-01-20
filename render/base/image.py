@@ -48,7 +48,10 @@ class RenderImage:
 
     @classmethod
     def from_raw(cls, im: cv2.Mat) -> Self:
-        height, width, channels = im.shape
+        if im.ndim > 3 or im.ndim < 2:
+            raise ValueError(f"Invalid image shape: {im.shape}")
+        height, width = im.shape[:2]
+        channels = im.shape[2] if im.ndim == 3 else 1
         if channels == 3:
             alpha = np.full((height, width, 1), 255, dtype=np.uint8)
             im = np.concatenate((im, alpha), axis=2)
