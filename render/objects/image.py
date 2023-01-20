@@ -1,7 +1,7 @@
 from typing import Union, Optional, Tuple
 from typing_extensions import override, Self, Unpack
 
-from render.base import RenderObject, RenderImage, BaseStyle
+from render.base import RenderObject, RenderImage, BaseStyle, Color
 from render.utils import PathLike
 
 
@@ -29,6 +29,11 @@ class Image(RenderObject):
     @classmethod
     def from_image(cls, im: RenderImage, **kwargs: Unpack[BaseStyle]) -> Self:
         return Image(im, **kwargs)
+
+    @classmethod
+    def from_color(cls, width: int, height: int, color: Color,
+                   **kwargs: Unpack[BaseStyle]) -> Self:
+        return Image(RenderImage.empty(width, height, color), **kwargs)
 
     @property
     @override
