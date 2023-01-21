@@ -156,8 +156,7 @@ class FixedContainer(Container):
     @override
     def render_content(self) -> RenderImage:
         rendered = list(map(lambda child: child.render(), self.children))
-        concat = RenderImage.empty(self.content_width, self.content_height,
-                                   self.background)
+        concat = RenderImage.empty(self.content_width, self.content_height)
 
         space, offset = self._render_boundary()
         for child in rendered:

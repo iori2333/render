@@ -156,8 +156,7 @@ class RelativeContainer(RenderObject):
         size = self._infer_size(boxes.values(), x, y, w, h)
 
         im = RenderImage.empty(round(size[w.var] + size[x.var]),
-                               round(size[h.var] + size[y.var]),
-                               color=self.background)
+                               round(size[h.var] + size[y.var]))
         for obj, box in boxes.items():
             x = box.x1.eval(**size)
             y = box.y1.eval(**size)

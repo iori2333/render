@@ -27,8 +27,7 @@ class TestRect(RenderObject):
 
     @override
     def render_content(self) -> RenderImage:
-        return RenderImage.empty(self.rect_width, self.rect_height,
-                                 self.background)
+        return RenderImage.empty(self.rect_width, self.rect_height)
 
 
 __all__ = ['TestRect']

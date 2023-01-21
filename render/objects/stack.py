@@ -50,7 +50,7 @@ class Stack(RenderObject):
     @override
     def render_content(self) -> RenderImage:
         rendered = map(lambda child: child.render(), self.children)
-        im = RenderImage.empty(self.width, self.height, self.background)
+        im = RenderImage.empty(self.width, self.height)
         for child in rendered:
             if self.vertical_alignment == Alignment.START:
                 y = 0
