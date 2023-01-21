@@ -40,12 +40,12 @@ class Stack(RenderObject):
     @property
     @override
     def content_width(self) -> int:
-        return max(child.width for child in self.children)
+        return max(child.width for child in self.children) if self.children else 0
 
     @property
     @override
     def content_height(self) -> int:
-        return max(child.height for child in self.children)
+        return max(child.height for child in self.children) if self.children else 0
 
     @override
     def render_content(self) -> RenderImage:
