@@ -283,8 +283,7 @@ class RenderImage:
         interpolation: Interpolation = Interpolation.BILINEAR,
     ) -> Self:
         if max_width < 0 and max_height < 0:
-            raise ValueError(
-                "Either max_width or max_height must be specified")
+            return self
         if max_width < 0:
             max_width = self.width
         elif max_height < 0:
