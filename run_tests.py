@@ -34,12 +34,12 @@ def run_tests(
 ) -> None:
     functions = []
     for path in test_dir.glob(f"test_*.py"):
-        if file_pattern.match(path.stem[5:]):
+        if file_pattern.search(path.stem[5:]):
             module = import_module(f"{test_dir}.{path.stem}")
             for name in dir(module):
                 f = getattr(module, name)
                 if name.startswith("test_") and callable(f):
-                    if method_pattern.match(name[5:]):
+                    if method_pattern.search(name[5:]):
                         functions.append(f)
     if profile:
         import cProfile
