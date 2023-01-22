@@ -38,7 +38,8 @@ class Text(RenderObject):
         self.line_spacing = line_spacing
         self.hyphenation = hyphenation
         self.pre_rendered = [
-            RenderText.of(line, font, size, color, stroke_width, stroke_color).render()
+            RenderText.of(line, font, size, color, stroke_width,
+                          stroke_color).render()
             for line in self.cut(text, stroke_width, max_width)
         ]
 
@@ -54,11 +55,12 @@ class Text(RenderObject):
         font: FreeTypeFont,
         text: str,
         stroke_width: int,
-        max_width: int,
+        max_width: Optional[int],
         hyphenation: bool,
-    ) -> Tuple[str, str]:
-        if len(text) == 0:
-            return "", ""
+    ) -> Tuple[str, str, bool]:
+        bad_split = False
+        if max_width is None:
+            return text, "", bad_split
         indices = list(range(len(text)))
         bound = find_rightmost(
             indices,
@@ -70,7 +72,7 @@ class Text(RenderObject):
         if bound <= 0:
             raise ValueError("Text is too long to fit in the given width")
         if bound == len(text):
-            return text, ""
+            return text, "", bad_split
 
         original_bound = bound
         # try to cut at a word boundary
@@ -95,7 +97,8 @@ class Text(RenderObject):
                         # no possible cut, put the whole word in the next line
                         bound = prev
                     else:
-                        return text[:prev] + first, second + text[next:]
+                        return text[:prev] + first, second + text[
+                            next:], bad_split
 
         # try not to leave a mark at the beginning of the next line
         if text[bound] in cls.MARKS:
@@ -112,7 +115,8 @@ class Text(RenderObject):
         # failed somewhere, give up
         if bound == 0:
             bound = original_bound
-        return text[:bound].rstrip(" "), text[bound:].lstrip(" ")
+            bad_split = True
+        return text[:bound], text[bound:], bad_split
 
     @classmethod
     def _split_line(
@@ -122,26 +126,16 @@ class Text(RenderObject):
         stroke_width: int,
         max_width: int,
         hyphenation: bool,
-        start_width: Optional[int] = None,
     ) -> Sequence[str]:
-        if start_width is not None:
-            try:
-                line, remaining = cls._split_once(font, text, stroke_width,
-                                                  start_width, hyphenation)
-            except ValueError:
-                line, remaining = cls._split_once(font, text, stroke_width,
-                                                  max_width, hyphenation)
-        else:
-            line, remaining = cls._split_once(font, text, stroke_width,
+        split_lines = []
+        while text:
+            # ignore bad_split flag
+            line, remain, _ = cls._split_once(font, text, stroke_width,
                                               max_width, hyphenation)
-        if not line and not remaining:
-            return []
-        if not remaining:
-            return [line]
-        return [
-            line, *cls._split_line(font, remaining, stroke_width, max_width,
-                                   hyphenation, None)
-        ]
+            if line:
+                split_lines.append(line.rstrip(" "))
+            text = remain.lstrip(" ")
+        return split_lines
 
     @classmethod
     def _split_word(

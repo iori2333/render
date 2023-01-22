@@ -21,6 +21,7 @@ class TextStyle(TypedDict, total=False):
 
 
 class NestedTextStyle:
+
     def __init__(self) -> None:
         self.stack: List[Tuple[str, TextStyle]] = []
 
@@ -77,7 +78,7 @@ class StyledText(RenderObject):
     @override
     def content_height(self) -> int:
         return (sum(rt.height for rt in self.pre_rendered) +
-                self.line_spacing * (len(self.pre_rendered) - 1))
+                self.line_spacing * max(len(self.pre_rendered) - 1, 0))
 
     @override
     def render_content(self) -> RenderImage:
@@ -93,11 +94,25 @@ class StyledText(RenderObject):
         blocks: Iterable[Tuple[str, TextStyle]],
         max_width: Optional[int],
     ) -> Generator[List[RenderText], None, None]:
+        """Cut the text into lines. Each line is a list of RenderTexts."""
 
-        max_width = max_width or 0x80000000
-        remain: List[RenderText] = []
+        def current_width():
+            """Return the current acceptable width of the line."""
+            if max_width is None:
+                return None
+            return max_width - sum(t.width for t in line_buffer)
 
+        def flush(
+            buffer: List[RenderText]
+        ) -> Generator[List[RenderText], None, None]:
+            if buffer:
+                buffer[-1].text = buffer[-1].text.rstrip(" ")
+            yield buffer
+            buffer.clear()
+
+        line_buffer: List[RenderText] = []
         for block, style in blocks:
+            # load style properties
             font_path = str(style.get("font", ""))
             font_size = style.get("size", 0)
             font = ImageFont.truetype(font_path, font_size)
@@ -105,49 +120,44 @@ class StyledText(RenderObject):
             stroke_color = style.get("stroke_color", None)
             hyphenation = style.get("hyphenation", True)
 
-            natural_lines = block.splitlines()
-            for line_no, line in enumerate(natural_lines):
-                remain_width = sum(r.width for r in remain)
-                if max_width is None:
-                    splitted = [line]
-                else:
-                    splitted = Text._split_line(font,
-                                                line,
-                                                stroke_width,
-                                                max_width,
-                                                hyphenation,
-                                                start_width=max_width -
-                                                remain_width)
-                if not splitted:
-                    continue
-                rt = [
-                    RenderText.of(
-                        s,
-                        font_path,
-                        font_size,
-                        style.get("color"),
-                        stroke_width,
-                        stroke_color,
-                        style.get("background") or Palette.TRANSPARENT,
-                    ) for s in splitted
-                ]
-                first, *rest = rt
-                if max_width is None or remain_width + first.width <= max_width:
-                    remain.append(first)
-                for i, r in enumerate(rest):
-                    if remain:
-                        yield remain
-                        remain = []
-                    if i == len(rest) - 1 and line_no == len(
-                            natural_lines) - 1:
-                        remain.append(r)
-                    else:
-                        yield [r]
-                if remain and line_no != len(natural_lines) - 1:
-                    yield remain
-                    remain = []
-        if remain:
-            yield remain
+            line_break_at_end = block.endswith('\n')
+            lines = block.split('\n')
+            for lineno, line in enumerate(lines):
+                while line:
+                    try:
+                        split, remain, bad = Text._split_once(
+                            font, line, stroke_width, current_width(),
+                            hyphenation)
+                    except ValueError:
+                        # too long to fit, flush the line and try again
+                        yield from flush(line_buffer)
+                        split, remain, bad = Text._split_once(
+                            font, line, stroke_width, current_width(),
+                            hyphenation)
+                    if line_buffer and bad:
+                        # flush the line and try again
+                        yield from flush(line_buffer)
+                        split, remain, _ = Text._split_once(
+                            font, line, stroke_width, current_width(),
+                            hyphenation)
+
+                    line_buffer.append(
+                        RenderText.of(
+                            split.lstrip(" ") if not line_buffer else split,
+                            font_path,
+                            font_size,
+                            style.get("color"),
+                            stroke_width,
+                            stroke_color,
+                            style.get("background") or Palette.TRANSPARENT,
+                        ))
+                    line = remain
+                # end of natural line
+                if lineno != len(lines) - 1 or line_break_at_end:
+                    yield from flush(line_buffer)
+        # check buffer not empty
+        if line_buffer:
+            yield from flush(line_buffer)
 
     @staticmethod
     def text_concat(text: Iterable[RenderText]) -> RenderImage:
@@ -165,7 +175,7 @@ class StyledText(RenderObject):
     @classmethod
     def of_tag(
         cls,
-        text_with_tags: str,
+        text: str,
         default: TextStyle,
         styles: Dict[str, TextStyle],
         max_width: Optional[int] = None,
@@ -176,7 +186,7 @@ class StyledText(RenderObject):
         """Create a Text object from a string with tags.
 
         Args:
-            text_with_tags (str): The text with html tags.
+            text (str): The text with html tags.
             default (TextStyle): The default text style.
             styles (Dict[str, TextStyle]): The styles for each tag.
         """
@@ -185,26 +195,26 @@ class StyledText(RenderObject):
         blocks: List[Tuple[str, TextStyle]] = []
 
         index = 0
-        while index < len(text_with_tags):
-            match = cls.tag_begin.match(text_with_tags, index)
+        while index < len(text):
+            match = cls.tag_begin.match(text, index)
             if match:
                 name = match.group(1)
                 style.push(name, styles[name])
                 index = match.end()
                 continue
-            match = cls.tag_end.match(text_with_tags, index)
+            match = cls.tag_end.match(text, index)
             if match:
                 name = match.group(1)
                 try:
                     style.pop(name)
                 except ValueError as e:
-                    raise ValueError(str(e) + " in " + repr(text_with_tags)) from e
+                    raise ValueError(str(e) + " in " + repr(text)) from e
                 index = match.end()
                 continue
-            next_tag = text_with_tags.find("<", index)
+            next_tag = text.find("<", index)
             if next_tag == -1:
-                next_tag = len(text_with_tags)
-            plain_text = text_with_tags[index:next_tag]
+                next_tag = len(text)
+            plain_text = text[index:next_tag]
             if plain_text:
                 blocks.append((plain_text, style.query()))
             index = next_tag
