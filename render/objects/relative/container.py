@@ -66,8 +66,8 @@ class RelativeContainer(RenderObject):
         w = LinearPolynomial(w=1)
         h = LinearPolynomial(h=1)
         size = self._infer_size(boxes, x, y, w, h)
-        return (round(size[w.var] + size[x.var]),
-                round(size[h.var] + size[y.var]))
+        return (round(size[w.var]),
+                round(size[h.var]))
 
     def _setup_boxes(self) -> Dict[RenderObject, Box]:
         # TODO: Remove objects outside of container
@@ -155,8 +155,8 @@ class RelativeContainer(RenderObject):
         boxes = self._setup_boxes()
         size = self._infer_size(boxes.values(), x, y, w, h)
 
-        im = RenderImage.empty(round(size[w.var] + size[x.var]),
-                               round(size[h.var] + size[y.var]))
+        im = RenderImage.empty(round(size[w.var]),
+                               round(size[h.var]))
         for obj, box in boxes.items():
             x = box.x1.eval(**size)
             y = box.y1.eval(**size)
