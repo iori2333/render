@@ -51,13 +51,18 @@ def run_tests(
             with profiler:
                 f()
 
+        print("=" * 80)
         stat = pstats.Stats(profiler).sort_stats("cumulative")
         _, funcs = stat.get_print_list([])
         stat.print_title()
         for func in funcs:
             file, _, name = func
-            if test_dir in Path(file).parents and name.startswith("test_"):
-                stat.print_stats(func)
+            file_posix = Path(file).as_posix()
+            dir_posix = test_dir.absolute().as_posix()
+            if file_posix.startswith(dir_posix) and name.startswith("test_"):
+                stat.print_line(func)
+        print("=" * 80)
+        stat.print_stats()
     else:
         for f in functions:
             print(f.__name__)
