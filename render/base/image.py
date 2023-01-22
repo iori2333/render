@@ -67,7 +67,7 @@ class RenderImage:
         images: Iterable[Self],
         direction: Direction,
         alignment: Alignment,
-        color: Color = Palette.WHITE,
+        color: Color = Palette.TRANSPARENT,
         spacing: int = 0,
     ) -> Self:
         images = list(images)
@@ -81,7 +81,7 @@ class RenderImage:
         cls,
         images: Sequence[Self],
         alignment: Alignment,
-        color: Color = Palette.WHITE,
+        color: Color = Palette.TRANSPARENT,
         spacing: int = 0,
     ) -> Self:
         width = sum(im.width for im in images)
@@ -105,7 +105,7 @@ class RenderImage:
         cls,
         images: Sequence[Self],
         alignment: Alignment,
-        color: Color = Palette.WHITE,
+        color: Color = Palette.TRANSPARENT,
         spacing: int = 0,
     ) -> Self:
         width = max(im.width for im in images)

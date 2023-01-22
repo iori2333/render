@@ -85,7 +85,6 @@ class StyledText(RenderObject):
             self.pre_rendered,
             direction=Direction.VERTICAL,
             alignment=self.alignment,
-            color=self.background,
             spacing=self.line_spacing,
         )
 
@@ -129,7 +128,7 @@ class StyledText(RenderObject):
                         style.get("color"),
                         stroke_width,
                         stroke_color,
-                        style.get("background") or self.background,
+                        style.get("background") or Palette.TRANSPARENT,
                     ) for s in splitted
                 ]
                 first, *rest = rt
