@@ -136,6 +136,50 @@ class LinearPolynomial:
         return next(iter(self.symbols.keys()))
 
 
+class Inequality(LinearPolynomial):
+    """A class to represent LinearPolynomial >= 0."""
+
+    def __init__(self, const: float, **symbols: float) -> None:
+        super().__init__(const, **symbols)
+
+    @classmethod
+    def of(cls, poly: LinearPolynomial) -> Self:
+        return cls(poly.const, **poly.symbols)
+
+    @classmethod
+    def greater(cls, lhs: Linear, rhs: Linear) -> Self:
+        if isinstance(lhs, (int, float)):
+            lhs = LinearPolynomial.of_const(lhs)
+        if isinstance(rhs, (int, float)):
+            rhs = LinearPolynomial.of_const(rhs)
+        return cls.of(lhs - rhs)
+
+    @classmethod
+    def less(cls, lhs: Linear, rhs: Linear) -> Self:
+        return cls.greater(rhs, lhs)
+
+    @property
+    def solvable(self) -> bool:
+        return len(self.symbols) == 1
+
+    @property
+    def var(self) -> str:
+        return next(iter(self.symbols.keys()))
+
+    def satisfy(self, **values: float) -> bool:
+        return self.eval(**values) >= 0
+
+    def solve(self) -> Tuple[str, bool, float]:
+        """Return (var, is_greater, value)"""
+        if not self.solvable:
+            raise ValueError("Not solvable")
+        var = self.var
+        return var, self.symbols[var] > 0, -self.const / self.symbols[var]
+
+    def __str__(self) -> str:
+        return super().__str__() + " >= 0" 
+
+
 class Point:
 
     def __init__(self, x: LinearPolynomial, y: LinearPolynomial) -> None:
@@ -244,6 +288,18 @@ class Box:
         if not hasattr(self, relative_type):
             raise ValueError(f"Invalid relative type: {relative_type}")
         return getattr(self, relative_type)(other)
+
+    def constrain(self, other: Self, constraint: str) -> Inequality:
+        if constraint == "left":
+            return Inequality.less(self.x2, other.x1)
+        elif constraint == "right":
+            return Inequality.greater(self.x1, other.x2)
+        elif constraint == "above":
+            return Inequality.less(self.y2, other.y1)
+        elif constraint == "below":
+            return Inequality.greater(self.y1, other.y2)
+        else:
+            raise ValueError(f"Invalid constraint: {constraint}")
 
     def offset(self, x: Linear, y: Linear) -> Self:
         return Box.of_size(self.p1.x + x, self.p1.y + y, self.w, self.h)

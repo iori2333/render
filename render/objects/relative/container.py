@@ -1,4 +1,4 @@
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, List, Tuple
 from typing_extensions import Self, TypedDict, Unpack, override
 
 from render.base import BaseStyle, RenderImage, RenderObject
@@ -20,7 +20,15 @@ class Relative(TypedDict, total=False):
     prior_to: RenderObject
 
 
+class Constraint(TypedDict, total=False):
+    above: RenderObject
+    below: RenderObject
+    left: RenderObject
+    right: RenderObject
+
+
 Offset = Tuple[int, int]
+ConstraintTuple = Tuple[RenderObject, str, RenderObject]
 
 
 class RelativeContainer(RenderObject):
@@ -33,6 +41,7 @@ class RelativeContainer(RenderObject):
         self.children: List[RenderObject] = []
         self.graph = DependencyGraph[RenderObject, str]().add_node(self)
         self.offsets: Dict[RenderObject, Offset] = {}
+        self.constraints: List[ConstraintTuple] = []
 
     def add_child(
             self,
@@ -49,6 +58,15 @@ class RelativeContainer(RenderObject):
         self.offsets[child] = offset
         return self
 
+    def add_constraint(
+        self,
+        obj: RenderObject,
+        **kwargs: Unpack[Constraint],
+    ) -> Self:
+        for relation, target in kwargs.items():
+            self.constraints.append((obj, relation, target))  # type: ignore
+        return self
+
     @property
     @override
     def content_width(self) -> int:
@@ -60,14 +78,13 @@ class RelativeContainer(RenderObject):
         return self.infer_size()[1] if self.children else 0
 
     def infer_size(self) -> Tuple[int, int]:
-        boxes = self._setup_boxes().values()
+        boxes = self._setup_boxes()
         x = LinearPolynomial(x=1)
         y = LinearPolynomial(y=1)
         w = LinearPolynomial(w=1)
         h = LinearPolynomial(h=1)
         size = self._infer_size(boxes, x, y, w, h)
-        return (round(size[w.var]),
-                round(size[h.var]))
+        return round(size[w.var]), round(size[h.var])
 
     def _setup_boxes(self) -> Dict[RenderObject, Box]:
         # TODO: Remove objects outside of container
@@ -103,17 +120,17 @@ class RelativeContainer(RenderObject):
 
     def _infer_size(
         self,
-        boxes: Iterable[Box],
+        boxes: Dict[RenderObject, Box],
         x: LinearPolynomial,
         y: LinearPolynomial,
         w: LinearPolynomial,
         h: LinearPolynomial,
     ) -> Dict[str, float]:
-        boxes = list(boxes)
-        x1 = list(map(lambda b: b.x1, boxes))
-        y1 = list(map(lambda b: b.y1, boxes))
-        x2 = list(map(lambda b: b.x2, boxes))
-        y2 = list(map(lambda b: b.y2, boxes))
+        box_list = list(boxes.values())
+        x1 = list(map(lambda b: b.x1, box_list))
+        y1 = list(map(lambda b: b.y1, box_list))
+        x2 = list(map(lambda b: b.x2, box_list))
+        y2 = list(map(lambda b: b.y2, box_list))
         x1_x, x1_w = partition(lambda x: not x.contains_symbol(w), x1)
         y1_y, y1_h = partition(lambda x: not x.contains_symbol(h), y1)
         x2_x, x2_w = partition(lambda x: not x.contains_symbol(w), x2)
@@ -124,22 +141,34 @@ class RelativeContainer(RenderObject):
         max_y2 = max(y2_h or y2_y)
         width = max_x2 - min_x1
         height = max_y2 - min_y1
-        if not width.is_const or not height.is_const:
+
+        width_c = width.const if width.is_const else -1
+        height_c = height.const if height.is_const else -1
+
+        for obj_from, constraint, obj_to in self.constraints:
+            box_from, box_to = boxes[obj_from], boxes[obj_to]
+            in_eq = box_from.constrain(box_to, constraint)
+            # TODO: handle not solvable or less_than case
+            if in_eq.solvable and in_eq.var in [w.var, h.var]:
+                var, greater, bound = in_eq.solve()
+                if greater and var == w.var:
+                    width_c = max(width_c, bound)
+                elif greater and var == h.var:
+                    height_c = max(height_c, bound)
+
+        if width_c < 0 or height_c < 0:
             raise ValueError(
-                f"Could not infer size of container: (w={width}, h={height})")
-        x_eval = [
-            x.eval(x=0, y=0, w=width.const, h=height.const) for x in x1 + x2
-        ]
-        y_eval = [
-            y.eval(x=0, y=0, w=width.const, h=height.const) for y in y1 + y2
-        ]
+                f"Could not resolve size of container: w={width}, h={height}")
+
+        x_eval = [x.eval(x=0, y=0, w=width_c, h=height_c) for x in x1 + x2]
+        y_eval = [y.eval(x=0, y=0, w=width_c, h=height_c) for y in y1 + y2]
         x_offset = -min(x_eval) if min(x_eval) < 0 else 0
         y_offset = -min(y_eval) if min(y_eval) < 0 else 0
         return {
             x.var: x_offset,
             y.var: y_offset,
-            w.var: width.const,
-            h.var: height.const,
+            w.var: width_c,
+            h.var: height_c,
         }
 
     @override
@@ -153,10 +182,9 @@ class RelativeContainer(RenderObject):
         h = LinearPolynomial(h=1)
 
         boxes = self._setup_boxes()
-        size = self._infer_size(boxes.values(), x, y, w, h)
+        size = self._infer_size(boxes, x, y, w, h)
 
-        im = RenderImage.empty(round(size[w.var]),
-                               round(size[h.var]))
+        im = RenderImage.empty(round(size[w.var]), round(size[h.var]))
         for obj, box in boxes.items():
             x = box.x1.eval(**size)
             y = box.y1.eval(**size)

@@ -100,3 +100,30 @@ def test_relative_failure():
         print("ValueError successfully raised: " + str(e))
     else:
         assert 0, "Expected ValueError"
+
+
+def test_relative_constraint():
+    red = TestRect.of(100, 100, Palette.RED)
+    green = TestRect.of(300, 300, Palette.GREEN)
+    container = RelativeContainer()
+    container.add_child(red, align_left=container, align_top=container)
+    container.add_child(green, align_right=container, align_bottom=container)
+    # add extra constraint for size inference
+    container.add_constraint(red, left=green, above=green)
+    container.render().save(Output / "relative-constraint.png")
+
+
+def test_relative_constraint2():
+    red = TestRect.of(100, 100, Palette.RED)
+    green = TestRect.of(300, 300, Palette.GREEN)
+    blue = TestRect.of(50, 50, Palette.BLUE)
+    container = RelativeContainer()
+    container.add_child(red, align_left=container, align_top=container)
+    container.add_child(blue,
+                        center_horizontal=container,
+                        center_vertical=container)
+    container.add_child(green, align_right=container, align_bottom=container)
+    # add extra constraint for size inference
+    container.add_constraint(blue, right=red, below=red)
+    container.add_constraint(green, right=blue, below=blue)
+    container.render().save(Output / "relative-constraint2.png")
