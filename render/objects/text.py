@@ -38,8 +38,8 @@ class Text(RenderObject):
         self.line_spacing = line_spacing
         self.hyphenation = hyphenation
         self.pre_rendered = [
-            RenderText.of(line, font, size, color, stroke_width,
-                          stroke_color).render()
+            RenderText.of(line, font, size, color, stroke_width, stroke_color,
+                          self.background).render()
             for line in self.cut(text, stroke_width, max_width)
         ]
 
