@@ -68,7 +68,7 @@ class RenderText:
         """Distance from the top to the baseline of the text."""
         font = ImageFont.truetype(str(self.font), self.size)
         ascent, _ = font.getmetrics()
-        return ascent
+        return ascent + self.stroke_width
 
     @property
     def width(self) -> int:
