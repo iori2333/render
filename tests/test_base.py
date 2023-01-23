@@ -19,10 +19,7 @@ def make_color_rect(name: str,
                          background=color,
                          hyphenation=False,
                          max_width=size - 10)
-    color_hex = Text.of(color.as_hex(),
-                        font=font,
-                        size=8,
-                        background=color)
+    color_hex = Text.of(color.as_hex(), font=font, size=8, background=color)
     if use_stack:
         spacing = TestRect.of(size // 16, size // 16, Palette.TRANSPARENT)
         color_text = Container.from_children([color_name, spacing, color_hex],
@@ -112,3 +109,20 @@ def test_image():
         print("ValueError successfully raised: {}".format(e))
     else:
         assert 0, "Expected ValueError"
+
+
+def test_padding():
+    container = Container.from_children(
+        children=[
+            Image.from_color(i * 20 + 10, 20, color=Color.rand())
+            for i in range(3)
+        ],
+        direction=Direction.VERTICAL,
+        alignment=Alignment.CENTER,
+        border=Border.of(5, Palette.ANTIQUE_WHITE),
+        padding=Space.horizontal(10),
+        background=Palette.BLACK.of_alpha(128),
+        decorations=[
+            RectCrop.of(border_radius=10, box_sizing=BoxSizing.FULL_BOX)
+        ])
+    container.render().save(Output / "padding.png")

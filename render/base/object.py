@@ -98,7 +98,7 @@ class RenderObject(ABC):
         5. Apply background decorations if needed
         """
 
-        im = RenderImage.empty(self.width, self.height, self.background)
+        im = RenderImage.empty(self.width, self.height, Palette.TRANSPARENT)
         content = self.render_content()
         content = self.decorations.apply_content(content)
 

@@ -52,8 +52,7 @@ class Container(RenderObject):
         if not self.children:
             return RenderImage.empty(0, 0)
         rendered = map(lambda child: child.render(), self.children)
-        concat = RenderImage.concat(rendered, self.direction, self.alignment,
-                                    self.background)
+        concat = RenderImage.concat(rendered, self.direction, self.alignment)
         return concat
 
 
