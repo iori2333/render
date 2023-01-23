@@ -1,9 +1,14 @@
 from abc import abstractmethod
 from enum import Enum
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
 from typing_extensions import Self
 
 from .image import RenderImage
+
+if TYPE_CHECKING:
+    from .object import RenderObject
+else:
+    RenderObject = None  # avoid raising NameError
 
 
 class BoxSizing(Enum):
@@ -47,7 +52,7 @@ class BackgroundDecoration(Decoration):
         self,
         obj: RenderImage,
         bg: RenderImage,
-        context: "render.base.RenderObject",
+        context: RenderObject,
     ) -> RenderImage:
         """Apply background decoration
 
@@ -100,7 +105,7 @@ class Decorations:
         self,
         obj: RenderImage,
         bg: RenderImage,
-        context: "render.base.RenderObject",
+        context: RenderObject,
     ) -> RenderImage:
         for decoration in self._bg_decorations:
             bg = decoration.apply(obj, bg, context)
@@ -113,6 +118,3 @@ class Decorations:
     @property
     def decorations(self) -> Sequence[Decoration]:
         return [*self._decorations, *self._bg_decorations]
-
-
-import render  # for type hints
