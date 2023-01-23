@@ -7,7 +7,7 @@ import pyphen
 from PIL.ImageFont import FreeTypeFont, truetype
 
 from render.base import (RenderObject, RenderImage, RenderText, Color,
-                         BaseStyle, Alignment, Direction)
+                         BaseStyle, Alignment, Direction, TextDecoration)
 from render.utils import find_rightmost, PathLike
 
 
@@ -28,6 +28,8 @@ class Text(RenderObject):
         stroke_color: Optional[Color],
         line_spacing: int,
         hyphenation: bool,
+        text_decoration: TextDecoration,
+        text_decoration_thickness: int,
         **kwargs: Unpack[BaseStyle],
     ) -> None:
         super(Text, self).__init__(**kwargs)
@@ -39,6 +41,7 @@ class Text(RenderObject):
         self.hyphenation = hyphenation
         self.pre_rendered = [
             RenderText.of(line, font, size, color, stroke_width, stroke_color,
+                          text_decoration, text_decoration_thickness,
                           self.background).render()
             for line in self.cut(text, stroke_width, max_width)
         ]
@@ -181,10 +184,13 @@ class Text(RenderObject):
         stroke_color: Optional[Color] = None,
         line_spacing: int = 0,
         hyphenation: bool = True,
+        text_decoration: TextDecoration = TextDecoration.NONE,
+        text_decoration_thickness: int = -1,
         **kwargs: Unpack[BaseStyle],
     ) -> Self:
         return cls(text, font, size, max_width, alignment, color, stroke_width,
-                   stroke_color, line_spacing, hyphenation, **kwargs)
+                   stroke_color, line_spacing, hyphenation, text_decoration,
+                   text_decoration_thickness, **kwargs)
 
     @property
     @override

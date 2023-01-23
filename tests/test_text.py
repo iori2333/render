@@ -87,3 +87,30 @@ def test_styled_stroke():
     }
     StyledText.of_tag(text, default=default,
                       styles=styles).render().save(output_dir / "stroke.png")
+
+
+def test_text_decoration():
+    flags = [
+        TextDecoration.UNDERLINE, TextDecoration.OVERLINE,
+        TextDecoration.LINE_THROUGH
+    ]
+    for max_width in [None, 200, 600]:
+        for i, text in enumerate(texts):
+            container = Container.from_children(
+                children=[
+                    Text.of(text,
+                            font=font,
+                            size=32,
+                            max_width=max_width,
+                            color=Palette.BLACK,
+                            line_spacing=6,
+                            hyphenation=True,
+                            text_decoration=flags[i % len(flags)],
+                            text_decoration_thickness=-1 if j % 2 == 0 else 1,
+                            alignment=Alignment.START)
+                    for j, font in enumerate(Font.fonts())
+                ],
+                direction=Direction.VERTICAL,
+                background=Palette.ANTIQUE_WHITE,
+            )
+            container.render().save(output_dir / f"{i}-{max_width}-deco.png")
