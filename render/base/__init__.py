@@ -1,3 +1,4 @@
+from .cacheable import Cacheable, cached, volatile
 from .color import Color, Palette
 from .object import RenderObject, BaseStyle
 from .properties import Alignment, Direction, Space, Border, Interpolation
@@ -11,6 +12,8 @@ __all__ = [
     "BaseStyle",
     "BoxSizing",
     "Border",
+    "Cacheable",
+    "cached",
     "Color",
     "Decorations",
     "Direction",
@@ -22,5 +25,6 @@ __all__ = [
     "RenderObject",
     "RenderText",
     "Space",
-    "TextDecoration",   
+    "TextDecoration",
+    "volatile",
 ]

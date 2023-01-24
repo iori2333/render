@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from functools import lru_cache
 from typing import Iterable
 from typing_extensions import TypedDict
 
@@ -75,13 +74,11 @@ class RenderObject(ABC):
         raise NotImplementedError()
 
     @property
-    @lru_cache()
     def width(self) -> int:
         width = self.content_width + self.padding.width + self.margin.width + self.border.width * 2
         return width
 
     @property
-    @lru_cache()
     def height(self) -> int:
         height = self.content_height + self.padding.height + self.margin.height + self.border.width * 2
         return height

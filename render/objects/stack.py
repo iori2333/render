@@ -1,10 +1,10 @@
 from typing import Iterable, Optional
 from typing_extensions import override, Self, Unpack, Literal
 
-from render.base import RenderObject, RenderImage, Alignment, BaseStyle
+from render.base import RenderObject, RenderImage, Alignment, BaseStyle, Cacheable, cached, volatile
 
 
-class Stack(RenderObject):
+class Stack(RenderObject, Cacheable):
 
     def __init__(
         self,
@@ -14,11 +14,13 @@ class Stack(RenderObject):
         paste_mode: Literal["paste", "overlay", "cover"],
         **kwargs: Unpack[BaseStyle],
     ) -> None:
-        super(Stack, self).__init__(**kwargs)
-        self.children = list(children)
-        self.vertical_alignment = vertical_alignment
-        self.horizontal_alignment = horizontal_alignment
-        self.paste_mode = paste_mode
+        RenderObject.__init__(self, **kwargs)
+        Cacheable.__init__(self)
+        with volatile(self) as v:
+            self.children = v.list(children)
+            self.vertical_alignment = vertical_alignment
+            self.horizontal_alignment = horizontal_alignment
+            self.paste_mode = paste_mode
 
     @classmethod
     def from_children(
@@ -38,15 +40,20 @@ class Stack(RenderObject):
                    paste_mode, **kwargs)
 
     @property
+    @cached
     @override
     def content_width(self) -> int:
-        return max(child.width for child in self.children) if self.children else 0
+        return max(child.width
+                   for child in self.children) if self.children else 0
 
     @property
+    @cached
     @override
     def content_height(self) -> int:
-        return max(child.height for child in self.children) if self.children else 0
+        return max(child.height
+                   for child in self.children) if self.children else 0
 
+    @cached
     @override
     def render_content(self) -> RenderImage:
         rendered = map(lambda child: child.render(), self.children)
