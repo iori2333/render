@@ -84,19 +84,20 @@ class FixedContainer(Container):
     ) -> None:
         super(FixedContainer, self).__init__(alignment, direction, children,
                                              **kwargs)
-        self._width = width
-        self._height = height
-        self.justifyContent = justify_content
+        with volatile(self):
+            self.fix_width = width
+            self.fix_height = height
+            self.justifyContent = justify_content
 
     @property
     @override
     def content_width(self) -> int:
-        return self._width
+        return self.fix_width
 
     @property
     @override
     def content_height(self) -> int:
-        return self._height
+        return self.fix_height
 
     @classmethod
     def from_children(
@@ -126,6 +127,7 @@ class FixedContainer(Container):
         return cls(width, height, justify_content, alignment, direction,
                    children, **kwargs)
 
+    @cached
     def _render_boundary(self) -> Tuple[int, int]:
         if self.direction == Direction.HORIZONTAL:
             space = self.content_width - sum(child.width
@@ -157,6 +159,7 @@ class FixedContainer(Container):
 
         return space, offset
 
+    @cached
     @override
     def render_content(self) -> RenderImage:
         rendered = list(map(lambda child: child.render(), self.children))
