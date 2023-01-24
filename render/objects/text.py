@@ -7,11 +7,12 @@ import pyphen
 from PIL.ImageFont import FreeTypeFont, truetype
 
 from render.base import (RenderObject, RenderImage, RenderText, Color,
-                         BaseStyle, Alignment, Direction, TextDecoration)
+                         BaseStyle, Alignment, Direction, TextDecoration,
+                         Cacheable, cached, volatile)
 from render.utils import find_rightmost, PathLike
 
 
-class Text(RenderObject):
+class Text(RenderObject, Cacheable):
 
     MARKS = set("；：。，！？、.,!?”》;:")
     _dict = pyphen.Pyphen(lang="en_US")
@@ -32,19 +33,22 @@ class Text(RenderObject):
         text_decoration_thickness: int,
         **kwargs: Unpack[BaseStyle],
     ) -> None:
-        super(Text, self).__init__(**kwargs)
+        RenderObject.__init__(self, **kwargs)
+        Cacheable.__init__(self)
 
-        self.font = font
-        self.size = size
-        self.alignment = alignment
-        self.line_spacing = line_spacing
-        self.hyphenation = hyphenation
-        self.pre_rendered = [
-            RenderText.of(line, font, size, color, stroke_width, stroke_color,
-                          text_decoration, text_decoration_thickness,
-                          self.background).render()
-            for line in self.cut(text, stroke_width, max_width)
-        ]
+        with volatile(self):
+            self.text = text
+            self.font = font
+            self.size = size
+            self.max_width = max_width
+            self.alignment = alignment
+            self.line_spacing = line_spacing
+            self.hyphenation = hyphenation
+            self.color = color
+            self.stroke_width = stroke_width
+            self.stroke_color = stroke_color
+            self.text_decoration = text_decoration
+            self.text_decoration_thickness = text_decoration_thickness
 
     @staticmethod
     @lru_cache()
@@ -158,16 +162,16 @@ class Text(RenderObject):
             return "", word
         return cuts[cut_bound - 1][0] + "-", cuts[cut_bound - 1][1]
 
-    def cut(self, text: str, stroke_width: int,
-            max_width: Optional[int]) -> Sequence[str]:
-        lines = text.splitlines()
-        if max_width is None:
+    @cached
+    def cut(self) -> Sequence[str]:
+        lines = self.text.splitlines()
+        if self.max_width is None:
             return lines
         font = truetype(str(self.font), self.size)
         res = list[str]()
         for line in lines:
-            splitted = self._split_line(font, line, stroke_width, max_width,
-                                        self.hyphenation)
+            splitted = self._split_line(font, line, self.stroke_width,
+                                        self.max_width, self.hyphenation)
             res.extend(splitted)
         return res
 
@@ -193,20 +197,34 @@ class Text(RenderObject):
                    text_decoration_thickness, **kwargs)
 
     @property
+    @cached
     @override
     def content_width(self) -> int:
-        return max(rt.width for rt in self.pre_rendered)
+        return self.render_content().width
 
     @property
+    @cached
     @override
     def content_height(self) -> int:
-        sp = max(0, len(self.pre_rendered) - 1) * self.line_spacing
-        return sum(rt.height for rt in self.pre_rendered) + sp
+        return self.render_content().height
 
+    @cached
     @override
     def render_content(self) -> RenderImage:
+        lines = [
+            RenderText.of(line,
+                          self.font,
+                          self.size,
+                          self.color,
+                          self.stroke_width,
+                          self.stroke_color,
+                          self.text_decoration,
+                          self.text_decoration_thickness,
+                          background=self.background).render()
+            for line in self.cut()
+        ]
         return RenderImage.concat(
-            self.pre_rendered,
+            lines,
             direction=Direction.VERTICAL,
             alignment=self.alignment,
             spacing=self.line_spacing,

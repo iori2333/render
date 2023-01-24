@@ -16,16 +16,20 @@ class Cacheable:
             p.clear_cache()
 
     def add_parent(self, parent: "Cacheable") -> None:
-        self.__cache_parent__.append(parent)
+        if parent not in self.__cache_parent__:
+            self.__cache_parent__.append(parent)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
 
 
-def clear_cache_after(f: Callable):
+def list_update(f: Callable):
     def wrapper(self, *args, **kwargs):
         result = f(self, *args, **kwargs)
         self.clear_cache()
+        for item in self:
+            if isinstance(item, Cacheable):
+                item.add_parent(self)
         return result
 
     return wrapper
@@ -43,20 +47,20 @@ class CacheableList(list[T], Cacheable):
     def __repr__(self) -> str:
         return Cacheable.__repr__(self)
 
-    __setitem__ = clear_cache_after(list.__setitem__)
-    __delitem__ = clear_cache_after(list.__delitem__)
-    __add__ = clear_cache_after(list.__add__)
-    __iadd__ = clear_cache_after(list.__iadd__)
-    __mul__ = clear_cache_after(list.__mul__)
-    __imul__ = clear_cache_after(list.__imul__)
-    __rmul__ = clear_cache_after(list.__rmul__)
-    append = clear_cache_after(list.append)
-    extend = clear_cache_after(list.extend)
-    insert = clear_cache_after(list.insert)
-    pop = clear_cache_after(list.pop)
-    remove = clear_cache_after(list.remove)
-    reverse = clear_cache_after(list.reverse)
-    sort = clear_cache_after(list.sort)
+    __setitem__ = list_update(list.__setitem__)
+    __delitem__ = list_update(list.__delitem__)
+    __add__ = list_update(list.__add__)
+    __iadd__ = list_update(list.__iadd__)
+    __mul__ = list_update(list.__mul__)
+    __imul__ = list_update(list.__imul__)
+    __rmul__ = list_update(list.__rmul__)
+    append = list_update(list.append)
+    extend = list_update(list.extend)
+    insert = list_update(list.insert)
+    pop = list_update(list.pop)
+    remove = list_update(list.remove)
+    reverse = list_update(list.reverse)
+    sort = list_update(list.sort)
 
 
 def cached(func: Callable[[Any], T]) -> Callable[[Cacheable], T]:
