@@ -5,7 +5,7 @@ from typing_extensions import Self, TypedDict, Unpack, override
 from PIL import ImageFont
 
 from render.base import (Alignment, BaseStyle, Color, Direction, Palette,
-                         RenderImage, RenderObject, RenderText)
+                         RenderImage, RenderObject, RenderText, TextDecoration)
 from render.utils import PathLike
 from .text import Text
 
@@ -18,6 +18,8 @@ class TextStyle(TypedDict, total=False):
     stroke_color: Optional[Color]
     background: Optional[Color]
     hyphenation: bool
+    decoration: TextDecoration
+    decoration_thickness: int
 
 
 class NestedTextStyle:
@@ -60,7 +62,6 @@ class StyledText(RenderObject):
     ) -> None:
         super(StyledText, self).__init__(**kwargs)
 
-        self.max_width = max_width
         self.alignment = alignment
         self.line_spacing = line_spacing
         self.pre_rendered = [
@@ -119,7 +120,9 @@ class StyledText(RenderObject):
             stroke_width = style.get("stroke_width", 0)
             stroke_color = style.get("stroke_color", None)
             hyphenation = style.get("hyphenation", True)
-
+            decoration = style.get("decoration", TextDecoration.NONE)
+            decoration_thickness = style.get("decoration_thickness", -1)
+            
             line_break_at_end = block.endswith('\n')
             lines = block.split('\n')
             for lineno, line in enumerate(lines):
@@ -149,7 +152,10 @@ class StyledText(RenderObject):
                             style.get("color"),
                             stroke_width,
                             stroke_color,
-                            style.get("background") or Palette.TRANSPARENT,
+                            decoration,
+                            decoration_thickness,
+                            background=style.get("background")
+                            or Palette.TRANSPARENT,
                         ))
                     line = remain
                 # end of natural line

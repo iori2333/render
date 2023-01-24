@@ -79,7 +79,7 @@ def test_styled_text():
 
 def test_styled_stroke():
     text = "The <1>quick</1> brown <3>fox</3> <5>jumps</5> over a lazy dog."
-    default = TextStyle(font=Font.one(), size=36, color=Palette.BLACK)
+    default = TextStyle(font=Font.one(), size=36, color=Palette.BLACK, decoration=TextDecoration.UNDERLINE)
     styles = {
         "1": TextStyle(stroke_width=1, stroke_color=Palette.BLUE),
         "3": TextStyle(stroke_width=3, stroke_color=Palette.BLUE),
