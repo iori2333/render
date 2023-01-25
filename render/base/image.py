@@ -64,6 +64,11 @@ class RenderImage:
         return cls(im)
 
     @classmethod
+    def from_pil(cls, im: PILImage.Image) -> Self:
+        im = im.convert("RGBA")
+        return cls.from_raw(np.asarray(im))
+
+    @classmethod
     def concat(
         cls,
         images: Iterable[Self],
@@ -330,6 +335,9 @@ class RenderImage:
             show_im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2BGR)
             cv2.imshow("image", show_im)
             cv2.waitKey(0)
+
+    def to_pil(self) -> PILImage.Image:
+        return PILImage.fromarray(self.base_im)
 
     def to_rgb(self) -> Self:
         im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2RGB)
