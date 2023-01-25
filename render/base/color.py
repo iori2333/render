@@ -1,4 +1,6 @@
-from typing import Generator, Tuple, NamedTuple
+from __future__ import annotations
+
+from typing import Generator, NamedTuple
 from typing_extensions import Self
 
 
@@ -38,7 +40,7 @@ class Color(NamedTuple):
         else:
             return f"#{self.r:02X}{self.g:02X}{self.b:02X}"
 
-    def to_rgb(self) -> Tuple[int, int, int]:
+    def to_rgb(self) -> tuple[int, int, int]:
         return self.r, self.g, self.b
 
     def __repr__(self) -> str:
@@ -204,7 +206,13 @@ class Palette:
         )
 
     @classmethod
-    def colors(cls) -> Generator[Tuple[str, Color], None, None]:
+    def named_colors(cls) -> Generator[tuple[str, Color], None, None]:
         for name, color in cls.__dict__.items():
             if isinstance(color, Color):
                 yield name, color
+
+    @classmethod
+    def colors(cls) -> Generator[Color, None, None]:
+        for _, color in cls.named_colors():
+            if isinstance(color, Color):
+                yield color

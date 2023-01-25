@@ -1,6 +1,8 @@
-from typing import Callable, Generic, Optional, Sequence, TypeVar
-from typing_extensions import Self, Protocol
+from __future__ import annotations
+
 import bisect
+from typing import Callable, Generic, Sequence, TypeVar
+from typing_extensions import Protocol, Self
 
 
 class Comparable(Protocol):
@@ -18,7 +20,7 @@ class Comparable(Protocol):
         ...
 
 
-T = TypeVar('T')
+T = TypeVar('T', Comparable, int, float, str)
 V = TypeVar('V', Comparable, int, float, str)
 
 
@@ -47,7 +49,7 @@ class BisectKeyWrapper(Generic[T, V]):
 def find_leftmost(
     seq: Sequence[T],
     obj: V,
-    key: Optional[Callable[[T], V]] = None,
+    key: Callable[[T], V] | None = None,
 ) -> int:
     """Find the leftmost index of the object in the sequence."""
     wrapper = BisectKeyWrapper(obj, key) if key else obj
@@ -57,7 +59,7 @@ def find_leftmost(
 def find_rightmost(
     seq: Sequence[T],
     obj: V,
-    key: Optional[Callable[[T], V]] = None,
+    key: Callable[[T], V] | None = None,
 ) -> int:
     """Find the rightmost index of the object in the sequence."""
     wrapper = BisectKeyWrapper(obj, key) if key else obj

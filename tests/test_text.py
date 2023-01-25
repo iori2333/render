@@ -1,4 +1,5 @@
 from itertools import cycle
+
 from render import *
 from tests.data import *
 
@@ -31,8 +32,6 @@ styles = {
     for i, sz in enumerate(range(32, 64, 8))
 }
 
-default = TextStyle(font=next(fonts), size=36, color=Palette.BLACK)
-
 output_dir = Output / "text"
 output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -59,11 +58,12 @@ def test_text():
 
 
 def test_styled_text():
+    default = TextStyle(font=next(fonts), size=36, color=Palette.BLACK)
     for max_width in [None, 200, 400, 600]:
         for i, text in enumerate(texts_with_tag):
             container = Container.from_children(
                 children=[
-                    StyledText.of_tag(
+                    StyledText.of(
                         text,
                         default=default,
                         styles=styles,
@@ -79,14 +79,17 @@ def test_styled_text():
 
 def test_styled_stroke():
     text = "The <1>quick</1> brown <3>fox</3> <5>jumps</5> over a lazy dog."
-    default = TextStyle(font=Font.one(), size=36, color=Palette.BLACK, decoration=TextDecoration.UNDERLINE)
-    styles = {
+    default = TextStyle(font=Font.one(),
+                        size=36,
+                        color=Palette.BLACK,
+                        decoration=TextDecoration.UNDERLINE)
+    stroke_styles = {
         "1": TextStyle(stroke_width=1, stroke_color=Palette.BLUE),
         "3": TextStyle(stroke_width=3, stroke_color=Palette.BLUE),
         "5": TextStyle(stroke_width=5, stroke_color=Palette.BLUE),
     }
-    StyledText.of_tag(text, default=default,
-                      styles=styles).render().save(output_dir / "stroke.png")
+    StyledText.of(text, default=default,
+                  styles=stroke_styles).render().save(output_dir / "stroke.png")
 
 
 def test_text_decoration():

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import abstractmethod
 from enum import Enum
 from typing import TYPE_CHECKING, Sequence
@@ -7,8 +9,6 @@ from .image import RenderImage
 
 if TYPE_CHECKING:
     from .object import RenderObject
-else:
-    RenderObject = None  # avoid raising NameError
 
 
 class BoxSizing(Enum):

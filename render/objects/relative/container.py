@@ -1,8 +1,13 @@
-from typing import Dict, List, Tuple
+from __future__ import annotations
+
+from typing import Tuple
 from typing_extensions import Self, TypedDict, Unpack, override
 
 from render.base import BaseStyle, RenderImage, RenderObject
 from .utils import Box, DependencyGraph, LinearPolynomial, partition
+
+XY = Tuple[int, int]
+ConstraintTuple = Tuple[RenderObject, str, RenderObject]
 
 
 class Relative(TypedDict, total=False):
@@ -27,10 +32,6 @@ class Constraint(TypedDict, total=False):
     right: RenderObject
 
 
-Offset = Tuple[int, int]
-ConstraintTuple = Tuple[RenderObject, str, RenderObject]
-
-
 class RelativeContainer(RenderObject):
 
     def __init__(
@@ -38,20 +39,19 @@ class RelativeContainer(RenderObject):
         **kwargs: Unpack[BaseStyle],
     ) -> None:
         super(RelativeContainer, self).__init__(**kwargs)
-        self.children: List[RenderObject] = []
+        self.children: list[RenderObject] = []
         self.graph = DependencyGraph[RenderObject, str]().add_node(self)
-        self.offsets: Dict[RenderObject, Offset] = {}
-        self.constraints: List[ConstraintTuple] = []
+        self.offsets: dict[RenderObject, XY] = {}
+        self.constraints: list[ConstraintTuple] = []
 
     def add_child(
-            self,
-            child: RenderObject,
-            offset: Offset = (0, 0),
-            **kwargs: Unpack[Relative],
+        self,
+        child: RenderObject,
+        offset: XY = (0, 0),
+        **kwargs: Unpack[Relative],
     ) -> Self:
         if child in self.children:
             raise ValueError("Child already added")
-        self.rendered_content = None
         self.children.append(child)
         for relation, target in kwargs.items():
             self.graph.add_edge(target, child, relation)  # type: ignore
@@ -77,7 +77,7 @@ class RelativeContainer(RenderObject):
     def content_height(self) -> int:
         return self.infer_size()[1] if self.children else 0
 
-    def infer_size(self) -> Tuple[int, int]:
+    def infer_size(self) -> XY:
         boxes = self._setup_boxes()
         x = LinearPolynomial(x=1)
         y = LinearPolynomial(y=1)
@@ -86,7 +86,7 @@ class RelativeContainer(RenderObject):
         size = self._infer_size(boxes, x, y, w, h)
         return round(size[w.var]), round(size[h.var])
 
-    def _setup_boxes(self) -> Dict[RenderObject, Box]:
+    def _setup_boxes(self) -> dict[RenderObject, Box]:
         # TODO: Remove objects outside of container
         # e.g. A is align_left and align_top of container, B is left of A.
         #      If B not removed, A cannot meet the original requirement.
@@ -96,7 +96,7 @@ class RelativeContainer(RenderObject):
         h = LinearPolynomial(h=1)
         undef = LinearPolynomial(undef=1)
 
-        boxes: Dict[RenderObject, Box] = {self: Box.of_size(x, y, w, h)}
+        boxes: dict[RenderObject, Box] = {self: Box.of_size(x, y, w, h)}
         for obj in self.graph.topological_sort():
             if obj is self:
                 continue
@@ -120,12 +120,12 @@ class RelativeContainer(RenderObject):
 
     def _infer_size(
         self,
-        boxes: Dict[RenderObject, Box],
+        boxes: dict[RenderObject, Box],
         x: LinearPolynomial,
         y: LinearPolynomial,
         w: LinearPolynomial,
         h: LinearPolynomial,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         box_list = list(boxes.values())
         x1 = list(map(lambda b: b.x1, box_list))
         y1 = list(map(lambda b: b.y1, box_list))

@@ -1,11 +1,12 @@
+from __future__ import annotations
+
 from abc import abstractmethod
-from typing import Optional
-from typing_extensions import override, Self
+from typing_extensions import Self, override
 
-import numpy as np
 import cv2
+import numpy as np
 
-from render.base import ForegroundDecoration, RenderImage, ImageMask, BoxSizing
+from render.base import BoxSizing, ForegroundDecoration, ImageMask, RenderImage
 
 
 class Crop(ForegroundDecoration):
@@ -25,7 +26,7 @@ class RoundedCrop(Crop):
 
     def __init__(
         self,
-        radius: Optional[int],
+        radius: int | None,
         box_sizing: BoxSizing,
     ) -> None:
         super(RoundedCrop, self).__init__(box_sizing)
@@ -34,7 +35,7 @@ class RoundedCrop(Crop):
     @classmethod
     def of(
         cls,
-        radius: Optional[int] = None,
+        radius: int | None = None,
         box_sizing: BoxSizing = BoxSizing.CONTENT_BOX,
     ) -> Self:
         return cls(radius, box_sizing)
@@ -62,8 +63,8 @@ class RectCrop(Crop):
 
     def __init__(
         self,
-        width: Optional[int],
-        height: Optional[int],
+        width: int | None,
+        height: int | None,
         border_radius: int,
         box_sizing: BoxSizing,
     ) -> None:
@@ -75,8 +76,8 @@ class RectCrop(Crop):
     @classmethod
     def of(
         cls,
-        width: Optional[int] = None,
-        height: Optional[int] = None,
+        width: int | None = None,
+        height: int | None = None,
         border_radius: int = 0,
         box_sizing: BoxSizing = BoxSizing.CONTENT_BOX,
     ) -> Self:
@@ -85,7 +86,7 @@ class RectCrop(Crop):
     @classmethod
     def of_square(
         cls,
-        size: Optional[int] = None,
+        size: int | None = None,
         border_radius: int = 0,
         box_sizing: BoxSizing = BoxSizing.CONTENT_BOX,
     ) -> Self:

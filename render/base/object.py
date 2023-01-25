@@ -3,10 +3,10 @@ from functools import lru_cache
 from typing import Iterable
 from typing_extensions import TypedDict
 
-from .decorations import Decoration, Decorations
 from .color import Color, Palette
+from .decorations import Decoration, Decorations
 from .image import RenderImage
-from .properties import Space, Border
+from .properties import Border, Space
 
 
 class BaseStyle(TypedDict, total=False):

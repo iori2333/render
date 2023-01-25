@@ -1,8 +1,11 @@
-from enum import Enum
-from typing import Iterable, Tuple
-from typing_extensions import override, Self, Unpack
+from __future__ import annotations
 
-from render.base import RenderObject, RenderImage, Alignment, Direction, BaseStyle
+from enum import Enum
+from typing import Iterable
+from typing_extensions import Self, Unpack, override
+
+from render.base import (Alignment, BaseStyle, Direction, RenderImage,
+                         RenderObject)
 
 
 class Container(RenderObject):
@@ -121,7 +124,7 @@ class FixedContainer(Container):
         return cls(width, height, justify_content, alignment, direction,
                    children, **kwargs)
 
-    def _render_boundary(self) -> Tuple[int, int]:
+    def _render_boundary(self) -> tuple[int, int]:
         if self.direction == Direction.HORIZONTAL:
             space = self.content_width - sum(child.width
                                              for child in self.children)

@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from typing import Iterable, Sequence
-from typing_extensions import Self
+from typing_extensions import Literal, Self
 
 import cv2
 import numpy as np
@@ -320,10 +322,14 @@ class RenderImage:
         if not cv2.imwrite(str(path), save_im):
             raise IOError(f"Failed to save image to {path}")
 
-    def show(self) -> None:
-        show_im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2BGR)
-        cv2.imshow("image", show_im)
-        cv2.waitKey(0)
+    def show(self, lib: Literal["cv2", "PIL"] = "PIL") -> None:
+        if lib == "PIL":
+            show_im = PILImage.fromarray(self.base_im)
+            show_im.show()
+        else:
+            show_im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2BGR)
+            cv2.imshow("image", show_im)
+            cv2.waitKey(0)
 
     def to_rgb(self) -> Self:
         im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2RGB)

@@ -1,6 +1,6 @@
 from typing_extensions import Self, override
 
-from render.base import RenderObject, RenderImage, Palette
+from render.base import Palette, RenderImage, RenderObject
 
 
 class Spacer(RenderObject):

@@ -1,4 +1,6 @@
-from typing import Iterable, Optional
+from __future__ import annotations
+
+from typing import Iterable
 from typing_extensions import override, Self, Unpack, Literal
 
 from render.base import RenderObject, RenderImage, Alignment, BaseStyle
@@ -25,8 +27,8 @@ class Stack(RenderObject):
         cls,
         children: Iterable[RenderObject],  # bottom to top
         alignment: Alignment = Alignment.START,
-        vertical_alignment: Optional[Alignment] = None,
-        horizontal_alignment: Optional[Alignment] = None,
+        vertical_alignment: Alignment | None = None,
+        horizontal_alignment: Alignment | None = None,
         paste_mode: Literal["paste", "overlay", "cover"] = "paste",
         **kwargs: Unpack[BaseStyle],
     ) -> Self:
@@ -40,12 +42,14 @@ class Stack(RenderObject):
     @property
     @override
     def content_width(self) -> int:
-        return max(child.width for child in self.children) if self.children else 0
+        return max(child.width
+                   for child in self.children) if self.children else 0
 
     @property
     @override
     def content_height(self) -> int:
-        return max(child.height for child in self.children) if self.children else 0
+        return max(child.height
+                   for child in self.children) if self.children else 0
 
     @override
     def render_content(self) -> RenderImage:

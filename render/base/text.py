@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 from enum import Flag, auto
-from typing import Optional
 from typing_extensions import Self
 
 import numpy as np
-from PIL import ImageFont, ImageDraw, Image
+from PIL import Image, ImageDraw, ImageFont
 
 from render.utils import PathLike
 from .color import Color, Palette
@@ -26,7 +27,7 @@ class RenderText:
         size: int,
         color: Color = Palette.BLACK,
         stroke_width: int = 0,
-        stroke_color: Optional[Color] = None,
+        stroke_color: Color | None = None,
         decoration: TextDecoration = TextDecoration.NONE,
         decoration_thickness: int = -1,
     ):
@@ -45,9 +46,9 @@ class RenderText:
         text: str,
         font: PathLike,
         size: int = 12,
-        color: Optional[Color] = None,
+        color: Color | None = None,
         stroke_width: int = 0,
-        stroke_color: Optional[Color] = None,
+        stroke_color: Color | None = None,
         decoration: TextDecoration = TextDecoration.NONE,
         decoration_thickness: int = -1,
         background: Color = Palette.TRANSPARENT,

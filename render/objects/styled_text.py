@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import re
-from typing import Dict, Generator, Iterable, List, Optional, Tuple
+from typing import Generator, Iterable
 from typing_extensions import Self, TypedDict, Unpack, override
 
 from PIL import ImageFont
@@ -13,10 +15,10 @@ from .text import Text
 class TextStyle(TypedDict, total=False):
     font: PathLike
     size: int
-    color: Optional[Color]
+    color: Color | None
     stroke_width: int
-    stroke_color: Optional[Color]
-    background: Optional[Color]
+    stroke_color: Color | None
+    background: Color | None
     hyphenation: bool
     decoration: TextDecoration
     decoration_thickness: int
@@ -25,7 +27,7 @@ class TextStyle(TypedDict, total=False):
 class NestedTextStyle:
 
     def __init__(self) -> None:
-        self.stack: List[Tuple[str, TextStyle]] = []
+        self.stack: list[tuple[str, TextStyle]] = []
 
     def push(self, name: str, style: TextStyle) -> None:
         self.stack.append((name, style))
@@ -54,8 +56,8 @@ class StyledText(RenderObject):
 
     def __init__(
         self,
-        blocks: Iterable[Tuple[str, TextStyle]],
-        max_width: Optional[int],
+        blocks: Iterable[tuple[str, TextStyle]],
+        max_width: int | None,
         alignment: Alignment,
         line_spacing: int,
         **kwargs: Unpack[BaseStyle],
@@ -92,9 +94,9 @@ class StyledText(RenderObject):
 
     def cut(
         self,
-        blocks: Iterable[Tuple[str, TextStyle]],
-        max_width: Optional[int],
-    ) -> Generator[List[RenderText], None, None]:
+        blocks: Iterable[tuple[str, TextStyle]],
+        max_width: int | None,
+    ) -> Generator[list[RenderText], None, None]:
         """Cut the text into lines. Each line is a list of RenderTexts."""
 
         def current_width():
@@ -104,14 +106,15 @@ class StyledText(RenderObject):
             return max_width - sum(t.width for t in line_buffer)
 
         def flush(
-            buffer: List[RenderText]
-        ) -> Generator[List[RenderText], None, None]:
+            buffer: list[RenderText]
+        ) -> Generator[list[RenderText], None, None]:
+            """Yield the current line and clear the buffer."""
             if buffer:
                 buffer[-1].text = buffer[-1].text.rstrip(" ")
             yield buffer
             buffer.clear()
 
-        line_buffer: List[RenderText] = []
+        line_buffer: list[RenderText] = []
         for block, style in blocks:
             # load style properties
             font_path = str(style.get("font", ""))
@@ -179,12 +182,12 @@ class StyledText(RenderObject):
         return im
 
     @classmethod
-    def of_tag(
+    def of(
         cls,
         text: str,
         default: TextStyle,
-        styles: Dict[str, TextStyle],
-        max_width: Optional[int] = None,
+        styles: dict[str, TextStyle],
+        max_width: int | None = None,
         alignment: Alignment = Alignment.START,
         line_spacing: int = 0,
         **kwargs: Unpack[BaseStyle],
@@ -195,10 +198,17 @@ class StyledText(RenderObject):
             text (str): The text with html tags.
             default (TextStyle): The default text style.
             styles (Dict[str, TextStyle]): The styles for each tag.
+
+        Example:
+            >>> text = Text.of(
+            ...     "Hello <b>world</b>!",
+            ...     TextStyle(color=Palette.RED),
+            ...     {"b": TextStyle(color=Palette.BLUE)},
+            ... )
         """
         style = NestedTextStyle()
         style.push("default", default)
-        blocks: List[Tuple[str, TextStyle]] = []
+        blocks: list[tuple[str, TextStyle]] = []
 
         index = 0
         while index < len(text):

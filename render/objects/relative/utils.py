@@ -1,5 +1,6 @@
-from typing import (Any, Callable, Dict, Generic, Iterable, List, Set, Tuple,
-                    TypeVar, Union)
+from __future__ import annotations
+
+from typing import Any, Callable, Generic, Iterable, TypeVar, Union
 from typing_extensions import Self
 
 Linear = Union[int, float, "LinearPolynomial"]
@@ -169,7 +170,7 @@ class Inequality(LinearPolynomial):
     def satisfy(self, **values: float) -> bool:
         return self.eval(**values) >= 0
 
-    def solve(self) -> Tuple[str, bool, float]:
+    def solve(self) -> tuple[str, bool, float]:
         """Return (var, is_greater, value)"""
         if not self.solvable:
             raise ValueError("Not solvable")
@@ -177,7 +178,7 @@ class Inequality(LinearPolynomial):
         return var, self.symbols[var] > 0, -self.const / self.symbols[var]
 
     def __str__(self) -> str:
-        return super().__str__() + " >= 0" 
+        return super().__str__() + " >= 0"
 
 
 class Point:
@@ -313,11 +314,11 @@ class DependencyGraph(Generic[Node, Edge]):
 
     def __init__(self) -> None:
         # node -> successors
-        self.graph: Dict[Any, Set[Any]] = {}
+        self.graph: dict[Any, set[Any]] = {}
         # node -> predecessors
-        self.reverse_graph: Dict[Any, Set[Any]] = {}
+        self.reverse_graph: dict[Any, set[Any]] = {}
         # (node, successor) -> edges
-        self.edge: Dict[Tuple[Any, Any], Set[Edge]] = {}
+        self.edge: dict[tuple[Any, Any], set[Edge]] = {}
 
     def add_node(self, node: Node) -> Self:
         self.graph.setdefault(node, set())
@@ -332,13 +333,13 @@ class DependencyGraph(Generic[Node, Edge]):
         self.edge.setdefault((node, successor), set()).add(edge)
         return self
 
-    def get_predecessors(self, node: Node) -> Set[Node]:
+    def get_predecessors(self, node: Node) -> set[Node]:
         return self.reverse_graph[node]
 
-    def get_edges(self, node: Node, successor: Node) -> Set[Edge]:
+    def get_edges(self, node: Node, successor: Node) -> set[Edge]:
         return self.edge[(node, successor)]
 
-    def topological_sort(self) -> List[Node]:
+    def topological_sort(self) -> list[Node]:
         """Returns a topological sort of the graph, or raises an exception if the graph is cyclic."""
         reverse_graph = {
             node: set(predecessors)
@@ -364,7 +365,7 @@ class DependencyGraph(Generic[Node, Edge]):
 def partition(
     predicate: Callable[[T], bool],
     iterable: Iterable[T],
-) -> Tuple[List[T], List[T]]:
+) -> tuple[list[T], list[T]]:
     x, y = [], []
     for item in iterable:
         (x if predicate(item) else y).append(item)

@@ -1,14 +1,16 @@
+from __future__ import annotations
+
 import string
 from functools import lru_cache
-from typing import Optional, Sequence, Tuple
-from typing_extensions import override, Self, Unpack
+from typing import Sequence
+from typing_extensions import Self, Unpack, override
 
 import pyphen
 from PIL.ImageFont import FreeTypeFont, truetype
 
-from render.base import (RenderObject, RenderImage, RenderText, Color,
-                         BaseStyle, Alignment, Direction, TextDecoration)
-from render.utils import find_rightmost, PathLike
+from render.base import (Alignment, BaseStyle, Color, Direction, RenderImage,
+                         RenderObject, RenderText, TextDecoration)
+from render.utils import PathLike, find_rightmost
 
 
 class Text(RenderObject):
@@ -21,11 +23,11 @@ class Text(RenderObject):
         text: str,
         font: PathLike,
         size: int,
-        max_width: Optional[int],
+        max_width: int | None,
         alignment: Alignment,
-        color: Optional[Color],
+        color: Color | None,
         stroke_width: int,
-        stroke_color: Optional[Color],
+        stroke_color: Color | None,
         line_spacing: int,
         hyphenation: bool,
         text_decoration: TextDecoration,
@@ -58,9 +60,9 @@ class Text(RenderObject):
         font: FreeTypeFont,
         text: str,
         stroke_width: int,
-        max_width: Optional[int],
+        max_width: int | None,
         hyphenation: bool,
-    ) -> Tuple[str, str, bool]:
+    ) -> tuple[str, str, bool]:
         bad_split = False
         if max_width is None:
             return text, "", bad_split
@@ -158,13 +160,17 @@ class Text(RenderObject):
             return "", word
         return cuts[cut_bound - 1][0] + "-", cuts[cut_bound - 1][1]
 
-    def cut(self, text: str, stroke_width: int,
-            max_width: Optional[int]) -> Sequence[str]:
+    def cut(
+        self,
+        text: str,
+        stroke_width: int,
+        max_width: int | None,
+    ) -> Sequence[str]:
         lines = text.splitlines()
         if max_width is None:
             return lines
         font = truetype(str(self.font), self.size)
-        res = list[str]()
+        res: list[str] = []
         for line in lines:
             splitted = self._split_line(font, line, stroke_width, max_width,
                                         self.hyphenation)
@@ -177,11 +183,11 @@ class Text(RenderObject):
         text: str,
         font: PathLike,
         size: int = 12,
-        max_width: Optional[int] = None,
+        max_width: int | None = None,
         alignment: Alignment = Alignment.START,
-        color: Optional[Color] = None,
+        color: Color | None = None,
         stroke_width: int = 0,
-        stroke_color: Optional[Color] = None,
+        stroke_color: Color | None = None,
         line_spacing: int = 0,
         hyphenation: bool = True,
         text_decoration: TextDecoration = TextDecoration.NONE,

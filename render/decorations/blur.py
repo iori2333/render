@@ -1,7 +1,8 @@
 from typing_extensions import Self, override
+
 import cv2
 
-from render.base import ForegroundDecoration, BoxSizing, RenderImage
+from render.base import BoxSizing, ForegroundDecoration, RenderImage
 
 
 class GaussianBlur(ForegroundDecoration):

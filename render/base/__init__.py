@@ -1,16 +1,17 @@
 from .color import Color, Palette
-from .object import RenderObject, BaseStyle
-from .properties import Alignment, Direction, Space, Border, Interpolation
-from .text import RenderText, TextDecoration
-from .decorations import ForegroundDecoration, BackgroundDecoration, Decorations, BoxSizing
+from .decorations import (BackgroundDecoration, BoxSizing, Decorations,
+                          ForegroundDecoration)
 from .image import ImageMask, RenderImage
+from .object import BaseStyle, RenderObject
+from .properties import Alignment, Border, Direction, Interpolation, Space
+from .text import RenderText, TextDecoration
 
 __all__ = [
     "Alignment",
     "BackgroundDecoration",
     "BaseStyle",
-    "BoxSizing",
     "Border",
+    "BoxSizing",
     "Color",
     "Decorations",
     "Direction",
@@ -22,5 +23,5 @@ __all__ = [
     "RenderObject",
     "RenderText",
     "Space",
-    "TextDecoration",   
+    "TextDecoration",
 ]

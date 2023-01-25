@@ -4,7 +4,7 @@ from typing_extensions import Self, override
 import cv2
 import numpy as np
 
-from render.base import BoxSizing, ForegroundDecoration, RenderImage, Color
+from render.base import BoxSizing, Color, ForegroundDecoration, RenderImage
 
 
 class ContourType(Enum):

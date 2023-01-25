@@ -1,4 +1,5 @@
 import cv2
+
 from render import *
 from tests.data import *
 from tests.utils import TestRect
@@ -48,7 +49,7 @@ def make_color_rect(name: str,
 
 
 def _test_color(use_stack: bool = True):
-    colors = list(Palette.colors())
+    colors = list(Palette.named_colors())
     n = len(colors)
     x = round(n**0.5 + 1)
 
