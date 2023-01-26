@@ -104,12 +104,14 @@ def test_image():
     im2.save(Output / "image-out-rgb.png")
     im3.save(Output / "image-empty.png")
 
-    try:
-        RenderImage.from_raw(cv2.cvtColor(im1.base_im, cv2.COLOR_RGBA2GRAY))
-    except ValueError as e:
-        print("ValueError successfully raised: {}".format(e))
-    else:
-        assert 0, "Expected ValueError"
+    # try:
+    #     RenderImage.from_raw(cv2.cvtColor(im1.base_im, cv2.COLOR_RGBA2GRAY))
+    # except ValueError as e:
+    #     print("ValueError successfully raised: {}".format(e))
+    # else:
+    #     assert 0, "Expected ValueError"
+    im4 = RenderImage.from_raw(cv2.cvtColor(im1.base_im, cv2.COLOR_RGBA2GRAY))
+    im4.save(Output / "image-out-gray.png")
 
 
 def test_padding():

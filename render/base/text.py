@@ -3,7 +3,6 @@ from __future__ import annotations
 from enum import Flag, auto
 from typing_extensions import Self
 
-import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
 from render.utils import PathLike
@@ -100,7 +99,7 @@ class RenderText:
                 fill=self.color,
                 width=thick,
             )
-        return RenderImage.from_raw(np.asarray(im))
+        return RenderImage.from_pil(im)
 
     @property
     def baseline(self) -> int:
