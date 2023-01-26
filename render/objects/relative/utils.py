@@ -81,6 +81,33 @@ class LinearPolynomial:
         else:
             return NotImplemented
 
+    def __le__(self, other: Linear) -> bool:
+        if isinstance(other, (int, float)):
+            return self.const <= other and all(c <= 0
+                                               for c in self.symbols.values())
+        elif isinstance(other, LinearPolynomial):
+            return self - other <= 0
+        else:
+            return NotImplemented
+    
+    def __gt__(self, other: Linear) -> bool:
+        if isinstance(other, (int, float)):
+            return self.const > other and all(c >= 0
+                                              for c in self.symbols.values())
+        elif isinstance(other, LinearPolynomial):
+            return self - other > 0
+        else:
+            return NotImplemented
+
+    def __ge__(self, other: Linear) -> bool:
+        if isinstance(other, (int, float)):
+            return self.const >= other and all(c >= 0
+                                               for c in self.symbols.values())
+        elif isinstance(other, LinearPolynomial):
+            return self - other >= 0
+        else:
+            return NotImplemented
+
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, LinearPolynomial):
             return self.const == other.const and self.symbols == other.symbols
@@ -293,8 +320,13 @@ class Box:
                            self.w, self.h)
 
     def center(self, other: Self) -> Self:
+        """Brief alias of center_horizontal + center_vertical."""
         return Box.of_size(other.p1.x + (other.w - self.w) / 2,
                            other.p1.y + (other.h - self.h) / 2, self.w, self.h)
+
+    def relative(self, other: Self) -> Self:
+        """Brief alias of align_left + align_top."""
+        return Box.of_size(other.p1.x, other.p1.y, self.w, self.h)
 
     def prior_to(self, other: Self) -> Self:
         """A dummy method to make self dependent on other 

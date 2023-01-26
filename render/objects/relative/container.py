@@ -24,6 +24,8 @@ class Relative(TypedDict, total=False):
     center_horizontal: RenderObject
     # brief for center_vertical and center_horizontal
     center: RenderObject
+    # brief for align_top and align_left
+    relative: RenderObject
     # control z-index implicitly
     prior_to: RenderObject
 
@@ -42,6 +44,8 @@ class RelativeContainer(RenderObject):
     The container will automatically resize itself to fit all children.
     
     Attributes:
+        strict: Expand the container to fit outside children if True.
+            Otherwise, the container only keeps inner part.
         children: A list of children objects.
         graph: A graph that stores the relative positions of children.
         offsets: A dictionary that stores the offset of each child.
@@ -59,9 +63,11 @@ class RelativeContainer(RenderObject):
     """
     def __init__(
         self,
+        strict: bool = False,
         **kwargs: Unpack[BaseStyle],
     ) -> None:
         super(RelativeContainer, self).__init__(**kwargs)
+        self.strict = strict
         self.children: list[RenderObject] = []
         self.graph = DependencyGraph[RenderObject, str]().add_node(self)
         self.offsets: dict[RenderObject, XY] = {}
@@ -130,9 +136,6 @@ class RelativeContainer(RenderObject):
             ValueError: If the relative positions cannot be inferred or
                 there is a cyclic dependency of objects.
         """
-        # TODO: Remove objects outside of container
-        # e.g. A is align_left and align_top of container, B is left of A.
-        #      If B not removed, A cannot meet the original requirement.
         x = LinearPolynomial(x=1)
         y = LinearPolynomial(y=1)
         w = LinearPolynomial(w=1)
@@ -214,10 +217,26 @@ class RelativeContainer(RenderObject):
             raise ValueError(
                 f"Could not infer size of container: w={width}, h={height}")
 
+        if self.strict:
+            # remove objects that are partially outside of the container
+            # and recalculate the size
+            inside_box = {}
+            for obj, box in boxes.items():
+                _x1 = box.x1.eval(x=0, y=0, w=width_c, h=height_c)
+                _x2 = box.x2.eval(x=0, y=0, w=width_c, h=height_c)
+                _y1 = box.y1.eval(x=0, y=0, w=width_c, h=height_c)
+                _y2 = box.y2.eval(x=0, y=0, w=width_c, h=height_c)
+                if _x1 >= 0 and _x2 <= width_c and _y1 >= 0 and _y2 <= height_c:
+                    inside_box[obj] = box
+            if len(inside_box) < len(boxes):
+                return self._infer_size(inside_box, x, y, w, h)
+            # else: all objects are inside the container, continue
+
         x_eval = [x.eval(x=0, y=0, w=width_c, h=height_c) for x in x1 + x2]
         y_eval = [y.eval(x=0, y=0, w=width_c, h=height_c) for y in y1 + y2]
-        x_offset = -min(x_eval) if min(x_eval) < 0 else 0
-        y_offset = -min(y_eval) if min(y_eval) < 0 else 0
+        min_x, min_y = min(x_eval), min(y_eval)
+        x_offset = -min_x
+        y_offset = -min_y
         return {
             x.var: x_offset,
             y.var: y_offset,
