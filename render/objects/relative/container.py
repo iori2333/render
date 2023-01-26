@@ -11,6 +11,7 @@ ConstraintTuple = Tuple[RenderObject, str, RenderObject]
 
 
 class Relative(TypedDict, total=False):
+    """Relative position of an object to another object."""
     above: RenderObject
     below: RenderObject
     left: RenderObject
@@ -26,6 +27,7 @@ class Relative(TypedDict, total=False):
 
 
 class Constraint(TypedDict, total=False):
+    """Constraint between two objects."""
     above: RenderObject
     below: RenderObject
     left: RenderObject
@@ -33,7 +35,26 @@ class Constraint(TypedDict, total=False):
 
 
 class RelativeContainer(RenderObject):
+    """A container that can arrange its children in relative positions.
+    
+    The container will automatically resize itself to fit all children.
+    
+    Attributes:
+        children: A list of children objects.
+        graph: A graph that stores the relative positions of children.
+        offsets: A dictionary that stores the offset of each child.
+        constraints: A list of constraints between children.
 
+    Example:
+        >>> container = RelativeContainer()
+        >>> center = RenderObject()
+        >>> obj = RenderObject()
+        >>> container.add_child(center, center=container)
+        >>> container.add_child(obj, right=center)
+        >>> container.render()
+        The container will put the center object in the center of itself,
+        and put the obj object to the right of the center object.
+    """
     def __init__(
         self,
         **kwargs: Unpack[BaseStyle],
@@ -45,11 +66,18 @@ class RelativeContainer(RenderObject):
         self.constraints: list[ConstraintTuple] = []
 
     def add_child(
-        self,
-        child: RenderObject,
-        offset: XY = (0, 0),
-        **kwargs: Unpack[Relative],
+            self,
+            child: RenderObject,
+            offset: XY = (0, 0),
+            **kwargs: Unpack[Relative],
     ) -> Self:
+        """Add a child to the container and set its relative position.
+
+        Args:
+            child: The child object to add.
+            offset: The final offset of the child.
+            **kwargs: The child object's relative position to other objects.
+        """
         if child in self.children:
             raise ValueError("Child already added")
         self.children.append(child)
@@ -63,6 +91,12 @@ class RelativeContainer(RenderObject):
         obj: RenderObject,
         **kwargs: Unpack[Constraint],
     ) -> Self:
+        """Add a constraint between two objects.
+        
+        Args:
+            obj: The object to add constraint to.
+            **kwargs: The constraint between the object and other objects.
+        """
         for relation, target in kwargs.items():
             self.constraints.append((obj, relation, target))  # type: ignore
         return self
@@ -78,6 +112,7 @@ class RelativeContainer(RenderObject):
         return self.infer_size()[1] if self.children else 0
 
     def infer_size(self) -> XY:
+        """Infer the size of the container."""
         boxes = self._setup_boxes()
         x = LinearPolynomial(x=1)
         y = LinearPolynomial(y=1)
@@ -87,6 +122,12 @@ class RelativeContainer(RenderObject):
         return round(size[w.var]), round(size[h.var])
 
     def _setup_boxes(self) -> dict[RenderObject, Box]:
+        """Create boxes for each child according to the relative positions.
+        
+        Raises:
+            ValueError: If the relative positions cannot be inferred or
+                there is a cyclic dependency of objects.
+        """
         # TODO: Remove objects outside of container
         # e.g. A is align_left and align_top of container, B is left of A.
         #      If B not removed, A cannot meet the original requirement.
@@ -109,7 +150,7 @@ class RelativeContainer(RenderObject):
                     obj_box = obj_box.relative_to(boxes[pred], relative)
             # check if x, y are defined
             if obj_box.x1 is undef or obj_box.y1 is undef:
-                raise ValueError(f"Could not resolve position of object: "
+                raise ValueError(f"Could not infer position of object: "
                                  f"{obj}(x={obj_box.x1}, y={obj_box.y1})")
             # apply offset
             boxes[obj] = obj_box.offset(*self.offsets.get(obj, (0, 0)))
@@ -126,6 +167,17 @@ class RelativeContainer(RenderObject):
         w: LinearPolynomial,
         h: LinearPolynomial,
     ) -> dict[str, float]:
+        """Calculate the size of the container 
+        according to the boxes and constraints.
+        
+        Find the boundary of each child object and calculate the width from
+        the leftmost and rightmost child, and the height from the topmost and
+        bottommost child. Then, apply the constraints to the width and height.
+
+        Raises:
+            ValueError: If the constraints cannot be satisfied or the size
+                cannot be inferred.
+        """
         box_list = list(boxes.values())
         x1 = list(map(lambda b: b.x1, box_list))
         y1 = list(map(lambda b: b.y1, box_list))
@@ -158,7 +210,7 @@ class RelativeContainer(RenderObject):
 
         if width_c < 0 or height_c < 0:
             raise ValueError(
-                f"Could not resolve size of container: w={width}, h={height}")
+                f"Could not infer size of container: w={width}, h={height}")
 
         x_eval = [x.eval(x=0, y=0, w=width_c, h=height_c) for x in x1 + x2]
         y_eval = [y.eval(x=0, y=0, w=width_c, h=height_c) for y in y1 + y2]
@@ -173,6 +225,15 @@ class RelativeContainer(RenderObject):
 
     @override
     def render_content(self) -> RenderImage:
+        """Render children objects to specified relative positions.
+        
+        The bounding box of the container is represented by a 4-variable 
+        polynomial: x, y, w, h. Children boxes are then calculated based on
+        container box and relative positions in topological order. The box of 
+        the container (4 var) is solved by covering all children boxes and 
+        applying constraints. Finally, the children are rendered to the 
+        calculated positions.
+        """
         if len(self.children) == 0:
             return RenderImage.empty(0, 0)
 

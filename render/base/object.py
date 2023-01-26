@@ -10,16 +10,14 @@ from .properties import Border, Space
 
 
 class BaseStyle(TypedDict, total=False):
-    background: Color
-    border: Border
-    margin: Space
-    padding: Space
-    decorations: Iterable[Decoration]
-
-
-class RenderObject(ABC):
-    """
-    Base class of all renderable objects.
+    """Base style of a render object.
+    
+    Args:
+        background: background color filled inside the border
+        padding: padding (px) of the object
+        border: width (px) and color of the border
+        margin: margin (px) of the object
+        decorations: decorations of the object
 
     Box model:
         margin -> border -> padding -> content
@@ -37,6 +35,16 @@ class RenderObject(ABC):
         | | | +-------+ | | |
         | | +-----------+ | |
         | +---------------+ |
+    """
+    background: Color
+    margin: Space
+    border: Border
+    padding: Space
+    decorations: Iterable[Decoration]
+
+
+class RenderObject(ABC):
+    """Base class of all renderable objects.
 
     Abstract Methods:
         content_width: int - width of the object
@@ -77,23 +85,34 @@ class RenderObject(ABC):
     @property
     @lru_cache()
     def width(self) -> int:
+        """Width of the object.
+        
+        Note: 
+            Modifications to the object should not affect content width, 
+            otherwise unexpected results may occur due to caching.
+        """
         width = self.content_width + self.padding.width + self.margin.width + self.border.width * 2
         return width
 
     @property
     @lru_cache()
     def height(self) -> int:
+        """Height of the object.
+        
+        Note: 
+            Modifications to the object should not affect content height, 
+            otherwise unexpected results may occur due to caching.
+        """
         height = self.content_height + self.padding.height + self.margin.height + self.border.width * 2
         return height
 
     def render(self) -> RenderImage:
-        """
-        Render an object to image.
+        """Render an object to image.
 
         Render process:
         1. Render content (implemented by subclasses)
         2. Apply content decorations
-        3. Draw border
+        3. Draw border & fill background
         4. Apply full decorations
         5. Apply background decorations if needed
         """

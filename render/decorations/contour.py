@@ -13,6 +13,16 @@ class ContourType(Enum):
 
 
 class Contour(ForegroundDecoration):
+    """Draw a contour around the foreground of the image.
+    
+    Attributes:
+        color: color of the contour
+        thickness: thickness of the contour
+        dilation: size of the dilation kernel
+        contour_type: type of the contour, either EXTERNAL or ALL
+        threshold: threshold of alpha channel for foreground
+        box_sizing: which render stage to apply the decoration
+    """
 
     def __init__(
         self,
@@ -40,18 +50,6 @@ class Contour(ForegroundDecoration):
         threshold: int = 0,
         box_sizing: BoxSizing = BoxSizing.CONTENT_BOX,
     ) -> Self:
-        """Create a new Contour decoration
-
-        Args:
-            thickness (int): thickness of the contour
-            dilation (int): size of the dilation kernel
-            contour_type (ContourType): type of contour to draw, either EXTERNAL or ALL
-            threshold (int): threshold of alpha channel to differentiate between foreground and background
-            box_sizing (BoxSizing): box sizing
-
-        Returns:
-            Contour: contour decoration
-        """
         return cls(color, thickness, dilation, contour_type, threshold,
                    box_sizing)
 

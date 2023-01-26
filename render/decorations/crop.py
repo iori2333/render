@@ -10,9 +10,15 @@ from render.base import BoxSizing, ForegroundDecoration, ImageMask, RenderImage
 
 
 class Crop(ForegroundDecoration):
+    """Crop foreground image by applying a mask to it."""
 
     @abstractmethod
     def get_mask(self, obj: RenderImage) -> ImageMask:
+        """Create a crop mask.
+        
+        Mask should be a 2D array of shape (height, width) with 
+        values in [0, 255].
+        """
         raise NotImplementedError()
 
     @override
@@ -22,14 +28,15 @@ class Crop(ForegroundDecoration):
         return obj
 
 
-class RoundedCrop(Crop):
+class CircleCrop(Crop):
+    """Crop foreground image to a circle."""
 
     def __init__(
         self,
         radius: int | None,
         box_sizing: BoxSizing,
     ) -> None:
-        super(RoundedCrop, self).__init__(box_sizing)
+        super(CircleCrop, self).__init__(box_sizing)
         self.radius = radius
 
     @classmethod
@@ -60,6 +67,7 @@ class RoundedCrop(Crop):
 
 
 class RectCrop(Crop):
+    """Crop foreground image to a (rounded-)rectangle."""
 
     def __init__(
         self,
