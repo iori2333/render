@@ -7,6 +7,7 @@ from render.utils import PathLike
 
 
 class Image(RenderObject):
+    """A RenderObject wrapping a RenderImage."""
 
     def __init__(self, im: RenderImage, **kwargs: Unpack[BaseStyle]) -> None:
         super(Image, self).__init__(**kwargs)

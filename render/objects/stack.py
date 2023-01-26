@@ -7,6 +7,17 @@ from render.base import RenderObject, RenderImage, Alignment, BaseStyle
 
 
 class Stack(RenderObject):
+    """A container that stacks its children on top of each other.
+    
+    The first child is at the bottom, the last child is at the top.
+    And the final content size is the size of the largest child.
+
+    Attributes:
+        children: list of children to be stacked.
+        vertical_alignment: alignment of children in vertical direction.
+        horizontal_alignment: alignment of children in horizontal direction.
+        paste_mode: paste mode of children. See RenderImage.paste.
+    """
 
     def __init__(
         self,

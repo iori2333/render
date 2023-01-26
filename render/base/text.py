@@ -18,6 +18,18 @@ class TextDecoration(Flag):
 
 
 class RenderText:
+    """Render text to an image in one single line.
+    
+    Attributes:
+        text: text to render.
+        font: font file path.
+        size: font size.
+        color: text color.
+        stroke_width: width of stroke.
+        stroke_color: color of stroke.
+        decoration: text decoration. See `TextDecoration`.
+        decoration_thickness: thickness of text decoration lines.
+    """
 
     def __init__(
         self,
@@ -52,10 +64,15 @@ class RenderText:
         decoration_thickness: int = -1,
         background: Color = Palette.TRANSPARENT,
     ) -> Self:
+        """Create a `RenderText` instance with default values.
+
+        If `color` is not specified, it will be automatically chosen
+        from BLACK or WHITE based on the background color luminance.
+        """
         if color is None:
             r, g, b = background.to_rgb()
-            lightness = 0.2126 * r + 0.7152 * g + 0.0722 * b
-            color = Palette.WHITE if lightness < 128 else Palette.BLACK
+            luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
+            color = Palette.WHITE if luminance < 128 else Palette.BLACK
         if decoration_thickness < 0:
             decoration_thickness = max(size // 10, 1)
         return cls(text, font, size, color, stroke_width, stroke_color,

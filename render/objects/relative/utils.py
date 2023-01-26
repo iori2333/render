@@ -5,8 +5,8 @@ from typing_extensions import Self
 
 Linear = Union[int, float, "LinearPolynomial"]
 T = TypeVar("T")
-Node = TypeVar("Node")
-Edge = TypeVar("Edge")
+Node = TypeVar("Node")  # Node in a graph
+Edge = TypeVar("Edge")  # Edge in a graph
 
 
 class LinearPolynomial:
@@ -44,7 +44,7 @@ class LinearPolynomial:
             -self.const, **{key: -coef
                             for key, coef in self.symbols.items()})
 
-    def __mul__(self, other: Union[int, float]) -> Self:
+    def __mul__(self, other: int | float) -> Self:
         if isinstance(other, (int, float)):
             return LinearPolynomial(
                 self.const * other,
@@ -53,7 +53,7 @@ class LinearPolynomial:
         else:
             return NotImplemented
 
-    def __truediv__(self, other: Union[int, float]) -> Self:
+    def __truediv__(self, other: int | float) -> Self:
         if isinstance(other, (int, float)):
             return LinearPolynomial(
                 self.const / other,
@@ -62,7 +62,7 @@ class LinearPolynomial:
         else:
             return NotImplemented
 
-    def __floordiv__(self, other: Union[int, float]) -> Self:
+    def __floordiv__(self, other: int | float) -> Self:
         if isinstance(other, (int, float)):
             return LinearPolynomial(
                 self.const // other,
@@ -113,7 +113,7 @@ class LinearPolynomial:
         return self.const + sum(coef * values[key]
                                 for key, coef in self.symbols.items())
 
-    def contains_symbol(self, symbol: Union[str, Self]) -> bool:
+    def contains_symbol(self, symbol: str | Self) -> bool:
         if isinstance(symbol, str):
             return symbol in self.symbols
         elif isinstance(symbol, LinearPolynomial):
@@ -138,7 +138,7 @@ class LinearPolynomial:
 
 
 class Inequality(LinearPolynomial):
-    """A class to represent LinearPolynomial >= 0."""
+    """Represents an inequality LinearPolynomial >= 0."""
 
     def __init__(self, const: float, **symbols: float) -> None:
         super().__init__(const, **symbols)
@@ -149,6 +149,7 @@ class Inequality(LinearPolynomial):
 
     @classmethod
     def greater(cls, lhs: Linear, rhs: Linear) -> Self:
+        """Return an inequality that lhs >= rhs."""
         if isinstance(lhs, (int, float)):
             lhs = LinearPolynomial.of_const(lhs)
         if isinstance(rhs, (int, float)):
@@ -161,6 +162,13 @@ class Inequality(LinearPolynomial):
 
     @property
     def solvable(self) -> bool:
+        """Solvable if it has only one variable.
+        
+        Note:
+            A stronger implementation is to use linear programming
+            to solve a couple of inequalities.
+            For simplicity, we just check if it has only one variable.
+        """
         return len(self.symbols) == 1
 
     @property
@@ -168,10 +176,21 @@ class Inequality(LinearPolynomial):
         return next(iter(self.symbols.keys()))
 
     def satisfy(self, **values: float) -> bool:
+        """Check if the inequality is satisfied with the given values."""
         return self.eval(**values) >= 0
 
     def solve(self) -> tuple[str, bool, float]:
-        """Return (var, is_greater, value)"""
+        """Solve the inequality with result in the form of 
+        var >= value or var <= value.
+        
+        Returns:
+            var: The variable name.
+            greater: True if var >= value, False if var <= value.
+            value: The value of the bound.
+
+        Raises:
+            ValueError: If the inequality is not solvable.
+        """ 
         if not self.solvable:
             raise ValueError("Not solvable")
         var = self.var
@@ -278,7 +297,10 @@ class Box:
                            other.p1.y + (other.h - self.h) / 2, self.w, self.h)
 
     def prior_to(self, other: Self) -> Self:
-        """A dummy method to make self dependent on other so that other will be overlaid."""
+        """A dummy method to make self dependent on other 
+        so that other will be overlaid.
+        
+        """
         return self
 
     def relative_to(
@@ -286,11 +308,13 @@ class Box:
         other: Self,
         relative_type: str,
     ) -> Self:
+        """Get an updated box as if self is placed relative to other."""
         if not hasattr(self, relative_type):
             raise ValueError(f"Invalid relative type: {relative_type}")
         return getattr(self, relative_type)(other)
 
     def constrain(self, other: Self, constraint: str) -> Inequality:
+        """Get an inequality that constrains self to other."""
         if constraint == "left":
             return Inequality.less(self.x2, other.x1)
         elif constraint == "right":
@@ -310,7 +334,7 @@ class Box:
 
 
 class DependencyGraph(Generic[Node, Edge]):
-    """A dependency graph between objects. Performs topological sorting."""
+    """A dependency graph between objects. Supports topological sorting."""
 
     def __init__(self) -> None:
         # node -> successors
@@ -340,7 +364,14 @@ class DependencyGraph(Generic[Node, Edge]):
         return self.edge[(node, successor)]
 
     def topological_sort(self) -> list[Node]:
-        """Returns a topological sort of the graph, or raises an exception if the graph is cyclic."""
+        """Perform topological sort on the graph.
+        
+        Returns:
+            A list of nodes in topological order.
+
+        Raises:
+            ValueError: If the graph contains a cycle.
+        """
         reverse_graph = {
             node: set(predecessors)
             for node, predecessors in self.reverse_graph.items()
@@ -366,6 +397,16 @@ def partition(
     predicate: Callable[[T], bool],
     iterable: Iterable[T],
 ) -> tuple[list[T], list[T]]:
+    """Partition an iterable into two lists based on a predicate.
+    
+    Args:
+        predicate: A function that takes an item and returns a boolean.
+        iterable: An iterable to partition.
+
+    Returns:
+        A tuple of (list of items satisfying the predicate,
+        list of items not satisfying the predicate).
+    """
     x, y = [], []
     for item in iterable:
         (x if predicate(item) else y).append(item)

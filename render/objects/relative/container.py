@@ -22,7 +22,9 @@ class Relative(TypedDict, total=False):
     align_right: RenderObject
     center_vertical: RenderObject
     center_horizontal: RenderObject
+    # brief for center_vertical and center_horizontal
     center: RenderObject
+    # control z-index implicitly
     prior_to: RenderObject
 
 

@@ -9,6 +9,13 @@ from render.base import (Alignment, BaseStyle, Direction, RenderImage,
 
 
 class Container(RenderObject):
+    """A container that arranges its children linearly.
+    
+    Attributes:
+        children: list of children to be arranged.
+        alignment: alignment of children. start, end or center.
+        direction: direction of arrangement. horizontal or vertical.
+    """
 
     def __init__(
         self,
@@ -60,16 +67,30 @@ class Container(RenderObject):
 
 
 class JustifyContent(Enum):
+    """How to justify children in a container."""
+
+    # Evenly distribute, first flush with start, last flush with end.
     SPACE_BETWEEN = 1
+    # Evenly distribute, either end has half the space.
     SPACE_AROUND = 2
+    # Evenly distribute, equal space for all.
     SPACE_EVENLY = 3
+    # Flush with start, possibly with space at end.
     START = 4
+    # Flush with end, possibly with space at start.
     END = 5
+    # Center, possibly with space at both ends.
     CENTER = 6
 
 
 class FixedContainer(Container):
-
+    """A container like Container, but with fixed width and height.
+    
+    Attributes:
+        _width: fixed content width.
+        _height: fixed content height.
+        justifyContent: how to justify children.
+    """
     def __init__(
         self,
         width: int,
