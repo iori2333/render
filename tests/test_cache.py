@@ -300,3 +300,44 @@ else:
                 alignment=self.alignment,
                 spacing=self.line_spacing,
             )
+
+
+def test_cache_styled_text():
+    default = TextStyle.of(font=Font.one(), size=24, color=Palette.ORANGE_RED)
+    large = TextStyle.of(size=48)
+    text = StyledText.of("<l>Hello</l> World!",
+                         styles={
+                             "default": default,
+                             "l": large,
+                         })
+    image = text.render()
+    large.size = 96
+    image2 = text.render()
+    RenderImage.concat_vertical([image, image2],
+                                alignment=Alignment.CENTER).save(
+                                    Output / "cache_styled_text.png")
+
+
+def test_cache_stack():
+    sp1 = Spacer.of(100, 200)
+    sp2 = Spacer.of(200, 100)
+    text1 = Text.of("Hello", font=Font.one(), size=24, color=Palette.AQUA)
+    text2 = Text.of("World",
+                    font=Font.one(),
+                    size=24,
+                    color=Palette.BLUE_VIOLET)
+    container1 = Container.from_children([text1, sp1, text2],
+                                         direction=Direction.HORIZONTAL,
+                                         alignment=Alignment.CENTER)
+    container2 = Container.from_children([text1, sp2, text2],
+                                         direction=Direction.VERTICAL,
+                                         alignment=Alignment.CENTER)
+    stack = Stack.from_children([container1, container2],
+                                alignment=Alignment.CENTER)
+    im1 = stack.render()
+    sp1.space_width, sp1.space_height = 200, 100
+    sp2.space_width, sp2.space_height = 100, 200
+    text1.color, text2.color = text2.color, text1.color
+    im2 = stack.render()
+    RenderImage.concat_vertical([im1, im2], alignment=Alignment.CENTER).save(
+        Output / "cache_stack.png")

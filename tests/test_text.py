@@ -63,7 +63,7 @@ def test_styled_text():
         for i, text in enumerate(texts_with_tag):
             container = Container.from_children(
                 children=[
-                    StyledText.of_tag(
+                    StyledText.of(
                         text,
                         default=default,
                         styles=styles,
@@ -88,7 +88,7 @@ def test_styled_stroke():
         "3": TextStyle.of(stroke_width=3, stroke_color=Palette.BLUE),
         "5": TextStyle.of(stroke_width=5, stroke_color=Palette.BLUE),
     }
-    StyledText.of_tag(text, default=default,
+    StyledText.of(text, default=default,
                       styles=styles).render().save(output_dir / "stroke.png")
 
 

@@ -274,7 +274,7 @@ class StyledText(RenderObject):
         return im
 
     @classmethod
-    def of_tag(
+    def of(
         cls,
         text: str,
         styles: Dict[str, TextStyle],
