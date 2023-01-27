@@ -1,25 +1,73 @@
+from __future__ import annotations
+
 import re
 from typing import Dict, Generator, Iterable, List, Optional, Tuple
-from typing_extensions import Self, TypedDict, Unpack, override
+from typing_extensions import Self, Unpack, override
 
 from PIL import ImageFont
 
-from render.base import (Alignment, BaseStyle, Color, Direction, Palette,
-                         RenderImage, RenderObject, RenderText, TextDecoration)
-from render.utils import PathLike
+from render.base import (Alignment, BaseStyle, Cacheable, Color, Palette,
+                         RenderImage, RenderObject, RenderText, TextDecoration,
+                         cached, volatile)
+from render.utils import PathLike, Undefined, undefined
+
 from .text import Text
 
 
-class TextStyle(TypedDict, total=False):
-    font: PathLike
-    size: int
-    color: Optional[Color]
-    stroke_width: int
-    stroke_color: Optional[Color]
-    background: Optional[Color]
-    hyphenation: bool
-    decoration: TextDecoration
-    decoration_thickness: int
+class TextStyle(Cacheable):
+    def __init__(
+        self,
+        font: PathLike | Undefined,
+        size: int | Undefined,
+        color: Color | None | Undefined,
+        stroke_width: int | Undefined,
+        stroke_color: Color | None | Undefined,
+        background: Color | Undefined,
+        hyphenation: bool | Undefined,
+        decoration: TextDecoration | Undefined,
+        decoration_thickness: int | Undefined,
+    ) -> None:
+        super(TextStyle, self).__init__()
+        with volatile(self):
+            self.font = font
+            self.size = size
+            self.color = color
+            self.stroke_width = stroke_width
+            self.stroke_color = stroke_color
+            self.background = background
+            self.hyphenation = hyphenation
+            self.decoration = decoration
+            self.decoration_thickness = decoration_thickness
+
+    @classmethod
+    def of(
+        cls,
+        font: PathLike | Undefined = undefined,
+        size: int | Undefined = undefined,
+        color: Color | None | Undefined = undefined,
+        stroke_width: int | Undefined = undefined,
+        stroke_color: Color | None | Undefined = undefined,
+        background: Color | Undefined = undefined,
+        hyphenation: bool | Undefined = undefined,
+        decoration: TextDecoration | Undefined = undefined,
+        decoration_thickness: int | Undefined = undefined,
+    ) -> Self:
+        return cls(
+            font,
+            size,
+            color,
+            stroke_width,
+            stroke_color,
+            background,
+            hyphenation,
+            decoration,
+            decoration_thickness,
+        )
+
+    def items(self) -> Generator[Tuple[str, object], None, None]:
+        for k, v in self.__dict__.items():
+            if v is not undefined:
+                yield k, v
 
 
 class NestedTextStyle:
@@ -32,18 +80,18 @@ class NestedTextStyle:
 
     def pop(self, name: str) -> TextStyle:
         if not self.stack:
-            raise ValueError("Empty stack")
+            raise ValueError(f"Expected tag: {name}")
         pop, style = self.stack.pop()
         if pop != name:
             raise ValueError(f"Unmatched tag: expected {pop}, got {name}")
         return style
 
     def query(self) -> TextStyle:
-        style = TextStyle()
+        style = TextStyle.of()
         for _, s in reversed(self.stack):
             for k, v in s.items():
-                if k not in style or style[k] is None:
-                    style[k] = v
+                if getattr(style, k) is undefined:
+                    setattr(style, k, v)
         return style
 
 
@@ -51,10 +99,12 @@ class StyledText(RenderObject):
 
     tag_begin = re.compile(r"<(\w+)>")
     tag_end = re.compile(r"</(\w+)>")
+    tag_any = re.compile(r"</?(\w+)>")
 
     def __init__(
         self,
-        blocks: Iterable[Tuple[str, TextStyle]],
+        text: str,
+        styles: Dict[str, TextStyle],
         max_width: Optional[int],
         alignment: Alignment,
         line_spacing: int,
@@ -62,41 +112,82 @@ class StyledText(RenderObject):
     ) -> None:
         super(StyledText, self).__init__(**kwargs)
 
-        self.alignment = alignment
-        self.line_spacing = line_spacing
-        self.pre_rendered = [
-            self.text_concat(line) for line in self.cut(blocks, max_width)
-        ]
+        with volatile(self) as v:
+            self.text = text
+            self.styles = v.dict(styles)
+            self.alignment = alignment
+            self.line_spacing = line_spacing
+            self.max_width = max_width
 
     @property
+    @cached
     @override
     def content_width(self) -> int:
-        if self.pre_rendered:
-            return max(rt.width for rt in self.pre_rendered)
-        return 0
+        return self.render_content().width
 
     @property
+    @cached
     @override
     def content_height(self) -> int:
-        return (sum(rt.height for rt in self.pre_rendered) +
-                self.line_spacing * max(len(self.pre_rendered) - 1, 0))
+        return self.render_content().height
 
     @override
     def render_content(self) -> RenderImage:
-        return RenderImage.concat(
-            self.pre_rendered,
-            direction=Direction.VERTICAL,
+        rendered_lines = []
+        for line in self.cut():
+            rendered_lines.append(self.text_concat(line))
+        return RenderImage.concat_vertical(
+            rendered_lines,
             alignment=self.alignment,
             spacing=self.line_spacing,
         )
 
-    def cut(
-        self,
-        blocks: Iterable[Tuple[str, TextStyle]],
-        max_width: Optional[int],
-    ) -> Generator[List[RenderText], None, None]:
-        """Cut the text into lines. Each line is a list of RenderTexts."""
+    def _cut_blocks(self) -> Generator[Tuple[str, TextStyle], None, None]:
+        text = self.text
+        styles = self.styles
 
+        style = NestedTextStyle()
+        style.push("default", self.styles["default"])
+
+        index = 0
+        while index < len(text):
+            # search for tag begin,
+            # if found, push the style referenced by the tag
+            match = self.tag_begin.match(text, index)
+            if match:
+                name = match.group(1)
+                if name not in styles:
+                    raise ValueError(f"Style {name} used but not defined")
+                style.push(name, styles[name])
+                index = match.end()
+                continue
+            # search for tag end,
+            # if found, pop the style referenced by the tag
+            match = self.tag_end.match(text, index)
+            if match:
+                name = match.group(1)
+                try:
+                    style.pop(name)
+                except ValueError as e:
+                    raise ValueError(str(e) + " in " + repr(text)) from e
+                index = match.end()
+                continue
+            # search for text from current index to next tag
+            # next_tag = text.find("<", index)
+            match = self.tag_any.search(text, index)
+            next_tag = match.start() if match else -1
+            if next_tag == -1:
+                next_tag = len(text)
+            plain_text = text[index:next_tag]
+            if plain_text:
+                yield plain_text, style.query()
+            index = next_tag
+
+        if len(style.stack) > 1:  # check if all tags are closed
+            raise ValueError(f"Unclosed tag: {style.stack[-1][0]}")
+
+    def cut(self) -> Generator[List[RenderText], None, None]:
+        """Cut the text into lines. Each line is a list of RenderTexts."""
         def current_width():
             """Return the current acceptable width of the line."""
             if max_width is None:
@@ -111,18 +202,23 @@ class StyledText(RenderObject):
             yield buffer
             buffer.clear()
 
+        max_width = self.max_width
+        blocks = self._cut_blocks()
         line_buffer: List[RenderText] = []
         for block, style in blocks:
             # load style properties
-            font_path = str(style.get("font", ""))
-            font_size = style.get("size", 0)
+            font_path = Undefined.default(str(style.font), "")
+            font_size = Undefined.default(style.size, 0)
             font = ImageFont.truetype(font_path, font_size)
-            stroke_width = style.get("stroke_width", 0)
-            stroke_color = style.get("stroke_color", None)
-            hyphenation = style.get("hyphenation", True)
-            decoration = style.get("decoration", TextDecoration.NONE)
-            decoration_thickness = style.get("decoration_thickness", -1)
-            
+            color = Undefined.default(style.color, None)
+            stroke_width = Undefined.default(style.stroke_width, 0)
+            stroke_color = Undefined.default(style.stroke_color, None)
+            hyphenation = Undefined.default(style.hyphenation, True)
+            decoration = Undefined.default(style.decoration,
+                                           TextDecoration.NONE)
+            thick = Undefined.default(style.decoration_thickness, -1)
+            background = Undefined.default(style.background, None)
+
             line_break_at_end = block.endswith('\n')
             lines = block.split('\n')
             for lineno, line in enumerate(lines):
@@ -149,13 +245,12 @@ class StyledText(RenderObject):
                             split.lstrip(" ") if not line_buffer else split,
                             font_path,
                             font_size,
-                            style.get("color"),
+                            color,
                             stroke_width,
                             stroke_color,
                             decoration,
-                            decoration_thickness,
-                            background=style.get("background")
-                            or Palette.TRANSPARENT,
+                            thick,
+                            background=background or Palette.TRANSPARENT,
                         ))
                     line = remain
                 # end of natural line
@@ -182,46 +277,18 @@ class StyledText(RenderObject):
     def of_tag(
         cls,
         text: str,
-        default: TextStyle,
         styles: Dict[str, TextStyle],
+        default: TextStyle | None = None,
         max_width: Optional[int] = None,
         alignment: Alignment = Alignment.START,
         line_spacing: int = 0,
         **kwargs: Unpack[BaseStyle],
     ) -> Self:
-        """Create a Text object from a string with tags.
+        if default is not None:
+            if "default" in styles:
+                raise ValueError("Cannot specify default style twice")
+            styles = {**styles, "default": default}
+        elif "default" not in styles:
+            raise ValueError("Missing default style")
 
-        Args:
-            text (str): The text with html tags.
-            default (TextStyle): The default text style.
-            styles (Dict[str, TextStyle]): The styles for each tag.
-        """
-        style = NestedTextStyle()
-        style.push("default", default)
-        blocks: List[Tuple[str, TextStyle]] = []
-
-        index = 0
-        while index < len(text):
-            match = cls.tag_begin.match(text, index)
-            if match:
-                name = match.group(1)
-                style.push(name, styles[name])
-                index = match.end()
-                continue
-            match = cls.tag_end.match(text, index)
-            if match:
-                name = match.group(1)
-                try:
-                    style.pop(name)
-                except ValueError as e:
-                    raise ValueError(str(e) + " in " + repr(text)) from e
-                index = match.end()
-                continue
-            next_tag = text.find("<", index)
-            if next_tag == -1:
-                next_tag = len(text)
-            plain_text = text[index:next_tag]
-            if plain_text:
-                blocks.append((plain_text, style.query()))
-            index = next_tag
-        return cls(blocks, max_width, alignment, line_spacing, **kwargs)
+        return cls(text, styles, max_width, alignment, line_spacing, **kwargs)

@@ -2,6 +2,8 @@ from typing import Any, Callable, Dict, Generic, Iterable, TypeVar
 from typing_extensions import Self
 
 T = TypeVar("T")
+K = TypeVar("K")
+V = TypeVar("V")
 
 
 class Cacheable:
@@ -15,24 +17,13 @@ class Cacheable:
         for p in self.__cache_parent__:
             p.clear_cache()
 
-    def add_parent(self, parent: "Cacheable") -> None:
+    def add_parent(self, parent: "Cacheable") -> Self:
         if parent not in self.__cache_parent__:
             self.__cache_parent__.append(parent)
+        return self
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
-
-
-def list_update(f: Callable):
-    def wrapper(self, *args, **kwargs):
-        result = f(self, *args, **kwargs)
-        self.clear_cache()
-        for item in self:
-            if isinstance(item, Cacheable):
-                item.add_parent(self)
-        return result
-
-    return wrapper
 
 
 class CacheableList(list[T], Cacheable):
@@ -45,22 +36,69 @@ class CacheableList(list[T], Cacheable):
                 item.add_parent(self)
 
     def __repr__(self) -> str:
-        return Cacheable.__repr__(self)
+        return Cacheable.__repr__(self) + list.__repr__(self)
 
-    __setitem__ = list_update(list.__setitem__)
-    __delitem__ = list_update(list.__delitem__)
-    __add__ = list_update(list.__add__)
-    __iadd__ = list_update(list.__iadd__)
-    __mul__ = list_update(list.__mul__)
-    __imul__ = list_update(list.__imul__)
-    __rmul__ = list_update(list.__rmul__)
-    append = list_update(list.append)
-    extend = list_update(list.extend)
-    insert = list_update(list.insert)
-    pop = list_update(list.pop)
-    remove = list_update(list.remove)
-    reverse = list_update(list.reverse)
-    sort = list_update(list.sort)
+    def _list_update(f: Callable):  # type: ignore
+        def wrapper(self, *args, **kwargs):
+            result = f(self, *args, **kwargs)
+            self.clear_cache()
+            for item in self:
+                if isinstance(item, Cacheable):
+                    item.add_parent(self)
+            return result
+
+        return wrapper
+
+    __setitem__ = _list_update(list.__setitem__)
+    __delitem__ = _list_update(list.__delitem__)
+    __add__ = _list_update(list.__add__)
+    __iadd__ = _list_update(list.__iadd__)
+    __mul__ = _list_update(list.__mul__)
+    __imul__ = _list_update(list.__imul__)
+    __rmul__ = _list_update(list.__rmul__)
+    append = _list_update(list.append)
+    extend = _list_update(list.extend)
+    insert = _list_update(list.insert)
+    pop = _list_update(list.pop)
+    remove = _list_update(list.remove)
+    reverse = _list_update(list.reverse)
+    sort = _list_update(list.sort)
+
+
+class CacheableDict(dict[K, V], Cacheable):
+
+    def __init__(self, dict_: dict[K, V] = {}, *parent: Cacheable) -> None:
+        dict.__init__(self, dict_)
+        Cacheable.__init__(self, *parent)
+        for key, value in dict_.items():
+            if isinstance(value, Cacheable):
+                value.add_parent(self)
+            if isinstance(key, Cacheable):
+                raise TypeError("CacheableDict keys must be immutable.")
+
+    def __repr__(self) -> str:
+        return Cacheable.__repr__(self) + dict.__repr__(self)
+
+    def _dict_update(f: Callable):  # type: ignore
+        def wrapper(self, *args, **kwargs):
+            result = f(self, *args, **kwargs)
+            self.clear_cache()
+            for key, value in self.items():
+                if isinstance(value, Cacheable):
+                    value.add_parent(self)
+                if isinstance(key, Cacheable):
+                    raise TypeError("CacheableDict keys must be immutable.")
+            return result
+
+        return wrapper
+
+    __setitem__ = _dict_update(dict.__setitem__)
+    __delitem__ = _dict_update(dict.__delitem__)
+    clear = _dict_update(dict.clear)
+    pop = _dict_update(dict.pop)
+    popitem = _dict_update(dict.popitem)
+    setdefault = _dict_update(dict.setdefault)
+    update = _dict_update(dict.update)
 
 
 def cached(func: Callable[[Any], T]) -> Callable[[Cacheable], T]:
@@ -106,6 +144,9 @@ class volatile(Generic[T]):
     def list(self, value: Iterable[T]) -> CacheableList[T]:
         return CacheableList(value, self.obj)
 
+    def dict(self, value: dict[K, V]) -> CacheableDict[K, V]:
+        return CacheableDict(value, self.obj)
+
     def __init__(self, obj: Cacheable) -> None:
         self.obj = obj
 
@@ -121,6 +162,14 @@ class volatile(Generic[T]):
             if not attr.startswith("_") and attr not in self.attr_names:
                 new_attr[attr] = getattr(self.obj, attr)
         for attr, value in new_attr.items():
-            if isinstance(value, list) and not isinstance(value, CacheableList):
-                raise TypeError(f"{attr} is a list, use self.{attr} = volatile.list(value).")
+            if isinstance(value,
+                          list) and not isinstance(value, CacheableList):
+                raise TypeError(
+                    f"{attr} is a list, use self.{attr} = volatile.list(value)."
+                )
+            if isinstance(value,
+                          dict) and not isinstance(value, CacheableDict):
+                raise TypeError(
+                    f"{attr} is a dict, use self.{attr} = volatile.dict(value)."
+                )
             self.create_property(self.obj, attr, value)

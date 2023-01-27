@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Iterable
 from typing_extensions import TypedDict
 
+from .cacheable import Cacheable
 from .decorations import Decoration, Decorations
 from .color import Color, Palette
 from .image import RenderImage
@@ -16,7 +17,7 @@ class BaseStyle(TypedDict, total=False):
     decorations: Iterable[Decoration]
 
 
-class RenderObject(ABC):
+class RenderObject(ABC, Cacheable):
     """
     Base class of all renderable objects.
 
@@ -53,6 +54,7 @@ class RenderObject(ABC):
         decorations: Iterable[Decoration] = (),
         background: Color = Palette.TRANSPARENT,
     ) -> None:
+        Cacheable.__init__(self)
         self.border = border
         self.margin = margin
         self.padding = padding

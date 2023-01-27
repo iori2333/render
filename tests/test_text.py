@@ -23,15 +23,15 @@ texts_with_tag = [
 fonts = cycle(Font.fonts())
 
 styles = {
-    str(i): TextStyle(font=next(fonts),
-                      size=sz,
-                      color=Color.rand(),
-                      background=Color.rand(),
-                      hyphenation=True)
+    str(i): TextStyle.of(font=next(fonts),
+                         size=sz,
+                         color=Color.rand(),
+                         background=Color.rand(),
+                         hyphenation=True)
     for i, sz in enumerate(range(32, 64, 8))
 }
 
-default = TextStyle(font=next(fonts), size=36, color=Palette.BLACK)
+default = TextStyle.of(font=next(fonts), size=36, color=Palette.BLACK)
 
 output_dir = Output / "text"
 output_dir.mkdir(parents=True, exist_ok=True)
@@ -79,11 +79,14 @@ def test_styled_text():
 
 def test_styled_stroke():
     text = "The <1>quick</1> brown <3>fox</3> <5>jumps</5> over a lazy dog."
-    default = TextStyle(font=Font.one(), size=36, color=Palette.BLACK, decoration=TextDecoration.UNDERLINE)
+    default = TextStyle.of(font=Font.one(),
+                           size=36,
+                           color=Palette.BLACK,
+                           decoration=TextDecoration.UNDERLINE)
     styles = {
-        "1": TextStyle(stroke_width=1, stroke_color=Palette.BLUE),
-        "3": TextStyle(stroke_width=3, stroke_color=Palette.BLUE),
-        "5": TextStyle(stroke_width=5, stroke_color=Palette.BLUE),
+        "1": TextStyle.of(stroke_width=1, stroke_color=Palette.BLUE),
+        "3": TextStyle.of(stroke_width=3, stroke_color=Palette.BLUE),
+        "5": TextStyle.of(stroke_width=5, stroke_color=Palette.BLUE),
     }
     StyledText.of_tag(text, default=default,
                       styles=styles).render().save(output_dir / "stroke.png")

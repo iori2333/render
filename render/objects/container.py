@@ -2,10 +2,10 @@ from enum import Enum
 from typing import Iterable, Tuple
 from typing_extensions import override, Self, Unpack
 
-from render.base import RenderObject, RenderImage, Alignment, Direction, BaseStyle, Cacheable, cached, volatile
+from render.base import RenderObject, RenderImage, Alignment, Direction, BaseStyle, cached, volatile
 
 
-class Container(RenderObject, Cacheable):
+class Container(RenderObject):
 
     def __init__(
         self,
@@ -14,8 +14,7 @@ class Container(RenderObject, Cacheable):
         children: Iterable[RenderObject],
         **kwargs: Unpack[BaseStyle],
     ) -> None:
-        RenderObject.__init__(self, **kwargs)
-        Cacheable.__init__(self)
+        super(Container, self).__init__(**kwargs)
         with volatile(self) as v:
             self.alignment = alignment
             self.direction = direction
@@ -85,19 +84,19 @@ class FixedContainer(Container):
         super(FixedContainer, self).__init__(alignment, direction, children,
                                              **kwargs)
         with volatile(self):
-            self.fix_width = width
-            self.fix_height = height
+            self.fixed_width = width
+            self.fixed_height = height
             self.justifyContent = justify_content
 
     @property
     @override
     def content_width(self) -> int:
-        return self.fix_width
+        return self.fixed_width
 
     @property
     @override
     def content_height(self) -> int:
-        return self.fix_height
+        return self.fixed_height
 
     @classmethod
     def from_children(

@@ -1,7 +1,7 @@
 from typing import Union, Optional, Tuple
 from typing_extensions import override, Self, Unpack
 
-from render.base import RenderObject, RenderImage, BaseStyle, Color
+from render.base import RenderObject, RenderImage, BaseStyle, Color, Cacheable, volatile
 from render.utils import PathLike
 
 
@@ -9,7 +9,8 @@ class Image(RenderObject):
 
     def __init__(self, im: RenderImage, **kwargs: Unpack[BaseStyle]) -> None:
         super(Image, self).__init__(**kwargs)
-        self.im = im
+        with volatile(self):
+            self.im = im
 
     @classmethod
     def from_file(

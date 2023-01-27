@@ -1,10 +1,10 @@
 from typing import Iterable, Optional
 from typing_extensions import override, Self, Unpack, Literal
 
-from render.base import RenderObject, RenderImage, Alignment, BaseStyle, Cacheable, cached, volatile
+from render.base import RenderObject, RenderImage, Alignment, BaseStyle, cached, volatile
 
 
-class Stack(RenderObject, Cacheable):
+class Stack(RenderObject):
 
     def __init__(
         self,
@@ -14,8 +14,7 @@ class Stack(RenderObject, Cacheable):
         paste_mode: Literal["paste", "overlay", "cover"],
         **kwargs: Unpack[BaseStyle],
     ) -> None:
-        RenderObject.__init__(self, **kwargs)
-        Cacheable.__init__(self)
+        super(Stack, self).__init__(**kwargs)
         with volatile(self) as v:
             self.children = v.list(children)
             self.vertical_alignment = vertical_alignment

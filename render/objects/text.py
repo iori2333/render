@@ -8,11 +8,11 @@ from PIL.ImageFont import FreeTypeFont, truetype
 
 from render.base import (RenderObject, RenderImage, RenderText, Color,
                          BaseStyle, Alignment, Direction, TextDecoration,
-                         Cacheable, cached, volatile)
+                         cached, volatile)
 from render.utils import find_rightmost, PathLike
 
 
-class Text(RenderObject, Cacheable):
+class Text(RenderObject):
 
     MARKS = set("；：。，！？、.,!?”》;:")
     _dict = pyphen.Pyphen(lang="en_US")
@@ -33,9 +33,7 @@ class Text(RenderObject, Cacheable):
         text_decoration_thickness: int,
         **kwargs: Unpack[BaseStyle],
     ) -> None:
-        RenderObject.__init__(self, **kwargs)
-        Cacheable.__init__(self)
-
+        super(Text, self).__init__(**kwargs)
         with volatile(self):
             self.text = text
             self.font = font
