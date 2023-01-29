@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Generic, Iterable, TypeVar
+from typing import Any, Callable, Dict, Generic, Iterable, List, TypeVar
 from typing_extensions import Self
 
 T = TypeVar("T")
@@ -49,7 +49,7 @@ def _list_update(f: Callable):
     return wrapper
 
 
-class CacheableList(list[T], Cacheable):
+class CacheableList(List[T], Cacheable):
     """A cacheable list sensitive to changes in its items."""
 
     def __init__(self, iterable: Iterable[T] = (), *parent: Cacheable) -> None:
@@ -93,7 +93,7 @@ def _dict_update(f: Callable):
     return wrapper
 
 
-class CacheableDict(dict[K, V], Cacheable):
+class CacheableDict(Dict[K, V], Cacheable):
     """A cacheable dict sensitive to changes in its values.
     
     Raises:
