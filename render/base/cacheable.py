@@ -1,4 +1,6 @@
-from typing import Any, Callable, Dict, Generic, Iterable, TypeVar
+from __future__ import annotations
+
+from typing import Any, Callable, Generic, Iterable, TypeVar
 from typing_extensions import Self
 
 T = TypeVar("T")
@@ -8,8 +10,8 @@ V = TypeVar("V")
 
 class Cacheable:
 
-    def __init__(self, *parent: "Cacheable") -> None:
-        self.__cache__: Dict[str, Any] = {}
+    def __init__(self, *parent: Cacheable) -> None:
+        self.__cache__: dict[str, Any] = {}
         self.__cache_parent__ = list(parent)
 
     def clear_cache(self) -> None:
@@ -17,7 +19,7 @@ class Cacheable:
         for p in self.__cache_parent__:
             p.clear_cache()
 
-    def add_parent(self, parent: "Cacheable") -> Self:
+    def add_parent(self, parent: Cacheable) -> Self:
         if parent not in self.__cache_parent__:
             self.__cache_parent__.append(parent)
         return self
@@ -141,10 +143,12 @@ class volatile(Generic[T]):
 
             setattr(obj.__class__, attr, property(getter, setter))
 
-    def list(self, value: Iterable[T]) -> CacheableList[T]:
+    def list(self, value: Iterable[T] | None = None) -> CacheableList[T]:
+        value = value or []
         return CacheableList(value, self.obj)
 
-    def dict(self, value: dict[K, V]) -> CacheableDict[K, V]:
+    def dict(self, value: dict[K, V] | None = None) -> CacheableDict[K, V]:
+        value = value or {}
         return CacheableDict(value, self.obj)
 
     def __init__(self, obj: Cacheable) -> None:

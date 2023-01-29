@@ -1,7 +1,7 @@
 from typing import Dict, List, Tuple
 from typing_extensions import Self, TypedDict, Unpack, override
 
-from render.base import BaseStyle, RenderImage, RenderObject
+from render.base import BaseStyle, RenderImage, RenderObject, volatile, cached
 from .utils import Box, DependencyGraph, LinearPolynomial, partition
 
 
@@ -38,10 +38,12 @@ class RelativeContainer(RenderObject):
         **kwargs: Unpack[BaseStyle],
     ) -> None:
         super(RelativeContainer, self).__init__(**kwargs)
-        self.children: List[RenderObject] = []
-        self.graph = DependencyGraph[RenderObject, str]().add_node(self)
-        self.offsets: Dict[RenderObject, Offset] = {}
-        self.constraints: List[ConstraintTuple] = []
+        with volatile(self) as v:
+            self.children: List[RenderObject] = v.list()
+        # The following attributes should not be accessed directly
+        self._offsets: Dict[RenderObject, Offset] = {}
+        self._graph = DependencyGraph[RenderObject, str]().add_node(self)
+        self._constraints: List[ConstraintTuple] = []
 
     def add_child(
             self,
@@ -51,11 +53,10 @@ class RelativeContainer(RenderObject):
     ) -> Self:
         if child in self.children:
             raise ValueError("Child already added")
-        self.rendered_content = None
         self.children.append(child)
         for relation, target in kwargs.items():
-            self.graph.add_edge(target, child, relation)  # type: ignore
-        self.offsets[child] = offset
+            self._graph.add_edge(target, child, relation)  # type: ignore
+        self._offsets[child] = offset
         return self
 
     def add_constraint(
@@ -64,7 +65,13 @@ class RelativeContainer(RenderObject):
         **kwargs: Unpack[Constraint],
     ) -> Self:
         for relation, target in kwargs.items():
-            self.constraints.append((obj, relation, target))  # type: ignore
+            self._constraints.append((obj, relation, target))  # type: ignore
+        return self
+
+    def set_offset(self, child: RenderObject, offset: Offset) -> Self:
+        self._offsets[child] = offset
+        # call clear_cache manually
+        self.clear_cache()
         return self
 
     @property
@@ -77,6 +84,7 @@ class RelativeContainer(RenderObject):
     def content_height(self) -> int:
         return self.infer_size()[1] if self.children else 0
 
+    @cached
     def infer_size(self) -> Tuple[int, int]:
         boxes = self._setup_boxes()
         x = LinearPolynomial(x=1)
@@ -86,6 +94,7 @@ class RelativeContainer(RenderObject):
         size = self._infer_size(boxes, x, y, w, h)
         return round(size[w.var]), round(size[h.var])
 
+    @cached
     def _setup_boxes(self) -> Dict[RenderObject, Box]:
         # TODO: Remove objects outside of container
         # e.g. A is align_left and align_top of container, B is left of A.
@@ -97,22 +106,22 @@ class RelativeContainer(RenderObject):
         undef = LinearPolynomial(undef=1)
 
         boxes: Dict[RenderObject, Box] = {self: Box.of_size(x, y, w, h)}
-        for obj in self.graph.topological_sort():
+        for obj in self._graph.topological_sort():
             if obj is self:
                 continue
 
             # initialize x, y with undefined values
             obj_box = boxes.get(
                 obj, Box.of_size(undef, undef, obj.width, obj.height))
-            for pred in self.graph.get_predecessors(obj):
-                for relative in self.graph.get_edges(pred, obj):
+            for pred in self._graph.get_predecessors(obj):
+                for relative in self._graph.get_edges(pred, obj):
                     obj_box = obj_box.relative_to(boxes[pred], relative)
             # check if x, y are defined
             if obj_box.x1 is undef or obj_box.y1 is undef:
                 raise ValueError(f"Could not resolve position of object: "
                                  f"{obj}(x={obj_box.x1}, y={obj_box.y1})")
             # apply offset
-            boxes[obj] = obj_box.offset(*self.offsets.get(obj, (0, 0)))
+            boxes[obj] = obj_box.offset(*self._offsets.get(obj, (0, 0)))
 
         # remove temporary self box
         del boxes[self]
@@ -145,7 +154,7 @@ class RelativeContainer(RenderObject):
         width_c = width.const if width.is_const else -1
         height_c = height.const if height.is_const else -1
 
-        for obj_from, constraint, obj_to in self.constraints:
+        for obj_from, constraint, obj_to in self._constraints:
             box_from, box_to = boxes[obj_from], boxes[obj_to]
             in_eq = box_from.constrain(box_to, constraint)
             # TODO: handle not solvable or less_than case
@@ -171,6 +180,7 @@ class RelativeContainer(RenderObject):
             h.var: height_c,
         }
 
+    @cached
     @override
     def render_content(self) -> RenderImage:
         if len(self.children) == 0:

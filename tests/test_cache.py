@@ -339,5 +339,40 @@ def test_cache_stack():
     sp2.space_width, sp2.space_height = 100, 200
     text1.color, text2.color = text2.color, text1.color
     im2 = stack.render()
-    RenderImage.concat_vertical([im1, im2], alignment=Alignment.CENTER).save(
-        Output / "cache_stack.png")
+    stack.vertical_alignment = Alignment.START
+    im3 = stack.render()
+    stack.vertical_alignment = Alignment.END
+    im4 = stack.render()
+    RenderImage.concat_vertical([im1, im2, im3, im4],
+                                alignment=Alignment.CENTER).save(
+                                    Output / "cache_stack.png")
+
+
+def test_cache_relative():
+    red = Image.from_color(100, 100, Palette.RED)
+    green = Image.from_color(300, 300, Palette.GREEN)
+    blue = Image.from_color(50, 50, Palette.BLUE)
+    container = RelativeContainer(border=Border.of(1))
+    container.add_child(red, align_left=container, align_top=container)
+    container.add_child(blue,
+                        center_horizontal=container,
+                        center_vertical=container)
+    container.add_child(green, align_right=container, align_bottom=container)
+    # add extra constraint for size inference
+    container.add_constraint(blue, right=red, below=red)
+    container.add_constraint(green, right=blue, below=blue)
+    im1 = container.render()
+
+    blue.im = RenderImage.empty(200, 200, Palette.AQUA)
+    im2 = container.render()
+
+    container.set_offset(blue, (50, 50)).add_child(
+        Image.from_color(4, 4, Palette.BLACK),
+        center=container,
+        prior_to=blue,
+    )
+    im3 = container.render()
+
+    RenderImage.concat_vertical([im1, im2, im3],
+                                alignment=Alignment.CENTER,
+                                spacing=5).save(Output / "cache_relative.png")
