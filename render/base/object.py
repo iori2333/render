@@ -12,7 +12,7 @@ from .properties import Border, Space
 class BaseStyle(TypedDict, total=False):
     """Base style of a render object.
 
-    Args:
+    Fields:
         background: background color filled inside the border
         padding: padding (px) of the object
         border: width (px) and color of the border

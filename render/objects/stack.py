@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from typing import Iterable
-from typing_extensions import override, Self, Unpack, Literal
+from typing_extensions import Literal, Self, Unpack, override
 
-from render.base import RenderObject, RenderImage, Alignment, BaseStyle, cached, volatile
+from render.base import (Alignment, BaseStyle, RenderImage, RenderObject,
+                         cached, volatile)
 
 
 class Stack(RenderObject):

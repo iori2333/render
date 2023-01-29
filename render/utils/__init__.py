@@ -1,17 +1,15 @@
 import sys
 
 if sys.version_info >= (3, 10):
-    import bisect as pybisect
-    find_leftmost = pybisect.bisect_left
-    find_rightmost = pybisect.bisect_right
+    from bisect import bisect_left, bisect_right
 else:
-    from .bisect import find_leftmost, find_rightmost
+    from .bisect import bisect_left, bisect_right
 
 from .typing import *
 
 __all__ = [
-    "find_leftmost",
-    "find_rightmost",
+    "bisect_left",
+    "bisect_right",
     "ImageMask",
     "PathLike",
     "Undefined",

@@ -46,7 +46,7 @@ class BisectKeyWrapper(Generic[T, V]):
         return self.obj >= self.key(other)
 
 
-def find_leftmost(
+def bisect_left(
     seq: Sequence[T],
     obj: V,
     key: Callable[[T], V] | None = None,
@@ -56,7 +56,7 @@ def find_leftmost(
     return bisect.bisect_left(seq, wrapper)
 
 
-def find_rightmost(
+def bisect_right(
     seq: Sequence[T],
     obj: V,
     key: Callable[[T], V] | None = None,

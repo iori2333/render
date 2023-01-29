@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Dict, Generator, Iterable
+from typing import Generator, Iterable
 from typing_extensions import Self, Unpack, override
 
 from PIL import ImageFont

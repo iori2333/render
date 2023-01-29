@@ -72,7 +72,7 @@ else:
                              RenderImage, RenderObject, RenderText,
                              TextDecoration, Palette)
     from render.objects import Container
-    from render.utils import PathLike, find_rightmost
+    from render.utils import PathLike, bisect_right
 
     class Text(RenderObject):
 
@@ -150,11 +150,10 @@ else:
             if max_width is None:
                 return text, "", bad_split
             indices = list(range(len(text)))
-            bound = find_rightmost(
+            bound = bisect_right(
                 indices,
                 max_width,
-                key=lambda k: cls._calculate_width(font, text[:k], stroke_width
-                                                   ),
+                key=lambda k: cls._calculate_width(font, text[:k], stroke_width),
             )
             if cls._calculate_width(font, text[:bound],
                                     stroke_width) > max_width:
@@ -238,7 +237,7 @@ else:
         ):
             cuts = list(cls._dict.iterate(word))
             cuts.sort(key=lambda k: len(k[0]))
-            cut_bound = find_rightmost(
+            cut_bound = bisect_right(
                 range(len(cuts)),
                 max_width,
                 key=lambda k: cls._calculate_width(font, cuts[k][0] + "-",

@@ -22,7 +22,7 @@ class Decoration:
 
 
 class ForegroundDecoration(Decoration):
-    "Decorations that are applied on top of the content."
+    """Decorations that are applied on top of the content."""
 
     def __init__(self, box_sizing: BoxSizing) -> None:
         super(ForegroundDecoration, self).__init__()
@@ -45,7 +45,7 @@ class ForegroundDecoration(Decoration):
 
 
 class BackgroundDecoration(Decoration):
-    "Decorations that are applied on the background."
+    """Decorations that are applied on the background."""
 
     @abstractmethod
     def apply(
@@ -73,7 +73,7 @@ class BackgroundDecoration(Decoration):
 
 
 class Decorations:
-    "Collection of decorations."
+    """Collection of decorations."""
 
     def __init__(self, decorations: Sequence[Decoration]) -> None:
         self._decorations = [

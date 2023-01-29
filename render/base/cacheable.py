@@ -9,6 +9,14 @@ V = TypeVar("V")
 
 
 class Cacheable:
+    """Supports caching return value of properties and methods.
+    
+    Cache can be cleared recursively by calling `clear_cache()`.
+
+    Attributes:
+        __cache__: Mapping from names to cached values.
+        __cache_parent__: List of parent Cacheable objects.
+    """
 
     def __init__(self, *parent: Cacheable) -> None:
         self.__cache__: dict[str, Any] = {}
@@ -29,6 +37,7 @@ class Cacheable:
 
 
 def _list_update(f: Callable):
+    """Apply to list methods that may change the list."""
     def wrapper(self, *args, **kwargs):
         result = f(self, *args, **kwargs)
         self.clear_cache()
@@ -41,6 +50,7 @@ def _list_update(f: Callable):
 
 
 class CacheableList(list[T], Cacheable):
+    """A cacheable list sensitive to changes in its items."""
 
     def __init__(self, iterable: Iterable[T] = (), *parent: Cacheable) -> None:
         list.__init__(self, iterable)
@@ -69,6 +79,7 @@ class CacheableList(list[T], Cacheable):
 
 
 def _dict_update(f: Callable):
+    """Apply to dict methods that may change the dict values."""
     def wrapper(self, *args, **kwargs):
         result = f(self, *args, **kwargs)
         self.clear_cache()
@@ -83,8 +94,16 @@ def _dict_update(f: Callable):
 
 
 class CacheableDict(dict[K, V], Cacheable):
+    """A cacheable dict sensitive to changes in its values.
+    
+    Raises:
+        TypeError: If a key is a Cacheable object.
+    """
 
-    def __init__(self, dict_: dict[K, V] = {}, *parent: Cacheable) -> None:
+    def __init__(self,
+                 dict_: dict[K, V] | None = None,
+                 *parent: Cacheable) -> None:
+        dict_ = dict_ or {}
         dict.__init__(self, dict_)
         Cacheable.__init__(self, *parent)
         for key, value in dict_.items():
@@ -106,6 +125,11 @@ class CacheableDict(dict[K, V], Cacheable):
 
 
 def cached(func: Callable[[Any], T]) -> Callable[[Cacheable], T]:
+    """Decorator to cache the return value of a method.
+    
+    Raises:
+        TypeError: If the object of decorated method is not a Cacheable object.
+    """
     key = func.__name__
 
     def wrapper(self):
@@ -120,7 +144,15 @@ def cached(func: Callable[[Any], T]) -> Callable[[Cacheable], T]:
 
 class volatile(Generic[T]):
     """A context manager that used in Cacheable.__init__ method 
-    to create volatile properties."""
+    to create volatile properties.
+    
+    Attributes:
+        obj: The Cacheable object.
+
+    Raises:
+        TypeError: If volatile attribute is a python list or dict.
+        RuntimeError: If volatile is not called from Cacheable.__init__.
+    """
 
     @classmethod
     def create_property(cls, obj: Cacheable, attr: str, initial: T) -> None:
@@ -157,6 +189,15 @@ class volatile(Generic[T]):
 
     def __init__(self, obj: Cacheable) -> None:
         self.obj = obj
+
+        import inspect
+        frame = inspect.currentframe()
+        back = None if frame is None else frame.f_back
+        if back is None:
+            raise RuntimeError("volatile must be used in Cacheable.__init__")
+        caller = back.f_code.co_name
+        if caller != "__init__":
+            raise RuntimeError("volatile must be used in Cacheable.__init__")
 
     def __enter__(self) -> Self:
         self.attr_names = list(self.obj.__dict__.keys())

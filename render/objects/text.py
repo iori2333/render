@@ -11,7 +11,7 @@ from PIL.ImageFont import FreeTypeFont, truetype
 from render.base import (Alignment, BaseStyle, Color, Direction, RenderImage,
                          RenderObject, RenderText, TextDecoration, cached,
                          volatile)
-from render.utils import PathLike, find_rightmost
+from render.utils import PathLike, bisect_right
 
 
 class Text(RenderObject):
@@ -69,7 +69,7 @@ class Text(RenderObject):
         if max_width is None:
             return text, "", bad_split
         indices = list(range(len(text)))
-        bound = find_rightmost(
+        bound = bisect_right(
             indices,
             max_width,
             key=lambda k: cls._calculate_width(font, text[:k], stroke_width),
@@ -154,10 +154,10 @@ class Text(RenderObject):
     ):
         cuts = list(cls._dict.iterate(word))
         cuts.sort(key=lambda k: len(k[0]))
-        cut_bound = find_rightmost(range(len(cuts)),
-                                   max_width,
-                                   key=lambda k: cls._calculate_width(
-                                       font, cuts[k][0] + "-", stroke_width))
+        cut_bound = bisect_right(range(len(cuts)),
+                                 max_width,
+                                 key=lambda k: cls._calculate_width(
+                                     font, cuts[k][0] + "-", stroke_width))
         if cut_bound == 0 or not cuts:
             return "", word
         return cuts[cut_bound - 1][0] + "-", cuts[cut_bound - 1][1]
