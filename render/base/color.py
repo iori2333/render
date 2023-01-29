@@ -214,6 +214,17 @@ class Palette:
         )
 
     @classmethod
+    def natural_blend(cls, color1: Color, color2: Color, t: float) -> Color:
+        """Natural color mixing by Mixbox (https://github.com/scrtwpns/mixbox)."""
+        try:
+            import mixbox
+        except ImportError:
+            raise ImportError(
+                "natural_blend requires pymixbox to be installed")
+        color = mixbox.lerp(color1, color2, t)
+        return Color.of(*color)
+
+    @classmethod
     def named_colors(cls) -> Generator[tuple[str, Color], None, None]:
         for name, color in cls.__dict__.items():
             if isinstance(color, Color):

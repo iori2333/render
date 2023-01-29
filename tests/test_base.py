@@ -1,4 +1,7 @@
+from random import choice
+
 import cv2
+import numpy as np
 
 from render import *
 from tests.data import *
@@ -73,6 +76,36 @@ def _test_color(use_stack: bool = True):
 def test_color():
     _test_color(use_stack=True)
     _test_color(use_stack=False)
+
+
+def test_color_blend():
+    colors = list(Palette.colors())
+    width = 400
+    height = 50
+    color_src = [Palette.BLUE, Palette.YELLOW, Palette.RED]
+    im = []
+    sep = RenderImage.empty(width, 1, Palette.BLACK)
+    for i in range(10):
+        if i < len(color_src):
+            color1 = color_src[i]
+            color2 = color_src[(i + 1) % len(color_src)]
+        else:
+            color1 = choice(colors)
+            color2 = choice(colors)
+        band1 = np.zeros((height, width, 4), dtype=np.uint8)
+        band2 = np.zeros((height, width, 4), dtype=np.uint8)
+        for t in range(width):
+            band1[:, t, :] = Palette.blend(color1, color2, t / width)
+            band2[:, t, :] = Palette.natural_blend(color1, color2, t / width)
+        im1 = RenderImage.from_raw(band1)
+        im2 = RenderImage.from_raw(band2)
+        im.append(
+            RenderImage.concat_vertical(
+                [im1, sep, im2],
+                alignment=Alignment.CENTER,
+            ))
+    RenderImage.concat_vertical(im, alignment=Alignment.CENTER,
+                                spacing=20).save(Output / "color-blend.png")
 
 
 def test_resize():
