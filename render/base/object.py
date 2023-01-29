@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from functools import lru_cache
 from typing import Iterable
 from typing_extensions import TypedDict
 
+from .cacheable import Cacheable
 from .color import Color, Palette
 from .decorations import Decoration, Decorations
 from .image import RenderImage
@@ -11,7 +11,7 @@ from .properties import Border, Space
 
 class BaseStyle(TypedDict, total=False):
     """Base style of a render object.
-    
+
     Args:
         background: background color filled inside the border
         padding: padding (px) of the object
@@ -43,7 +43,7 @@ class BaseStyle(TypedDict, total=False):
     decorations: Iterable[Decoration]
 
 
-class RenderObject(ABC):
+class RenderObject(ABC, Cacheable):
     """Base class of all renderable objects.
 
     Abstract Methods:
@@ -62,6 +62,7 @@ class RenderObject(ABC):
         decorations: Iterable[Decoration] = (),
         background: Color = Palette.TRANSPARENT,
     ) -> None:
+        Cacheable.__init__(self)
         self.border = border
         self.margin = margin
         self.padding = padding
@@ -83,25 +84,23 @@ class RenderObject(ABC):
         raise NotImplementedError()
 
     @property
-    @lru_cache()
     def width(self) -> int:
         """Width of the object.
-        
-        Note: 
-            Modifications to the object should not affect content width, 
-            otherwise unexpected results may occur due to caching.
+
+        Note:
+            This method should NOT be @cached.
+            Add @cached to `content_width`.
         """
         width = self.content_width + self.padding.width + self.margin.width + self.border.width * 2
         return width
 
     @property
-    @lru_cache()
     def height(self) -> int:
         """Height of the object.
-        
-        Note: 
-            Modifications to the object should not affect content height, 
-            otherwise unexpected results may occur due to caching.
+
+        Note:
+            This method should NOT be @cached.
+            Add @cached to `content_height`.
         """
         height = self.content_height + self.padding.height + self.margin.height + self.border.width * 2
         return height
@@ -110,11 +109,15 @@ class RenderObject(ABC):
         """Render an object to image.
 
         Render process:
-        1. Render content (implemented by subclasses)
-        2. Apply content decorations
-        3. Draw border & fill background
-        4. Apply full decorations
-        5. Apply background decorations if needed
+            1. Render content (implemented by subclasses)
+            2. Apply content decorations
+            3. Draw border & fill background
+            4. Apply full decorations
+            5. Apply background decorations if needed
+
+        Note:
+            This method should NOT be @cached.
+            Add @cached to `render_content`.
         """
 
         im = RenderImage.empty(self.width, self.height, Palette.TRANSPARENT)

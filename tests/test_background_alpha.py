@@ -19,7 +19,7 @@ def test_stack_bg_when_deco():
     y = arr.shape[0] // 2
     x = arr.shape[1] // 2
     assert (arr[y, x] == (0, 0, 0, alpha)).all(), \
-    f"{arr[y, x]} should be (0, 0, 0, {alpha})"
+        f"{arr[y, x]} should be (0, 0, 0, {alpha})"
 
 
 def test_text_bg():
@@ -31,4 +31,4 @@ def test_text_bg():
     y = arr.shape[0] // 2
     x = arr.shape[1] // 2
     assert (arr[y, x] == (0, 0, 0, alpha)).all(), \
-    f"{arr[y, x]} should be (0, 0, 0, {alpha})"
+        f"{arr[y, x]} should be (0, 0, 0, {alpha})"

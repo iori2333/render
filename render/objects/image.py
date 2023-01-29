@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing_extensions import Self, Unpack, override
 
-from render.base import BaseStyle, Color, RenderImage, RenderObject
+from render.base import BaseStyle, Color, RenderImage, RenderObject, volatile
 from render.utils import PathLike
 
 
@@ -11,7 +11,8 @@ class Image(RenderObject):
 
     def __init__(self, im: RenderImage, **kwargs: Unpack[BaseStyle]) -> None:
         super(Image, self).__init__(**kwargs)
-        self.im = im
+        with volatile(self):
+            self.im = im
 
     @classmethod
     def from_file(

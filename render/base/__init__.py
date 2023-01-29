@@ -1,3 +1,4 @@
+from .cacheable import Cacheable, cached, volatile
 from .color import Color, Palette
 from .decorations import (BackgroundDecoration, BoxSizing, Decorations,
                           ForegroundDecoration)
@@ -12,6 +13,7 @@ __all__ = [
     "BaseStyle",
     "Border",
     "BoxSizing",
+    "Cacheable",
     "Color",
     "Decorations",
     "Direction",
@@ -24,4 +26,6 @@ __all__ = [
     "RenderText",
     "Space",
     "TextDecoration",
+    "cached",
+    "volatile",
 ]

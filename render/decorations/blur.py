@@ -22,7 +22,7 @@ class GaussianBlur(ForegroundDecoration):
         box_sizing: BoxSizing = BoxSizing.CONTENT_BOX,
     ) -> Self:
         if blur_radius % 2 == 0:
-            blur_radius += 1  # incase of even number
+            blur_radius += 1  # in case of even number
         return cls(blur_radius, box_sizing)
 
     @override

@@ -14,4 +14,6 @@ __all__ = [
     "find_rightmost",
     "ImageMask",
     "PathLike",
+    "Undefined",
+    "undefined",
 ]

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Tuple
 from typing_extensions import Self, TypedDict, Unpack, override
 
-from render.base import BaseStyle, RenderImage, RenderObject
+from render.base import BaseStyle, RenderImage, RenderObject, volatile, cached
 from .utils import Box, DependencyGraph, LinearPolynomial, partition
 
 XY = Tuple[int, int]
@@ -40,9 +40,9 @@ class Constraint(TypedDict, total=False):
 
 class RelativeContainer(RenderObject):
     """A container that can arrange its children in relative positions.
-    
+
     The container will automatically resize itself to fit all children.
-    
+
     Attributes:
         strict: Expand the container to fit outside children if True.
             Otherwise, the container only keeps inner part.
@@ -61,17 +61,20 @@ class RelativeContainer(RenderObject):
         The container will put the center object in the center of itself,
         and put the obj object to the right of the center object.
     """
+
     def __init__(
         self,
         strict: bool = False,
         **kwargs: Unpack[BaseStyle],
     ) -> None:
         super(RelativeContainer, self).__init__(**kwargs)
-        self.strict = strict
-        self.children: list[RenderObject] = []
-        self.graph = DependencyGraph[RenderObject, str]().add_node(self)
-        self.offsets: dict[RenderObject, XY] = {}
-        self.constraints: list[ConstraintTuple] = []
+        with volatile(self) as v:
+            self.strict = strict
+            self.children: list[RenderObject] = v.list()
+        # The following attributes should not be accessed directly
+        self._offsets: dict[RenderObject, XY] = {}
+        self._graph = DependencyGraph[RenderObject, str]().add_node(self)
+        self._constraints: list[ConstraintTuple] = []
 
     def add_child(
             self,
@@ -90,8 +93,8 @@ class RelativeContainer(RenderObject):
             raise ValueError("Child already added")
         self.children.append(child)
         for relation, target in kwargs.items():
-            self.graph.add_edge(target, child, relation)  # type: ignore
-        self.offsets[child] = offset
+            self._graph.add_edge(target, child, relation)  # type: ignore
+        self._offsets[child] = offset
         return self
 
     def add_constraint(
@@ -100,13 +103,19 @@ class RelativeContainer(RenderObject):
         **kwargs: Unpack[Constraint],
     ) -> Self:
         """Add a constraint between two objects.
-        
+
         Args:
             obj: The object to add constraint to.
             **kwargs: The constraint between the object and other objects.
         """
         for relation, target in kwargs.items():
-            self.constraints.append((obj, relation, target))  # type: ignore
+            self._constraints.append((obj, relation, target))  # type: ignore
+        return self
+
+    def set_offset(self, child: RenderObject, offset: XY) -> Self:
+        self._offsets[child] = offset
+        # call clear_cache manually
+        self.clear_cache()
         return self
 
     @property
@@ -119,6 +128,7 @@ class RelativeContainer(RenderObject):
     def content_height(self) -> int:
         return self.infer_size()[1] if self.children else 0
 
+    @cached
     def infer_size(self) -> XY:
         """Infer the size of the container."""
         boxes = self._setup_boxes()
@@ -129,9 +139,10 @@ class RelativeContainer(RenderObject):
         size = self._infer_size(boxes, x, y, w, h)
         return round(size[w.var]), round(size[h.var])
 
+    @cached
     def _setup_boxes(self) -> dict[RenderObject, Box]:
         """Create boxes for each child according to the relative positions.
-        
+
         Raises:
             ValueError: If the relative positions cannot be inferred or
                 there is a cyclic dependency of objects.
@@ -143,22 +154,22 @@ class RelativeContainer(RenderObject):
         undef = LinearPolynomial(undef=1)
 
         boxes: dict[RenderObject, Box] = {self: Box.of_size(x, y, w, h)}
-        for obj in self.graph.topological_sort():
+        for obj in self._graph.topological_sort():
             if obj is self:
                 continue
 
             # initialize x, y with undefined values
             obj_box = boxes.get(
                 obj, Box.of_size(undef, undef, obj.width, obj.height))
-            for pred in self.graph.get_predecessors(obj):
-                for relative in self.graph.get_edges(pred, obj):
+            for pred in self._graph.get_predecessors(obj):
+                for relative in self._graph.get_edges(pred, obj):
                     obj_box = obj_box.relative_to(boxes[pred], relative)
             # check if x, y are defined
             if obj_box.x1 is undef or obj_box.y1 is undef:
                 raise ValueError(f"Could not infer position of object: "
                                  f"{obj}(x={obj_box.x1}, y={obj_box.y1})")
             # apply offset
-            boxes[obj] = obj_box.offset(*self.offsets.get(obj, (0, 0)))
+            boxes[obj] = obj_box.offset(*self._offsets.get(obj, (0, 0)))
 
         # remove temporary self box
         del boxes[self]
@@ -172,9 +183,9 @@ class RelativeContainer(RenderObject):
         w: LinearPolynomial,
         h: LinearPolynomial,
     ) -> dict[str, float]:
-        """Calculate the size of the container 
+        """Calculate the size of the container
         according to the boxes and constraints.
-        
+
         Find the boundary of each child object and calculate the width from
         the leftmost and rightmost child, and the height from the topmost and
         bottommost child. Then, apply the constraints to the width and height.
@@ -202,7 +213,7 @@ class RelativeContainer(RenderObject):
         width_c = width.const if width.is_const else -1
         height_c = height.const if height.is_const else -1
 
-        for obj_from, constraint, obj_to in self.constraints:
+        for obj_from, constraint, obj_to in self._constraints:
             box_from, box_to = boxes[obj_from], boxes[obj_to]
             in_eq = box_from.constrain(box_to, constraint)
             # TODO: handle not solvable or less_than case
@@ -218,7 +229,7 @@ class RelativeContainer(RenderObject):
                 f"Could not infer size of container: w={width}, h={height}")
 
         if self.strict:
-            # remove objects that are partially outside of the container
+            # remove objects that are partially outside the container
             # and recalculate the size
             inside_box = {}
             for obj, box in boxes.items():
@@ -244,15 +255,16 @@ class RelativeContainer(RenderObject):
             h.var: height_c,
         }
 
+    @cached
     @override
     def render_content(self) -> RenderImage:
         """Render children objects to specified relative positions.
-        
-        The bounding box of the container is represented by a 4-variable 
+
+        The bounding box of the container is represented by a 4-variable
         polynomial: x, y, w, h. Children boxes are then calculated based on
-        container box and relative positions in topological order. The box of 
-        the container (4 var) is solved by covering all children boxes and 
-        applying constraints. Finally, the children are rendered to the 
+        container box and relative positions in topological order. The box of
+        the container (4 var) is solved by covering all children boxes and
+        applying constraints. Finally, the children are rendered to the
         calculated positions.
         """
         if len(self.children) == 0:

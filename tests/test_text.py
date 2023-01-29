@@ -24,13 +24,15 @@ texts_with_tag = [
 fonts = cycle(Font.fonts())
 
 styles = {
-    str(i): TextStyle(font=next(fonts),
-                      size=sz,
-                      color=Color.rand(),
-                      background=Color.rand(),
-                      hyphenation=True)
+    str(i): TextStyle.of(font=next(fonts),
+                         size=sz,
+                         color=Color.rand(),
+                         background=Color.rand(),
+                         hyphenation=True)
     for i, sz in enumerate(range(32, 64, 8))
 }
+
+default = TextStyle.of(font=next(fonts), size=36, color=Palette.BLACK)
 
 output_dir = Output / "text"
 output_dir.mkdir(parents=True, exist_ok=True)
@@ -58,7 +60,6 @@ def test_text():
 
 
 def test_styled_text():
-    default = TextStyle(font=next(fonts), size=36, color=Palette.BLACK)
     for max_width in [None, 200, 400, 600]:
         for i, text in enumerate(texts_with_tag):
             container = Container.from_children(
@@ -79,17 +80,17 @@ def test_styled_text():
 
 def test_styled_stroke():
     text = "The <1>quick</1> brown <3>fox</3> <5>jumps</5> over a lazy dog."
-    default = TextStyle(font=Font.one(),
-                        size=36,
-                        color=Palette.BLACK,
-                        decoration=TextDecoration.UNDERLINE)
-    stroke_styles = {
-        "1": TextStyle(stroke_width=1, stroke_color=Palette.BLUE),
-        "3": TextStyle(stroke_width=3, stroke_color=Palette.BLUE),
-        "5": TextStyle(stroke_width=5, stroke_color=Palette.BLUE),
+    default = TextStyle.of(font=Font.one(),
+                           size=36,
+                           color=Palette.BLACK,
+                           decoration=TextDecoration.UNDERLINE)
+    styles = {
+        "1": TextStyle.of(stroke_width=1, stroke_color=Palette.BLUE),
+        "3": TextStyle.of(stroke_width=3, stroke_color=Palette.BLUE),
+        "5": TextStyle.of(stroke_width=5, stroke_color=Palette.BLUE),
     }
     StyledText.of(text, default=default,
-                  styles=stroke_styles).render().save(output_dir / "stroke.png")
+                  styles=styles).render().save(output_dir / "stroke.png")
 
 
 def test_text_decoration():

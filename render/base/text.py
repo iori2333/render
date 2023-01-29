@@ -6,6 +6,7 @@ from typing_extensions import Self
 from PIL import Image, ImageDraw, ImageFont
 
 from render.utils import PathLike
+from .cacheable import Cacheable, cached, volatile
 from .color import Color, Palette
 from .image import RenderImage
 
@@ -17,9 +18,9 @@ class TextDecoration(Flag):
     LINE_THROUGH = auto()
 
 
-class RenderText:
+class RenderText(Cacheable):
     """Render text to an image in one single line.
-    
+
     Attributes:
         text: text to render.
         font: font file path.
@@ -42,14 +43,16 @@ class RenderText:
         decoration: TextDecoration = TextDecoration.NONE,
         decoration_thickness: int = -1,
     ):
-        self.text = text
-        self.font = font
-        self.size = size
-        self.color = color
-        self.stroke_width = stroke_width
-        self.stroke_color = stroke_color
-        self.decoration = decoration
-        self.decoration_thickness = decoration_thickness
+        super().__init__()
+        with volatile(self):
+            self.text = text
+            self.font = font
+            self.size = size
+            self.color = color
+            self.stroke_width = stroke_width
+            self.stroke_color = stroke_color
+            self.decoration = decoration
+            self.decoration_thickness = decoration_thickness
 
     @classmethod
     def of(
@@ -78,6 +81,7 @@ class RenderText:
         return cls(text, font, size, color, stroke_width, stroke_color,
                    decoration, decoration_thickness)
 
+    @cached
     def render(self) -> RenderImage:
         font = ImageFont.truetype(str(self.font), self.size)
         # 1. calculate font metrics and text bounding box
@@ -119,6 +123,7 @@ class RenderText:
         return RenderImage.from_pil(im)
 
     @property
+    @cached
     def baseline(self) -> int:
         """Distance from the top to the baseline of the text."""
         font = ImageFont.truetype(str(self.font), self.size)
@@ -126,12 +131,14 @@ class RenderText:
         return ascent + self.stroke_width
 
     @property
+    @cached
     def width(self) -> int:
         font = ImageFont.truetype(str(self.font), self.size)
         width, _ = font.getsize(self.text, stroke_width=self.stroke_width)
         return width
 
     @property
+    @cached
     def height(self) -> int:
         font = ImageFont.truetype(str(self.font), self.size)
         ascent, descent = font.getmetrics()

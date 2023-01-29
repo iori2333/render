@@ -89,7 +89,7 @@ class LinearPolynomial:
             return self - other <= 0
         else:
             return NotImplemented
-    
+
     def __gt__(self, other: Linear) -> bool:
         if isinstance(other, (int, float)):
             return self.const > other and all(c >= 0
@@ -217,7 +217,7 @@ class Inequality(LinearPolynomial):
 
         Raises:
             ValueError: If the inequality is not solvable.
-        """ 
+        """
         if not self.solvable:
             raise ValueError("Not solvable")
         var = self.var
@@ -329,7 +329,7 @@ class Box:
         return Box.of_size(other.p1.x, other.p1.y, self.w, self.h)
 
     def prior_to(self, other: Self) -> Self:
-        """A dummy method to make self dependent on other 
+        """A dummy method to make self rendered later than the other
         so that other will be overlaid.
         
         """
@@ -340,13 +340,13 @@ class Box:
         other: Self,
         relative_type: str,
     ) -> Self:
-        """Get an updated box as if self is placed relative to other."""
+        """Get an updated box as if self is placed relative to the other."""
         if not hasattr(self, relative_type):
             raise ValueError(f"Invalid relative type: {relative_type}")
         return getattr(self, relative_type)(other)
 
     def constrain(self, other: Self, constraint: str) -> Inequality:
-        """Get an inequality that constrains self to other."""
+        """Get an inequality that constrains self to the other."""
         if constraint == "left":
             return Inequality.less(self.x2, other.x1)
         elif constraint == "right":

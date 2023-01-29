@@ -196,9 +196,9 @@ class RenderImage:
         self_g = np.array(self.base_im[:, :, 1]).astype(np.int16)
         self_b = np.array(self.base_im[:, :, 2]).astype(np.int16)
         self_a = np.array(self.base_im[:, :, 3]).astype(np.int16)
-        diff = (end.r - start.r, \
-            end.g - start.g, \
-            end.b - start.b)
+        diff = (end.r - start.r,
+                end.g - start.g,
+                end.b - start.b)
 
         transparency_r = np.zeros(
             (self.height,
@@ -220,12 +220,12 @@ class RenderImage:
             transparency_b = np.clip(
                 np.array(transparency_b).astype(np.int16), 0, 1)
 
-        if (diff == (0, 0, 0)):
+        if diff == (0, 0, 0):
             raise ValueError(f"Invalid colors: {start}, {end}")
         transparency = (transparency_r + transparency_g + transparency_b) / \
-            ((0 if diff[0] == 0 else 1) + \
-            (0 if diff[1] == 0 else 1) + \
-            (0 if diff[2] == 0 else 1))
+            ((0 if diff[0] == 0 else 1) +
+             (0 if diff[1] == 0 else 1) +
+             (0 if diff[2] == 0 else 1))
         transparency = np.clip(np.array(transparency).astype(np.int16), 0, 1)
 
         new_a = np.array(self_a - self_a * transparency).astype(np.uint8)
