@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 from typing import Any, Callable, Dict, Generic, Iterable, List, TypeVar
 from typing_extensions import Self
 
@@ -10,7 +11,7 @@ V = TypeVar("V")
 
 class Cacheable:
     """Supports caching return value of properties and methods.
-    
+
     Cache can be cleared recursively by calling `clear_cache()`.
 
     Attributes:
@@ -52,7 +53,7 @@ def _list_update(f: Callable):
 class CacheableList(List[T], Cacheable):
     """A cacheable list sensitive to changes in its items."""
 
-    def __init__(self, iterable: Iterable[T] = (), *parent: Cacheable) -> None:
+    def __init__(self, iterable: Iterable[T], *parent: Cacheable) -> None:
         list.__init__(self, iterable)
         Cacheable.__init__(self, *parent)
         for item in iterable:
@@ -95,13 +96,13 @@ def _dict_update(f: Callable):
 
 class CacheableDict(Dict[K, V], Cacheable):
     """A cacheable dict sensitive to changes in its values.
-    
+
     Raises:
         TypeError: If a key is a Cacheable object.
     """
 
     def __init__(self,
-                 dict_: dict[K, V] | None = None,
+                 dict_: dict[K, V],
                  *parent: Cacheable) -> None:
         dict_ = dict_ or {}
         dict.__init__(self, dict_)
@@ -126,7 +127,7 @@ class CacheableDict(Dict[K, V], Cacheable):
 
 def cached(func: Callable[[Any], T]) -> Callable[[Cacheable], T]:
     """Decorator to cache the return value of a method.
-    
+
     Raises:
         TypeError: If the object of decorated method is not a Cacheable object.
     """
@@ -143,9 +144,9 @@ def cached(func: Callable[[Any], T]) -> Callable[[Cacheable], T]:
 
 
 class volatile(Generic[T]):
-    """A context manager that used in Cacheable.__init__ method 
+    """A context manager that used in Cacheable.__init__ method
     to create volatile properties.
-    
+
     Attributes:
         obj: The Cacheable object.
 
@@ -157,7 +158,7 @@ class volatile(Generic[T]):
     @classmethod
     def create_property(cls, obj: Cacheable, attr: str, initial: T) -> None:
         """Create a property named `attr` on `obj.__class__` that is volatile.
-        
+
         Property getter will return obj._attr
         Property setter will set obj._attr and notify obj of the change.
         """
@@ -189,8 +190,8 @@ class volatile(Generic[T]):
 
     def __init__(self, obj: Cacheable) -> None:
         self.obj = obj
+        self.attr_names = []
 
-        import inspect
         frame = inspect.currentframe()
         back = None if frame is None else frame.f_back
         if back is None:

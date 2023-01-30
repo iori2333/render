@@ -12,7 +12,7 @@ class GaussianBlur(ForegroundDecoration):
         blur_radius: int,
         box_sizing: BoxSizing,
     ) -> None:
-        super(GaussianBlur, self).__init__(box_sizing)
+        super().__init__(box_sizing)
         self.blur_radius = blur_radius
 
     @classmethod

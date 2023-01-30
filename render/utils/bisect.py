@@ -26,7 +26,7 @@ V = TypeVar('V', Comparable, int, float, str)
 
 class BisectKeyWrapper(Generic[T, V]):
     """A wrapper class that allows to use a key function with bisect.
-    
+
     Python 3.10 introduced the `key` parameter."""
 
     def __init__(self, obj: V, key: Callable[[T], V]) -> None:

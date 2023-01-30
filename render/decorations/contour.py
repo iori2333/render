@@ -14,7 +14,7 @@ class ContourType(Enum):
 
 class Contour(ForegroundDecoration):
     """Draw a contour around the foreground of the image.
-    
+
     Attributes:
         color: color of the contour
         thickness: thickness of the contour
@@ -33,7 +33,7 @@ class Contour(ForegroundDecoration):
         threshold: int,
         box_sizing: BoxSizing,
     ) -> None:
-        super(Contour, self).__init__(box_sizing)
+        super().__init__(box_sizing)
         self.color = color
         self.thickness = thickness
         self.dilation = dilation

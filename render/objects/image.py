@@ -10,7 +10,7 @@ class Image(RenderObject):
     """A RenderObject wrapping a RenderImage."""
 
     def __init__(self, im: RenderImage, **kwargs: Unpack[BaseStyle]) -> None:
-        super(Image, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         with volatile(self):
             self.im = im
 

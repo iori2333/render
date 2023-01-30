@@ -35,7 +35,7 @@ class Text(RenderObject):
         text_decoration_thickness: int,
         **kwargs: Unpack[BaseStyle],
     ) -> None:
-        super(Text, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         with volatile(self):
             self.text = text
             self.font = font

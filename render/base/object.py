@@ -21,7 +21,7 @@ class BaseStyle(TypedDict, total=False):
 
     Box model:
         margin -> border -> padding -> content
-        
+
         +-------------------+
         | margin            |
         | +---------------+ |
@@ -50,7 +50,7 @@ class RenderObject(ABC, Cacheable):
         content_width: int - width of the object
         content_height: int - height of the object
         render_content(): RenderImage - render the object
-    
+
     Content width and height must be determined before rendering.
     """
 
@@ -91,7 +91,8 @@ class RenderObject(ABC, Cacheable):
             This method should NOT be @cached.
             Add @cached to `content_width`.
         """
-        width = self.content_width + self.padding.width + self.margin.width + self.border.width * 2
+        width = (self.content_width + self.padding.width + self.margin.width +
+                 self.border.width * 2)
         return width
 
     @property
@@ -102,7 +103,8 @@ class RenderObject(ABC, Cacheable):
             This method should NOT be @cached.
             Add @cached to `content_height`.
         """
-        height = self.content_height + self.padding.height + self.margin.height + self.border.width * 2
+        height = (self.content_height + self.padding.height +
+                  self.margin.height + self.border.width * 2)
         return height
 
     def render(self) -> RenderImage:

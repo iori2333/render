@@ -1,5 +1,13 @@
 from __future__ import annotations
 
+try:
+    from mixbox import lerp
+except ImportError as e:
+    from warnings import warn
+    warn("natural_blend requires pymixbox to be installed, "
+         "using linear blend as fallback.")
+    lerp = None
+
 from random import randint
 from typing import Generator, NamedTuple
 from typing_extensions import Self
@@ -39,8 +47,7 @@ class Color(NamedTuple):
     def as_hex(self, lower: bool = False) -> str:
         if lower:
             return f"#{self.r:02x}{self.g:02x}{self.b:02x}"
-        else:
-            return f"#{self.r:02X}{self.g:02X}{self.b:02X}"
+        return f"#{self.r:02X}{self.g:02X}{self.b:02X}"
 
     def to_rgb(self) -> tuple[int, int, int]:
         return self.r, self.g, self.b
@@ -203,7 +210,7 @@ class Palette:
     @classmethod
     def blend(cls, color1: Color, color2: Color, t: float) -> Color:
         """Linearly interpolate between two colors.
-        
+
         color = (1 - t) * color1 + t * color2
         """
         return Color.of(
@@ -216,12 +223,9 @@ class Palette:
     @classmethod
     def natural_blend(cls, color1: Color, color2: Color, t: float) -> Color:
         """Natural color mixing by Mixbox (https://github.com/scrtwpns/mixbox)."""
-        try:
-            import mixbox
-        except ImportError:
-            raise ImportError(
-                "natural_blend requires pymixbox to be installed")
-        color = mixbox.lerp(color1, color2, t)
+        if lerp is None:
+            return cls.blend(color1, color2, t)
+        color = lerp(color1, color2, t)
         return Color.of(*color)
 
     @classmethod

@@ -9,7 +9,7 @@ from render.base import (Alignment, BaseStyle, RenderImage, RenderObject,
 
 class Stack(RenderObject):
     """A container that stacks its children on top of each other.
-    
+
     The first child is at the bottom, the last child is at the top.
     And the final content size is the size of the largest child.
 
@@ -28,7 +28,7 @@ class Stack(RenderObject):
         paste_mode: Literal["paste", "overlay", "cover"],
         **kwargs: Unpack[BaseStyle],
     ) -> None:
-        super(Stack, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         with volatile(self) as v:
             self.children = v.list(children)
             self.vertical_alignment = vertical_alignment

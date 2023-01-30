@@ -67,7 +67,7 @@ class RelativeContainer(RenderObject):
         strict: bool = False,
         **kwargs: Unpack[BaseStyle],
     ) -> None:
-        super(RelativeContainer, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         with volatile(self) as v:
             self.strict = strict
             self.children: list[RenderObject] = v.list()

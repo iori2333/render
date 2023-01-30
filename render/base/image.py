@@ -14,7 +14,7 @@ from .properties import Alignment, Border, Direction, Interpolation
 
 class RenderImage:
     """A wrapper class for image matrices.
-    
+
     Attributes:
         base_im: The image matrix (RGBA, uint8).
     """
@@ -25,7 +25,7 @@ class RenderImage:
     @classmethod
     def from_file(cls, path: PathLike) -> Self:
         """Loads an image from a file.
-        
+
         RGB images are converted to RGBA with alpha channel set to 255.
         """
         im = cv2.imread(str(path), cv2.IMREAD_UNCHANGED)
@@ -51,7 +51,7 @@ class RenderImage:
     @classmethod
     def from_raw(cls, im: cv2.Mat, bgr: bool = False) -> Self:
         """Converts an image matrix to RenderImage.
-        
+
         Args:
             im: The image matrix (from cv2.imread or np.array, etc.).
             bgr: Whether the image matrix is in BGR format.
@@ -88,8 +88,7 @@ class RenderImage:
         images = list(images)
         if direction == Direction.HORIZONTAL:
             return cls.concat_horizontal(images, alignment, color, spacing)
-        else:
-            return cls.concat_vertical(images, alignment, color, spacing)
+        return cls.concat_vertical(images, alignment, color, spacing)
 
     @classmethod
     def concat_horizontal(
@@ -150,7 +149,7 @@ class RenderImage:
     def paste(self, x: int, y: int, im: Self) -> Self:
         """Pastes the image onto this image at the given coordinates.
         Considering alpha channels of both images.
-        
+
         Based on PIL.Image.alpha_composite."""
         im_self = PILImage.fromarray(self.base_im)
         im_paste = PILImage.fromarray(im.base_im)
@@ -159,7 +158,7 @@ class RenderImage:
         return self
 
     def cover(self, x: int, y: int, im: Self) -> Self:
-        """Pastes the image onto this image at the given coordinates 
+        """Pastes the image onto this image at the given coordinates
         only where the cover image is not transparent.
 
         If the cover pixel is transparent, the pixel in the base image is not changed."""
@@ -175,7 +174,7 @@ class RenderImage:
         return self
 
     def overlay(self, x: int, y: int, im: Self) -> Self:
-        """Pastes the image onto this image at the given coordinates 
+        """Pastes the image onto this image at the given coordinates
         no matter what the alpha channel is."""
         b, t, l, r = (y, y + im.height, x, x + im.width)
         if b >= self.height or t < 0 or l >= self.width or r < 0:
@@ -265,10 +264,10 @@ class RenderImage:
         interpolation: Interpolation = Interpolation.BILINEAR,
     ) -> Self:
         """Resizes the image to the given width and height inplace.
-        
-        If only one of the dimensions is specified, the other dimension is 
+
+        If only one of the dimensions is specified, the other dimension is
         calculated to preserve the aspect ratio.
-        
+
         Args:
             width: The new width of the image.
             height: The new height of the image.
@@ -298,7 +297,7 @@ class RenderImage:
         interpolation: Interpolation = Interpolation.BILINEAR,
     ) -> Self:
         """Resizes the image by the given scale inplace.
-        
+
         Args:
             scale: The scale to resize the image by.
             interpolation: The interpolation method to use.
@@ -316,7 +315,7 @@ class RenderImage:
         interpolation: Interpolation = Interpolation.BILINEAR,
     ) -> Self:
         """Resizes the image to fit within the given dimensions inplace.
-        
+
         If dimension is not specified, original dimension is used.
 
         Args:
@@ -339,7 +338,7 @@ class RenderImage:
 
     def copy(self) -> Self:
         """Returns a copy of the image.
-        
+
         Useful when the original image needs to be preserved.
         """
         return self.__class__(self.base_im.copy())
@@ -357,12 +356,12 @@ class RenderImage:
 
     def mask(self, mask: ImageMask) -> Self:
         """Apply mask to image inplace.
-        
+
         Alpha channel of the image will be multiplied by the mask.
 
         Args:
             mask: a 2D numpy array of shape (height, width) with values in [0, 255].
-            
+
         Raises:
             ValueError: if mask size is not same as image size.
         """

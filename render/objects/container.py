@@ -24,7 +24,7 @@ class Container(RenderObject):
         children: Iterable[RenderObject],
         **kwargs: Unpack[BaseStyle],
     ) -> None:
-        super(Container, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         with volatile(self) as v:
             self.alignment = alignment
             self.direction = direction
@@ -46,9 +46,8 @@ class Container(RenderObject):
     def content_width(self) -> int:
         if self.direction == Direction.HORIZONTAL:
             return sum(child.width for child in self.children)
-        else:
-            return max(child.width
-                       for child in self.children) if self.children else 0
+        return max(child.width
+                   for child in self.children) if self.children else 0
 
     @property
     @cached
@@ -57,8 +56,7 @@ class Container(RenderObject):
         if self.direction == Direction.HORIZONTAL:
             return max(child.height
                        for child in self.children) if self.children else 0
-        else:
-            return sum(child.height for child in self.children)
+        return sum(child.height for child in self.children)
 
     @cached
     @override
@@ -105,8 +103,7 @@ class FixedContainer(Container):
         children: Iterable[RenderObject],
         **kwargs: Unpack[BaseStyle],
     ) -> None:
-        super(FixedContainer, self).__init__(alignment, direction, children,
-                                             **kwargs)
+        super().__init__(alignment, direction, children, **kwargs)
         with volatile(self):
             self.fixed_width = width
             self.fixed_height = height
@@ -143,9 +140,9 @@ class FixedContainer(Container):
             min_height = sum(child.height for child in children)
 
         if width < min_width or height < min_height:
-            raise ValueError(
-                f"Container is too small, expect at least {(min_width, min_height)}, got {(width, height)}"
-            )
+            raise ValueError(f"Container is too small, "
+                             f"expect at least {(min_width, min_height)}, "
+                             f"got {(width, height)}")
 
         return cls(width, height, justify_content, alignment, direction,
                    children, **kwargs)

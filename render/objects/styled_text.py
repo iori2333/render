@@ -14,6 +14,7 @@ from .text import Text
 
 
 class TextStyle(Cacheable):
+
     def __init__(
         self,
         font: PathLike | Undefined,
@@ -26,7 +27,7 @@ class TextStyle(Cacheable):
         decoration: TextDecoration | Undefined,
         decoration_thickness: int | Undefined,
     ) -> None:
-        super(TextStyle, self).__init__()
+        super().__init__()
         with volatile(self):
             self.font = font
             self.size = size
@@ -109,7 +110,7 @@ class StyledText(RenderObject):
         line_spacing: int,
         **kwargs: Unpack[BaseStyle],
     ) -> None:
-        super(StyledText, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
         with volatile(self) as v:
             self.text = text

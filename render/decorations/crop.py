@@ -15,8 +15,8 @@ class Crop(ForegroundDecoration):
     @abstractmethod
     def get_mask(self, obj: RenderImage) -> ImageMask:
         """Create a crop mask.
-        
-        Mask should be a 2D array of shape (height, width) with 
+
+        Mask should be a 2D array of shape (height, width) with
         values in [0, 255].
         """
         raise NotImplementedError()
@@ -36,7 +36,7 @@ class CircleCrop(Crop):
         radius: int | None,
         box_sizing: BoxSizing,
     ) -> None:
-        super(CircleCrop, self).__init__(box_sizing)
+        super().__init__(box_sizing)
         self.radius = radius
 
     @classmethod
@@ -76,7 +76,7 @@ class RectCrop(Crop):
         border_radius: int,
         box_sizing: BoxSizing,
     ) -> None:
-        super(RectCrop, self).__init__(box_sizing)
+        super().__init__(box_sizing)
         self.width = width
         self.height = height
         self.border_radius = border_radius

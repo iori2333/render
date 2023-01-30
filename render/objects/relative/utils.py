@@ -28,10 +28,9 @@ class LinearPolynomial:
             }
             coef = {key: value for key, value in coef.items() if value != 0.0}
             return LinearPolynomial(self.const + other.const, **coef)
-        elif isinstance(other, (int, float)):
+        if isinstance(other, (int, float)):
             return LinearPolynomial(self.const + other, **self.symbols)
-        else:
-            return NotImplemented
+        return NotImplemented
 
     def __radd__(self, other: Linear) -> Self:
         return self + other
@@ -50,8 +49,7 @@ class LinearPolynomial:
                 self.const * other,
                 **{key: coef * other
                    for key, coef in self.symbols.items()})
-        else:
-            return NotImplemented
+        return NotImplemented
 
     def __truediv__(self, other: int | float) -> Self:
         if isinstance(other, (int, float)):
@@ -59,8 +57,7 @@ class LinearPolynomial:
                 self.const / other,
                 **{key: coef / other
                    for key, coef in self.symbols.items()})
-        else:
-            return NotImplemented
+        return NotImplemented
 
     def __floordiv__(self, other: int | float) -> Self:
         if isinstance(other, (int, float)):
@@ -68,73 +65,67 @@ class LinearPolynomial:
                 self.const // other,
                 **{key: coef // other
                    for key, coef in self.symbols.items()})
-        else:
-            return NotImplemented
+        return NotImplemented
 
     def __lt__(self, other: Linear) -> bool:
         """Note: This is not exact. Just for finding the minimum."""
         if isinstance(other, (int, float)):
             return self.const < other and all(c <= 0
                                               for c in self.symbols.values())
-        elif isinstance(other, LinearPolynomial):
+        if isinstance(other, LinearPolynomial):
             return self - other < 0
-        else:
-            return NotImplemented
+        return NotImplemented
 
     def __le__(self, other: Linear) -> bool:
         if isinstance(other, (int, float)):
             return self.const <= other and all(c <= 0
                                                for c in self.symbols.values())
-        elif isinstance(other, LinearPolynomial):
+        if isinstance(other, LinearPolynomial):
             return self - other <= 0
-        else:
-            return NotImplemented
+        return NotImplemented
 
     def __gt__(self, other: Linear) -> bool:
         if isinstance(other, (int, float)):
             return self.const > other and all(c >= 0
                                               for c in self.symbols.values())
-        elif isinstance(other, LinearPolynomial):
+        if isinstance(other, LinearPolynomial):
             return self - other > 0
-        else:
-            return NotImplemented
+        return NotImplemented
 
     def __ge__(self, other: Linear) -> bool:
         if isinstance(other, (int, float)):
             return self.const >= other and all(c >= 0
                                                for c in self.symbols.values())
-        elif isinstance(other, LinearPolynomial):
+        if isinstance(other, LinearPolynomial):
             return self - other >= 0
-        else:
-            return NotImplemented
+        return NotImplemented
 
     def __eq__(self, other: Any) -> bool:
         if isinstance(other, LinearPolynomial):
             return self.const == other.const and self.symbols == other.symbols
-        elif isinstance(other, (int, float)):
+        if isinstance(other, (int, float)):
             return self.const == other and len(self.symbols) == 0
-        else:
-            return NotImplemented
+        return NotImplemented
 
     def __repr__(self) -> str:
-        return f"LinearPolynomial({self.const}, {' '.join(f'{coef}:{key}' for key, coef in self.symbols.items())})"
+        return (f"LinearPolynomial({self.const}, "
+                f"""{' '.join(f'{coef}:{key}'
+            for key, coef in self.symbols.items())})""")
 
     def __str__(self) -> str:
         def _symbol(key, coef):
             if coef == 1:
                 return f"{key}"
-            elif coef == -1:
+            if coef == -1:
                 return f"-{key}"
-            else:
-                return f"{coef}{key}"
+            return f"{coef}{key}"
 
         if self.is_const:
             return str(self.const)
-        else:
-            const = f"{self.const} + " if self.const != 0 else ""
-            terms = " + ".join(
-                _symbol(key, coef) for key, coef in self.symbols.items())
-            return (const + terms).lstrip("+ ").replace("+ -", "- ")
+        const = f"{self.const} + " if self.const != 0 else ""
+        terms = " + ".join(
+            _symbol(key, coef) for key, coef in self.symbols.items())
+        return (const + terms).lstrip("+ ").replace("+ -", "- ")
 
     def eval(self, **values: float) -> float:
         return self.const + sum(coef * values[key]
@@ -143,10 +134,9 @@ class LinearPolynomial:
     def contains_symbol(self, symbol: str | Self) -> bool:
         if isinstance(symbol, str):
             return symbol in self.symbols
-        elif isinstance(symbol, LinearPolynomial):
+        if isinstance(symbol, LinearPolynomial):
             return all(key in self.symbols for key in symbol.symbols)
-        else:
-            raise TypeError(f"Invalid type: {type(symbol)}")
+        raise TypeError(f"Invalid type: {type(symbol)}")
 
     @property
     def is_const(self) -> bool:
@@ -190,7 +180,7 @@ class Inequality(LinearPolynomial):
     @property
     def solvable(self) -> bool:
         """Solvable if it has only one variable.
-        
+
         Note:
             A stronger implementation is to use linear programming
             to solve a couple of inequalities.
@@ -207,9 +197,9 @@ class Inequality(LinearPolynomial):
         return self.eval(**values) >= 0
 
     def solve(self) -> tuple[str, bool, float]:
-        """Solve the inequality with result in the form of 
+        """Solve the inequality with result in the form of
         var >= value or var <= value.
-        
+
         Returns:
             var: The variable name.
             greater: True if var >= value, False if var <= value.
@@ -331,7 +321,7 @@ class Box:
     def prior_to(self, other: Self) -> Self:
         """A dummy method to make self rendered later than the other
         so that other will be overlaid.
-        
+
         """
         return self
 
@@ -349,14 +339,13 @@ class Box:
         """Get an inequality that constrains self to the other."""
         if constraint == "left":
             return Inequality.less(self.x2, other.x1)
-        elif constraint == "right":
+        if constraint == "right":
             return Inequality.greater(self.x1, other.x2)
-        elif constraint == "above":
+        if constraint == "above":
             return Inequality.less(self.y2, other.y1)
-        elif constraint == "below":
+        if constraint == "below":
             return Inequality.greater(self.y1, other.y2)
-        else:
-            raise ValueError(f"Invalid constraint: {constraint}")
+        raise ValueError(f"Invalid constraint: {constraint}")
 
     def offset(self, x: Linear, y: Linear) -> Self:
         return Box.of_size(self.p1.x + x, self.p1.y + y, self.w, self.h)
@@ -397,7 +386,7 @@ class DependencyGraph(Generic[Node, Edge]):
 
     def topological_sort(self) -> list[Node]:
         """Perform topological sort on the graph.
-        
+
         Returns:
             A list of nodes in topological order.
 
@@ -430,7 +419,7 @@ def partition(
     iterable: Iterable[T],
 ) -> tuple[list[T], list[T]]:
     """Partition an iterable into two lists based on a predicate.
-    
+
     Args:
         predicate: A function that takes an item and returns a boolean.
         iterable: An iterable to partition.

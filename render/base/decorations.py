@@ -25,7 +25,7 @@ class ForegroundDecoration(Decoration):
     """Decorations that are applied on top of the content."""
 
     def __init__(self, box_sizing: BoxSizing) -> None:
-        super(ForegroundDecoration, self).__init__()
+        super().__init__()
         self.box_sizing = box_sizing
 
     @abstractmethod

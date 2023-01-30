@@ -7,13 +7,14 @@ class Spacer(RenderObject):
     """A spacer for holding space in containers."""
 
     def __init__(self, width: int, height: int) -> None:
-        super(Spacer, self).__init__()
+        super().__init__()
         with volatile(self):
             self.space_width = width
             self.space_height = height
 
     @classmethod
     def of(cls, width: int = 0, height: int = 0) -> Self:
+        """Create a spacer with given width or height."""
         return Spacer(width, height)
 
     @property
