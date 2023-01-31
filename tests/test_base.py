@@ -21,9 +21,17 @@ def make_color_rect(name: str,
                          size=18,
                          alignment=Alignment.CENTER,
                          background=color,
+                         shading=color,
                          hyphenation=False,
                          max_width=size - 10)
-    color_hex = Text.of(color.as_hex(), font=font, size=8, background=color)
+    color_hex = Text.of(
+        color.as_hex(),
+        font=font,
+        size=8,
+        background=color,
+        shading=color,
+        text_decoration=TextDecoration.UNDERLINE,
+    )
     if use_stack:
         spacing = TestRect.of(size // 16, size // 16, Palette.TRANSPARENT)
         color_text = Container.from_children([color_name, spacing, color_hex],

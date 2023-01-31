@@ -30,6 +30,8 @@ class RenderText(Cacheable):
         stroke_color: color of stroke.
         decoration: text decoration. See `TextDecoration`.
         decoration_thickness: thickness of text decoration lines.
+        shading: shading color of the text.
+            Do not confuse with `RenderObject.background`.
     """
 
     def __init__(
@@ -42,6 +44,7 @@ class RenderText(Cacheable):
         stroke_color: Color | None = None,
         decoration: TextDecoration = TextDecoration.NONE,
         decoration_thickness: int = -1,
+        shading: Color = Palette.TRANSPARENT,
     ):
         super().__init__()
         with volatile(self):
@@ -53,6 +56,7 @@ class RenderText(Cacheable):
             self.stroke_color = stroke_color
             self.decoration = decoration
             self.decoration_thickness = decoration_thickness
+            self.shading = shading
 
     @classmethod
     def of(
@@ -65,6 +69,7 @@ class RenderText(Cacheable):
         stroke_color: Color | None = None,
         decoration: TextDecoration = TextDecoration.NONE,
         decoration_thickness: int = -1,
+        shading: Color = Palette.TRANSPARENT,
         background: Color = Palette.TRANSPARENT,
     ) -> Self:
         """Create a `RenderText` instance with default values.
@@ -73,13 +78,15 @@ class RenderText(Cacheable):
         from BLACK or WHITE based on the background color luminance.
         """
         if color is None:
-            r, g, b = background.to_rgb()
+            im_bg = RenderImage.empty(1, 1, background)
+            im_sd = RenderImage.empty(1, 1, shading)
+            r, g, b, _ = im_bg.paste(0, 0, im_sd).base_im[0, 0]
             luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b
             color = Palette.WHITE if luminance < 128 else Palette.BLACK
         if decoration_thickness < 0:
             decoration_thickness = max(size // 10, 1)
         return cls(text, font, size, color, stroke_width, stroke_color,
-                   decoration, decoration_thickness)
+                   decoration, decoration_thickness, shading)
 
     @cached
     def render(self) -> RenderImage:
@@ -93,7 +100,7 @@ class RenderText(Cacheable):
         width = r - l
         height = ascent + descent + self.stroke_width * 2
         # 2. draw text
-        im = Image.new("RGBA", (width, height), color=Palette.TRANSPARENT)
+        im = Image.new("RGBA", (width, height), color=self.shading)
         draw = ImageDraw.Draw(im)
         draw.text(
             xy=(self.stroke_width, self.stroke_width),

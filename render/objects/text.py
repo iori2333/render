@@ -8,9 +8,9 @@ from typing_extensions import Self, Unpack, override
 import pyphen
 from PIL.ImageFont import FreeTypeFont, truetype
 
-from render.base import (Alignment, BaseStyle, Color, Direction, RenderImage,
-                         RenderObject, RenderText, TextDecoration, cached,
-                         volatile)
+from render.base import (Alignment, BaseStyle, Color, Direction, Palette,
+                         RenderImage, RenderObject, RenderText, TextDecoration,
+                         cached, volatile)
 from render.utils import PathLike, bisect_right
 
 
@@ -33,6 +33,7 @@ class Text(RenderObject):
         hyphenation: bool,
         text_decoration: TextDecoration,
         text_decoration_thickness: int,
+        shading: Color,
         **kwargs: Unpack[BaseStyle],
     ) -> None:
         super().__init__(**kwargs)
@@ -49,6 +50,7 @@ class Text(RenderObject):
             self.stroke_color = stroke_color
             self.text_decoration = text_decoration
             self.text_decoration_thickness = text_decoration_thickness
+            self.shading = shading
 
     @staticmethod
     @lru_cache()
@@ -190,11 +192,12 @@ class Text(RenderObject):
         hyphenation: bool = True,
         text_decoration: TextDecoration = TextDecoration.NONE,
         text_decoration_thickness: int = -1,
+        shading: Color = Palette.TRANSPARENT,
         **kwargs: Unpack[BaseStyle],
     ) -> Self:
         return cls(text, font, size, max_width, alignment, color, stroke_width,
                    stroke_color, line_spacing, hyphenation, text_decoration,
-                   text_decoration_thickness, **kwargs)
+                   text_decoration_thickness, shading, **kwargs)
 
     @property
     @cached
@@ -220,6 +223,7 @@ class Text(RenderObject):
                           self.stroke_color,
                           self.text_decoration,
                           self.text_decoration_thickness,
+                          shading=self.shading,
                           background=self.background).render()
             for line in self.cut()
         ]

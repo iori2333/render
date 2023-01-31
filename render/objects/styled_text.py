@@ -22,7 +22,7 @@ class TextStyle(Cacheable):
         color: Color | None | Undefined,
         stroke_width: int | Undefined,
         stroke_color: Color | None | Undefined,
-        background: Color | Undefined,
+        shading: Color | Undefined,
         hyphenation: bool | Undefined,
         decoration: TextDecoration | Undefined,
         decoration_thickness: int | Undefined,
@@ -34,7 +34,7 @@ class TextStyle(Cacheable):
             self.color = color
             self.stroke_width = stroke_width
             self.stroke_color = stroke_color
-            self.background = background
+            self.shading = shading
             self.hyphenation = hyphenation
             self.decoration = decoration
             self.decoration_thickness = decoration_thickness
@@ -219,7 +219,7 @@ class StyledText(RenderObject):
             decoration = Undefined.default(style.decoration,
                                            TextDecoration.NONE)
             thick = Undefined.default(style.decoration_thickness, -1)
-            background = Undefined.default(style.background, None)
+            shading = Undefined.default(style.shading, None)
 
             line_break_at_end = block.endswith('\n')
             lines = block.split('\n')
@@ -252,7 +252,8 @@ class StyledText(RenderObject):
                             stroke_color,
                             decoration,
                             thick,
-                            background=background or Palette.TRANSPARENT,
+                            shading=shading or Palette.TRANSPARENT,
+                            background=self.background,
                         ))
                     line = remain
                 # end of natural line
