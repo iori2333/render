@@ -11,7 +11,9 @@ from PIL.ImageFont import FreeTypeFont, truetype
 from render.base import (Alignment, BaseStyle, Color, Direction, Palette,
                          RenderImage, RenderObject, RenderText, TextDecoration,
                          cached, volatile)
-from render.utils import PathLike, bisect_right
+from render.utils import PathLike, Undefined, bisect_right
+
+from .style import TextStyle
 
 
 class Text(RenderObject):
@@ -198,6 +200,30 @@ class Text(RenderObject):
         return cls(text, font, size, max_width, alignment, color, stroke_width,
                    stroke_color, line_spacing, hyphenation, text_decoration,
                    text_decoration_thickness, shading, **kwargs)
+
+    @classmethod
+    def from_style(
+        cls,
+        text: str,
+        style: TextStyle,
+        max_width: int | None = None,
+        alignment: Alignment = Alignment.START,
+        line_spacing: int = 0,
+        **kwargs: Unpack[BaseStyle],
+    ) -> Self:
+        font = Undefined.default(style.font, "")
+        font_size = Undefined.default(style.size, 0)
+        color = Undefined.default(style.color, None)
+        stroke_width = Undefined.default(style.stroke_width, 0)
+        stroke_color = Undefined.default(style.stroke_color, None)
+        hyphenation = Undefined.default(style.hyphenation, True)
+        decoration = Undefined.default(style.decoration, TextDecoration.NONE)
+        thick = Undefined.default(style.decoration_thickness, -1)
+        shading = Undefined.default(style.shading, None)
+        return cls.of(text, font, font_size, max_width, alignment, color,
+                      stroke_width, stroke_color, line_spacing, hyphenation,
+                      decoration, thick, shading or Palette.TRANSPARENT,
+                      **kwargs)
 
     @property
     @cached

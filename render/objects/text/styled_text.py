@@ -2,75 +2,21 @@ from __future__ import annotations
 
 import re
 from typing import Generator, Iterable
-from typing_extensions import Self, Unpack, override
 
 from PIL import ImageFont
+from typing_extensions import Self, Unpack, override
 
-from render.base import (Alignment, BaseStyle, Cacheable, Color, Palette,
-                         RenderImage, RenderObject, RenderText, TextDecoration,
-                         cached, volatile)
-from render.utils import PathLike, Undefined, undefined
+from render.base import (Alignment, BaseStyle, Palette, RenderImage,
+                         RenderObject, RenderText, TextDecoration, cached,
+                         volatile)
+from render.utils import Undefined, undefined
+
+from .style import TextStyle
 from .text import Text
 
 
-class TextStyle(Cacheable):
-
-    def __init__(
-        self,
-        font: PathLike | Undefined,
-        size: int | Undefined,
-        color: Color | None | Undefined,
-        stroke_width: int | Undefined,
-        stroke_color: Color | None | Undefined,
-        shading: Color | Undefined,
-        hyphenation: bool | Undefined,
-        decoration: TextDecoration | Undefined,
-        decoration_thickness: int | Undefined,
-    ) -> None:
-        super().__init__()
-        with volatile(self):
-            self.font = font
-            self.size = size
-            self.color = color
-            self.stroke_width = stroke_width
-            self.stroke_color = stroke_color
-            self.shading = shading
-            self.hyphenation = hyphenation
-            self.decoration = decoration
-            self.decoration_thickness = decoration_thickness
-
-    @classmethod
-    def of(
-        cls,
-        font: PathLike | Undefined = undefined,
-        size: int | Undefined = undefined,
-        color: Color | None | Undefined = undefined,
-        stroke_width: int | Undefined = undefined,
-        stroke_color: Color | None | Undefined = undefined,
-        background: Color | Undefined = undefined,
-        hyphenation: bool | Undefined = undefined,
-        decoration: TextDecoration | Undefined = undefined,
-        decoration_thickness: int | Undefined = undefined,
-    ) -> Self:
-        return cls(
-            font,
-            size,
-            color,
-            stroke_width,
-            stroke_color,
-            background,
-            hyphenation,
-            decoration,
-            decoration_thickness,
-        )
-
-    def items(self) -> Generator[tuple[str, object], None, None]:
-        for key, value in self.__dict__.items():
-            if value is not undefined:
-                yield key, value
-
-
 class NestedTextStyle:
+    """A stack of text styles for nested style scopes."""
 
     def __init__(self) -> None:
         self.stack: list[tuple[str, TextStyle]] = []
@@ -87,6 +33,11 @@ class NestedTextStyle:
         return style
 
     def query(self) -> TextStyle:
+        """Get the style of the current scope.
+        
+        If a style is not defined in the current scope, it will be inherited
+        from the outer scope.
+        """
         style = TextStyle.of()
         for _, outer_style in reversed(self.stack):
             for k, v in outer_style.items():
@@ -96,6 +47,7 @@ class NestedTextStyle:
 
 
 class StyledText(RenderObject):
+    """A text object with multiple styles."""
 
     tag_begin = re.compile(r"<(\w+)>")
     tag_end = re.compile(r"</(\w+)>")
@@ -188,7 +140,6 @@ class StyledText(RenderObject):
 
     def cut(self) -> Generator[list[RenderText], None, None]:
         """Cut the text into lines. Each line is a list of RenderTexts."""
-
         def current_width():
             """Return the current acceptable width of the line."""
             if max_width is None:
