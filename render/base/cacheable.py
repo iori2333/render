@@ -102,12 +102,12 @@ class CacheableDict(Dict[K, V], Cacheable):
     """
 
     def __init__(self,
-                 dict_: dict[K, V],
+                 mapping: dict[K, V],
                  *parent: Cacheable) -> None:
-        dict_ = dict_ or {}
-        dict.__init__(self, dict_)
+        mapping = mapping or {}
+        dict.__init__(self, mapping)
         Cacheable.__init__(self, *parent)
-        for key, value in dict_.items():
+        for key, value in mapping.items():
             if isinstance(value, Cacheable):
                 value.add_parent(self)
             if isinstance(key, Cacheable):
@@ -190,7 +190,7 @@ class volatile(Generic[T]):
 
     def __init__(self, obj: Cacheable) -> None:
         self.obj = obj
-        self.attr_names = []
+        self.attr_names: list[str] = []
 
         frame = inspect.currentframe()
         back = None if frame is None else frame.f_back
@@ -204,7 +204,7 @@ class volatile(Generic[T]):
         self.attr_names = list(self.obj.__dict__.keys())
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
         # compare which attributes have been created,
         # create property for each new attribute
         new_attr = {}
@@ -223,3 +223,4 @@ class volatile(Generic[T]):
                     f"{attr} is a dict, use self.{attr} = volatile.dict(value)."
                 )
             self.create_property(self.obj, attr, value)
+        return False  # don't suppress exceptions
