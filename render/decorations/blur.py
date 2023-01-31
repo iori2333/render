@@ -2,10 +2,10 @@ from typing_extensions import Self, override
 
 import cv2
 
-from render.base import BoxSizing, ForegroundDecoration, RenderImage
+from render.base import BoxSizing, InplaceDecoration, RenderImage
 
 
-class GaussianBlur(ForegroundDecoration):
+class GaussianBlur(InplaceDecoration):
 
     def __init__(
         self,
@@ -26,10 +26,10 @@ class GaussianBlur(ForegroundDecoration):
         return cls(blur_radius, box_sizing)
 
     @override
-    def apply(self, obj: RenderImage) -> RenderImage:
-        obj.base_im = cv2.GaussianBlur(
-            obj.base_im,
+    def apply(self, im: RenderImage) -> RenderImage:
+        im.base_im = cv2.GaussianBlur(
+            im.base_im,
             (self.blur_radius, self.blur_radius),
             0,
         )
-        return obj
+        return im

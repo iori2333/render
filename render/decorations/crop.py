@@ -6,14 +6,14 @@ from typing_extensions import Self, override
 import cv2
 import numpy as np
 
-from render.base import BoxSizing, ForegroundDecoration, ImageMask, RenderImage
+from render.base import BoxSizing, ImageMask, InplaceDecoration, RenderImage
 
 
-class Crop(ForegroundDecoration):
+class Crop(InplaceDecoration):
     """Crop foreground image by applying a mask to it."""
 
     @abstractmethod
-    def get_mask(self, obj: RenderImage) -> ImageMask:
+    def get_mask(self, im: RenderImage) -> ImageMask:
         """Create a crop mask.
 
         Mask should be a 2D array of shape (height, width) with
@@ -22,10 +22,10 @@ class Crop(ForegroundDecoration):
         raise NotImplementedError()
 
     @override
-    def apply(self, obj: RenderImage) -> RenderImage:
-        mask = self.get_mask(obj)
-        obj = obj.mask(mask)
-        return obj
+    def apply(self, im: RenderImage) -> RenderImage:
+        mask = self.get_mask(im)
+        im = im.mask(mask)
+        return im
 
 
 class CircleCrop(Crop):
@@ -48,16 +48,16 @@ class CircleCrop(Crop):
         return cls(radius, box_sizing)
 
     @override
-    def get_mask(self, obj: RenderImage) -> ImageMask:
+    def get_mask(self, im: RenderImage) -> ImageMask:
         if self.radius is None:
-            radius = min(obj.height, obj.width) // 2
+            radius = min(im.height, im.width) // 2
         else:
             radius = self.radius
 
-        mask = np.zeros((obj.height, obj.width), dtype=np.uint8)
+        mask = np.zeros((im.height, im.width), dtype=np.uint8)
         mask = cv2.circle(
             mask,
-            (obj.height // 2, obj.width // 2),
+            (im.height // 2, im.width // 2),
             radius,
             255,
             thickness=-1,
@@ -101,12 +101,12 @@ class RectCrop(Crop):
         return cls(size, size, border_radius, box_sizing)
 
     @override
-    def get_mask(self, obj: RenderImage) -> ImageMask:
-        height = self.height if self.height is not None else obj.height
-        width = self.width if self.width is not None else obj.width
-        start_x = (obj.width - width) // 2
-        start_y = (obj.height - height) // 2
-        mask = np.zeros((obj.height, obj.width), dtype=np.uint8)
+    def get_mask(self, im: RenderImage) -> ImageMask:
+        height = self.height if self.height is not None else im.height
+        width = self.width if self.width is not None else im.width
+        start_x = (im.width - width) // 2
+        start_y = (im.height - height) // 2
+        mask = np.zeros((im.height, im.width), dtype=np.uint8)
         if self.border_radius == 0:
             return cv2.rectangle(
                 mask,

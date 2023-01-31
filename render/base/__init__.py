@@ -1,7 +1,7 @@
 from .cacheable import Cacheable, cached, volatile
 from .color import Color, Palette
-from .decorations import (BackgroundDecoration, BoxSizing, Decorations,
-                          ForegroundDecoration)
+from .decorations import (BoxSizing, Decorations, InplaceDecoration,
+                          LayerDecoration)
 from .image import ImageMask, RenderImage
 from .object import BaseStyle, RenderObject
 from .properties import Alignment, Border, Direction, Interpolation, Space
@@ -9,7 +9,6 @@ from .text import RenderText, TextDecoration
 
 __all__ = [
     "Alignment",
-    "BackgroundDecoration",
     "BaseStyle",
     "Border",
     "BoxSizing",
@@ -17,9 +16,10 @@ __all__ = [
     "Color",
     "Decorations",
     "Direction",
-    "ForegroundDecoration",
     "ImageMask",
+    "InplaceDecoration",
     "Interpolation",
+    "LayerDecoration",
     "Palette",
     "RenderImage",
     "RenderObject",

@@ -4,7 +4,7 @@ from typing_extensions import Self, override
 import cv2
 import numpy as np
 
-from render.base import BoxSizing, Color, ForegroundDecoration, RenderImage
+from render.base import Color, LayerDecoration, RenderImage, RenderObject
 
 
 class ContourType(Enum):
@@ -12,7 +12,7 @@ class ContourType(Enum):
     ALL = cv2.RETR_TREE
 
 
-class Contour(ForegroundDecoration):
+class Contour(LayerDecoration):
     """Draw a contour around the foreground of the image.
 
     Attributes:
@@ -31,14 +31,13 @@ class Contour(ForegroundDecoration):
         dilation: int,
         contour_type: ContourType,
         threshold: int,
-        box_sizing: BoxSizing,
     ) -> None:
-        super().__init__(box_sizing)
+        super().__init__()
         self.color = color
         self.thickness = thickness
         self.dilation = dilation
-        self.threshold = threshold
         self.contour_type = contour_type
+        self.threshold = threshold
 
     @classmethod
     def of(
@@ -48,31 +47,29 @@ class Contour(ForegroundDecoration):
         dilation: int = 0,
         contour_type: ContourType = ContourType.EXTERNAL,
         threshold: int = 0,
-        box_sizing: BoxSizing = BoxSizing.CONTENT_BOX,
     ) -> Self:
-        return cls(color, thickness, dilation, contour_type, threshold,
-                   box_sizing)
+        return cls(color, thickness, dilation, contour_type, threshold)
 
     @override
-    def apply(self, obj: RenderImage) -> RenderImage:
-        threshed = obj.base_im[:, :, 3] > self.threshold  # type: ignore
-        fore = threshed.astype(np.uint8) * 255
+    def render_layer(self, im: RenderImage, obj: RenderObject) -> RenderImage:
+        threshed = im.base_im[:, :, 3] > self.threshold  # type: ignore
+        foreground = threshed.astype(np.uint8) * 255
         if self.dilation > 0:
-            fore = cv2.dilate(
-                fore, np.ones((self.dilation, self.dilation), np.uint8))
+            foreground = cv2.dilate(
+                foreground, np.ones((self.dilation, self.dilation), np.uint8))
 
+        layer = RenderImage.empty_like(im)
         contours, _ = cv2.findContours(
-            fore,
+            foreground,
             self.contour_type.value,
             cv2.CHAIN_APPROX_NONE,
         )
-        im_with_contour = cv2.drawContours(
-            obj.base_im,
+        layer.base_im = cv2.drawContours(
+            layer.base_im,
             contours,
             -1,
             self.color,
             self.thickness,
             cv2.LINE_AA,
         )
-        obj.base_im = im_with_contour
-        return obj
+        return layer
