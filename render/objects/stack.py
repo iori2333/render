@@ -29,8 +29,8 @@ class Stack(RenderObject):
         **kwargs: Unpack[BaseStyle],
     ) -> None:
         super().__init__(**kwargs)
-        with volatile(self) as v:
-            self.children = v.list(children)
+        with volatile(self) as vlt:
+            self.children = vlt.list(children)
             self.vertical_alignment = vertical_alignment
             self.horizontal_alignment = horizontal_alignment
             self.paste_mode = paste_mode

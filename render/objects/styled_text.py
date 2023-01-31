@@ -65,9 +65,9 @@ class TextStyle(Cacheable):
         )
 
     def items(self) -> Generator[tuple[str, object], None, None]:
-        for k, v in self.__dict__.items():
-            if v is not undefined:
-                yield k, v
+        for key, value in self.__dict__.items():
+            if value is not undefined:
+                yield key, value
 
 
 class NestedTextStyle:
@@ -88,8 +88,8 @@ class NestedTextStyle:
 
     def query(self) -> TextStyle:
         style = TextStyle.of()
-        for _, s in reversed(self.stack):
-            for k, v in s.items():
+        for _, outer_style in reversed(self.stack):
+            for k, v in outer_style.items():
                 if getattr(style, k) is undefined:
                     setattr(style, k, v)
         return style
@@ -112,9 +112,9 @@ class StyledText(RenderObject):
     ) -> None:
         super().__init__(**kwargs)
 
-        with volatile(self) as v:
+        with volatile(self) as vlt:
             self.text = text
-            self.styles = v.dict(styles)
+            self.styles = vlt.dict(styles)
             self.alignment = alignment
             self.line_spacing = line_spacing
             self.max_width = max_width

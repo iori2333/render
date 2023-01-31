@@ -19,6 +19,9 @@ class Shadow(LayerDecoration):
         self.blur_radius = blur_radius
         self.color = color
 
+    def render_layer(self, im: RenderImage, obj: RenderObject) -> RenderImage:
+        raise NotImplementedError()
+
 
 class BoxShadow(Shadow):
     """Add shadow depending on the box model.
@@ -48,8 +51,7 @@ class BoxShadow(Shadow):
         spread: int = 0,
         color: Color = Color.of(0, 0, 0, 0.5),
     ) -> Self:
-        if blur_radius < 0:
-            blur_radius = 0
+        blur_radius = max(0, blur_radius)
         if blur_radius > 0 and blur_radius % 2 == 0:
             blur_radius += 1  # in case of even number
         return cls(offset, blur_radius, spread, color)
@@ -85,7 +87,7 @@ class BoxShadow(Shadow):
 class ContentShadow(Shadow):
     """Add shadow depending on the opacity of the content.
 
-    Shadow opacity is calculated by multiplying the opacity of 
+    Shadow opacity is calculated by multiplying the opacity of
     the content and the shadow color.
 
     Attributes:
@@ -101,8 +103,7 @@ class ContentShadow(Shadow):
         blur_radius: int = 0,
         color: Color = Color.of(0, 0, 0, 0.5),
     ) -> Self:
-        if blur_radius < 0:
-            blur_radius = 0
+        blur_radius = max(0, blur_radius)
         if blur_radius > 0 and blur_radius % 2 == 0:
             blur_radius += 1  # in case of even number
         return cls(offset, blur_radius, color)

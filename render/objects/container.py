@@ -25,10 +25,10 @@ class Container(RenderObject):
         **kwargs: Unpack[BaseStyle],
     ) -> None:
         super().__init__(**kwargs)
-        with volatile(self) as v:
+        with volatile(self) as vlt:
             self.alignment = alignment
             self.direction = direction
-            self.children = v.list(children)
+            self.children = vlt.list(children)
 
     @classmethod
     def from_children(

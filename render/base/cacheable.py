@@ -37,10 +37,10 @@ class Cacheable:
         return f"{self.__class__.__name__}"
 
 
-def _list_update(f: Callable):
+def _list_update(func: Callable):
     """Apply to list methods that may change the list."""
     def wrapper(self, *args, **kwargs):
-        result = f(self, *args, **kwargs)
+        result = func(self, *args, **kwargs)
         self.clear_cache()
         for item in self:
             if isinstance(item, Cacheable):
@@ -79,10 +79,10 @@ class CacheableList(List[T], Cacheable):
     sort = _list_update(list.sort)
 
 
-def _dict_update(f: Callable):
+def _dict_update(func: Callable):
     """Apply to dict methods that may change the dict values."""
     def wrapper(self, *args, **kwargs):
-        result = f(self, *args, **kwargs)
+        result = func(self, *args, **kwargs)
         self.clear_cache()
         for key, value in self.items():
             if isinstance(value, Cacheable):

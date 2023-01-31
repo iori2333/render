@@ -68,9 +68,9 @@ class RelativeContainer(RenderObject):
         **kwargs: Unpack[BaseStyle],
     ) -> None:
         super().__init__(**kwargs)
-        with volatile(self) as v:
+        with volatile(self) as vlt:
             self.strict = strict
-            self.children: list[RenderObject] = v.list()
+            self.children: list[RenderObject] = vlt.list()
         # The following attributes should not be accessed directly
         self._offsets: dict[RenderObject, XY] = {}
         self._graph = DependencyGraph[RenderObject, str]().add_node(self)

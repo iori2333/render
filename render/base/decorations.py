@@ -46,7 +46,7 @@ class InplaceDecoration(Decoration):
 
 
 class LayerDecoration(Decoration):
-    """Decorations that render a layer to be overlayed on the render result."""
+    """Decorations that render a layer to be overlaid on the render result."""
 
     @abstractmethod
     def render_layer(self, im: RenderImage, obj: RenderObject) -> RenderImage:

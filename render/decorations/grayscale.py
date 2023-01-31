@@ -7,7 +7,7 @@ from render.base import BoxSizing, InplaceDecoration, RenderImage
 
 class Grayscale(InplaceDecoration):
     """Convert image to grayscale.
-    
+
     Attributes:
         amount: Amount of grayscale (0.0 - 1.0).
         box_sizing: Box sizing to apply grayscale.
@@ -31,7 +31,7 @@ class Grayscale(InplaceDecoration):
 
     @override
     def apply(self, im: RenderImage) -> RenderImage:
-        amount = max(0, min(1, self.amount))
+        amount = max(0.0, min(1.0, self.amount))
         im.base_im[..., :3] = cv2.addWeighted(
             im.base_im[..., :3],
             1 - amount,
