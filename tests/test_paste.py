@@ -1,8 +1,10 @@
 import timeit
 import random
+
 from render import *
-from tests.data import *
-from tests.utils import TestRect
+
+from data import *
+from utils import TestRect
 
 
 def setup(alpha_fore: int, alpha_back: int):

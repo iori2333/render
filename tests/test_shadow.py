@@ -1,5 +1,6 @@
 from render import *
-from tests.data import Font, Output
+
+from data import Font, Output
 
 
 def test_box_shadow():

@@ -10,7 +10,7 @@ def setup():
     parser.add_argument("-p", "--profile", action="store_true")
     parser.add_argument("-d",
                         "--dir",
-                        default="tests",
+                        default=".",
                         type=Path,
                         help="test directory")
     parser.add_argument("-f",
@@ -35,7 +35,7 @@ def run_tests(
     functions = []
     for path in test_dir.glob(f"test_*.py"):
         if file_pattern.search(path.stem[5:]):
-            module = import_module(f"{test_dir}.{path.stem}")
+            module = import_module(f"{test_dir}.{path.stem}".lstrip("."))
             for name in dir(module):
                 f = getattr(module, name)
                 if name.startswith("test_") and callable(f):

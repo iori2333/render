@@ -1,6 +1,7 @@
 from render import *
-from tests.data import *
-from tests.utils import *
+
+from data import *
+from utils import *
 
 
 def test_relative_prior():

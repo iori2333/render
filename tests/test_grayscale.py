@@ -1,6 +1,7 @@
 from render import (Alignment, Border, BoxSizing, FixedContainer, Grayscale,
                     Image, JustifyContent, Palette, RenderImage, Space)
-from tests.data import Output
+
+from data import Output
 
 
 def test_grayscale():

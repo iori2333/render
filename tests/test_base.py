@@ -2,10 +2,10 @@ from random import choice
 
 import cv2
 import numpy as np
-
 from render import *
-from tests.data import *
-from tests.utils import TestRect
+
+from data import *
+from utils import TestRect
 
 
 def make_color_rect(name: str,
@@ -130,6 +130,22 @@ def test_resize():
     ).render().save(Output / "resize.png")
 
 
+def save_example(path: str):
+    im1 = RenderImage.empty(100, 100, color=Palette.BLUE)
+    im2 = RenderImage.empty(50, 50, color=Palette.GREEN)
+    im3 = RenderImage.empty(200, 200, color=Palette.RED)
+    el1, el2, el3 = map(Image.from_image, (im1, im2, im3))
+    container = FixedContainer.from_children(
+        width=500,
+        height=300,
+        children=[el1, el2, el3],
+        alignment=Alignment.CENTER,
+        justify_content=JustifyContent.SPACE_AROUND,
+    )
+    out_im = container.render()
+    out_im.save(path)
+
+
 def test_image():
     try:
         RenderImage.from_file("path/to/not-exist.png")
@@ -138,21 +154,20 @@ def test_image():
     else:
         assert 0, "Expected IOError"
 
-    im1 = RenderImage.from_file("assets/out.png")
+    path = "out.png"
+    save_example(path)
+
+    im1 = RenderImage.from_file(path)
     im2 = RenderImage.from_raw(cv2.cvtColor(im1.base_im, cv2.COLOR_RGBA2RGB))
     im3 = RenderImage.empty_like(im1, color=Color.rand())
+    im4 = RenderImage.from_raw(cv2.cvtColor(im1.base_im, cv2.COLOR_RGBA2GRAY))
     im1.save(Output / "image-out.png")
     im2.save(Output / "image-out-rgb.png")
     im3.save(Output / "image-empty.png")
-
-    # try:
-    #     RenderImage.from_raw(cv2.cvtColor(im1.base_im, cv2.COLOR_RGBA2GRAY))
-    # except ValueError as e:
-    #     print("ValueError successfully raised: {}".format(e))
-    # else:
-    #     assert 0, "Expected ValueError"
-    im4 = RenderImage.from_raw(cv2.cvtColor(im1.base_im, cv2.COLOR_RGBA2GRAY))
     im4.save(Output / "image-out-gray.png")
+
+    import os
+    os.remove(path)
 
 
 def test_padding():

@@ -1,6 +1,7 @@
 from render import (Alignment, BoxSizing, CircleCrop, Contour, Decorations,
                     Image, Palette, RectCrop, RenderImage, Space)
-from tests.data import Output
+
+from data import Output
 
 
 def test_crop():

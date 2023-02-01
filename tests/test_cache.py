@@ -1,6 +1,6 @@
 from time import perf_counter
 
-from tests.data import Font, Output
+from data import Font, Output
 
 # set False and switch to master branch to test, or
 # set True and switch to cache branch to test

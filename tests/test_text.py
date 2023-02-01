@@ -1,7 +1,8 @@
 from itertools import cycle
 
 from render import *
-from tests.data import *
+
+from data import *
 
 texts = [
     'The quick brown fox jumps over a lazy dog.',

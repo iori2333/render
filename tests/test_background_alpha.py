@@ -1,5 +1,6 @@
 from render import *
-from tests.data import *
+
+from data import *
 
 alpha = 170
 
