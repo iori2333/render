@@ -1,7 +1,7 @@
 from .cacheable import Cacheable, cached, volatile
 from .color import Color, Palette
 from .decorations import (BoxSizing, Decorations, InplaceDecoration,
-                          LayerDecoration)
+                          LayerDecoration, Overlay)
 from .image import ImageMask, RenderImage
 from .object import BaseStyle, RenderObject
 from .properties import Alignment, Border, Direction, Interpolation, Space
@@ -20,6 +20,7 @@ __all__ = [
     "InplaceDecoration",
     "Interpolation",
     "LayerDecoration",
+    "Overlay",
     "Palette",
     "RenderImage",
     "RenderObject",

@@ -4,7 +4,8 @@ from typing_extensions import Self, override
 import cv2
 import numpy as np
 
-from render.base import Color, LayerDecoration, RenderImage, RenderObject
+from render.base import (Color, LayerDecoration, Overlay, RenderImage,
+                         RenderObject)
 
 
 class ContourType(Enum):
@@ -21,7 +22,7 @@ class Contour(LayerDecoration):
         dilation: size of the dilation kernel
         contour_type: type of the contour, either EXTERNAL or ALL
         threshold: threshold of alpha channel for foreground
-        box_sizing: which render stage to apply the decoration
+        overlay: layer relationship to the decorated image
     """
 
     def __init__(
@@ -31,8 +32,9 @@ class Contour(LayerDecoration):
         dilation: int,
         contour_type: ContourType,
         threshold: int,
+        overlay: Overlay,
     ) -> None:
-        super().__init__()
+        super().__init__(overlay)
         self.color = color
         self.thickness = thickness
         self.dilation = dilation
@@ -47,8 +49,10 @@ class Contour(LayerDecoration):
         dilation: int = 0,
         contour_type: ContourType = ContourType.EXTERNAL,
         threshold: int = 0,
+        overlay: Overlay = Overlay.ABOVE_COMPOSITE,
     ) -> Self:
-        return cls(color, thickness, dilation, contour_type, threshold)
+        return cls(color, thickness, dilation, contour_type, threshold,
+                   overlay)
 
     @override
     def render_layer(self, im: RenderImage, obj: RenderObject) -> RenderImage:

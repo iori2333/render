@@ -1,10 +1,12 @@
 from __future__ import annotations
 
-import cv2
-import numpy as np
 from typing_extensions import Self, override
 
-from render.base import Color, LayerDecoration, RenderImage, RenderObject
+import cv2
+import numpy as np
+
+from render.base import (Color, LayerDecoration, Overlay, RenderImage,
+                         RenderObject)
 
 
 class Shadow(LayerDecoration):
@@ -14,7 +16,9 @@ class Shadow(LayerDecoration):
         offset: tuple[int, int],
         blur_radius: int,
         color: Color,
+        overlay: Overlay,
     ) -> None:
+        super().__init__(overlay)
         self.offset = offset
         self.blur_radius = blur_radius
         self.color = color
@@ -39,8 +43,9 @@ class BoxShadow(Shadow):
         blur_radius: int,
         spread: int,
         color: Color,
+        overlay: Overlay,
     ) -> None:
-        super().__init__(offset, blur_radius, color)
+        super().__init__(offset, blur_radius, color, overlay)
         self.spread = spread
 
     @classmethod
@@ -50,11 +55,12 @@ class BoxShadow(Shadow):
         blur_radius: int = 0,
         spread: int = 0,
         color: Color = Color.of(0, 0, 0, 0.5),
+        overlay: Overlay = Overlay.BELOW_COMPOSITE,
     ) -> Self:
         blur_radius = max(0, blur_radius)
         if blur_radius > 0 and blur_radius % 2 == 0:
             blur_radius += 1  # in case of even number
-        return cls(offset, blur_radius, spread, color)
+        return cls(offset, blur_radius, spread, color, overlay)
 
     @override
     def render_layer(
@@ -89,11 +95,6 @@ class ContentShadow(Shadow):
 
     Shadow opacity is calculated by multiplying the opacity of
     the content and the shadow color.
-
-    Attributes:
-        offset: Offset from the object box.
-        blur_radius: Radius of gaussian blur.
-        color: Color of shadow.
     """
 
     @classmethod
@@ -102,11 +103,12 @@ class ContentShadow(Shadow):
         offset: tuple[int, int] = (0, 0),
         blur_radius: int = 0,
         color: Color = Color.of(0, 0, 0, 0.5),
+        overlay: Overlay = Overlay.BELOW_COMPOSITE,
     ) -> Self:
         blur_radius = max(0, blur_radius)
         if blur_radius > 0 and blur_radius % 2 == 0:
             blur_radius += 1  # in case of even number
-        return cls(offset, blur_radius, color)
+        return cls(offset, blur_radius, color, overlay)
 
     @override
     def render_layer(

@@ -21,6 +21,13 @@ class BoxSizing(Enum):
     FULL_BOX = 4
 
 
+class Overlay(Enum):
+    ABOVE_COMPOSITE = 1
+    BELOW_COMPOSITE = 2
+    ABOVE_OVERLAY = 3
+    BELOW_OVERLAY = 4
+
+
 class Decoration:
     pass
 
@@ -47,6 +54,10 @@ class InplaceDecoration(Decoration):
 
 class LayerDecoration(Decoration):
     """Decorations that render a layer to be overlaid on the render result."""
+
+    def __init__(self, overlay: Overlay) -> None:
+        super().__init__()
+        self.overlay = overlay
 
     @abstractmethod
     def render_layer(self, im: RenderImage, obj: RenderObject) -> RenderImage:
@@ -116,7 +127,16 @@ class Decorations:
             cropped = RenderImage.from_raw(im.base_im[y:y + h, x:x + w])
             im = im.overlay(x, y, deco.apply(cropped))
         elif isinstance(deco, LayerDecoration):
-            im = deco.render_layer(im, obj).paste(0, 0, im)
+            if deco.overlay == Overlay.ABOVE_COMPOSITE:
+                im = im.paste(0, 0, deco.render_layer(im, obj))
+            elif deco.overlay == Overlay.BELOW_COMPOSITE:
+                im = deco.render_layer(im, obj).paste(0, 0, im)
+            elif deco.overlay == Overlay.ABOVE_OVERLAY:
+                im = im.overlay(0, 0, deco.render_layer(im, obj))
+            elif deco.overlay == Overlay.BELOW_OVERLAY:
+                im = deco.render_layer(im, obj).overlay(0, 0, im)
+            else:
+                raise ValueError(f"Invalid overlay {deco.overlay}")
         else:
             raise ValueError(f"Invalid decoration type {deco}")
         return im
