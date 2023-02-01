@@ -57,7 +57,7 @@ class CircleCrop(Crop):
         mask = np.zeros((im.height, im.width), dtype=np.uint8)
         mask = cv2.circle(
             mask,
-            (im.height // 2, im.width // 2),
+            (im.width // 2, im.height // 2),
             radius,
             255,
             thickness=-1,

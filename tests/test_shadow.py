@@ -40,16 +40,27 @@ def test_box_shadow():
     ).render().save(Output / "box_shadow.png")
 
 
-def test_content_shadow():
-    text = Text.of(
-        "Hello World",
-        Font.get("YAHEI"),
-        64,
+def test_text_shadow():
+    style = TextStyle.of(
+        font=Font.get("YAHEI"),
+        size=64,
         color=Palette.BLACK,
-        decorations=Decorations.of().after_content(
-            ContentShadow.of((3, 3),
-                             blur_radius=10,
-                             color=Palette.BLACK.of_alpha(128))),
+    )
+    shadow = ContentShadow.of((3, 3),
+                              blur_radius=10,
+                              color=Palette.BLACK.of_alpha(128))
+    text = Text.from_style(
+        "Hello World",
+        style=style,
+        decorations=Decorations.of().after_content(shadow),
         background=Palette.WHITE,
     )
-    text.render().save(Output / "content_shadow.png")
+    im1 = text.render()
+
+    text.color = Palette.WHITE
+    shadow.offset = (0, 0)
+    shadow.blur_radius = 51
+    shadow.color = Palette.GREEN
+    im2 = text.render()
+    RenderImage.concat_vertical([im1, im2], alignment=Alignment.CENTER).save(
+        Output / "text_shadow.png")
