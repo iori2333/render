@@ -8,10 +8,10 @@ else:
     from .bisect import bisect_left, bisect_right
 
 __all__ = [
-    "bisect_left",
-    "bisect_right",
     "ImageMask",
     "PathLike",
     "Undefined",
+    "bisect_left",
+    "bisect_right",
     "undefined",
 ]
