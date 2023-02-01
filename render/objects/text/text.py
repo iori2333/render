@@ -56,7 +56,7 @@ class Text(RenderObject):
 
     @staticmethod
     @lru_cache()
-    def _calculate_width(font: FreeTypeFont, text: str, stroke: int):
+    def _calculate_width(font: FreeTypeFont, text: str, stroke: int) -> int:
         w, _ = font.getsize(text, stroke_width=stroke)
         return w
 
@@ -155,7 +155,7 @@ class Text(RenderObject):
         word: str,
         stroke_width: int,
         max_width: int,
-    ):
+    ) -> tuple[str, str]:
         cuts = list(cls._dict.iterate(word))
         cuts.sort(key=lambda k: len(k[0]))
         cut_bound = bisect_right(range(len(cuts)),

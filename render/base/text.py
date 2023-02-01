@@ -45,7 +45,7 @@ class RenderText(Cacheable):
         decoration: TextDecoration = TextDecoration.NONE,
         decoration_thickness: int = -1,
         shading: Color = Palette.TRANSPARENT,
-    ):
+    ) -> None:
         super().__init__()
         with volatile(self):
             self.text = text

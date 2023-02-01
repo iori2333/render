@@ -19,13 +19,13 @@ class Undefined:
 
     _inst = None
 
-    def __new__(cls):
+    def __new__(cls) -> Undefined:
         if cls._inst is None:
             cls._inst = super().__new__(cls)
         return cls._inst
 
     @classmethod
-    def __repr__(cls):
+    def __repr__(cls) -> str:
         return "Undefined"
 
     @classmethod

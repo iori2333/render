@@ -114,7 +114,7 @@ class LinearPolynomial:
 
     def __str__(self) -> str:
 
-        def _symbol(key, coef):
+        def _symbol(key: str, coef: float) -> str:
             if coef == 1:
                 return f"{key}"
             if coef == -1:

@@ -37,10 +37,10 @@ class Cacheable:
         return f"{self.__class__.__name__}"
 
 
-def _list_update(func: Callable):
+def _list_update(func: Callable[..., T]) -> Callable[..., T]:
     """Apply to list methods that may change the list."""
 
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self: CacheableList, *args, **kwargs) -> T:
         result = func(self, *args, **kwargs)
         self.clear_cache()
         for item in self:
@@ -80,10 +80,10 @@ class CacheableList(List[T], Cacheable):
     sort = _list_update(list.sort)
 
 
-def _dict_update(func: Callable):
+def _dict_update(func: Callable[..., T]) -> Callable[..., T]:
     """Apply to dict methods that may change the dict values."""
 
-    def wrapper(self, *args, **kwargs):
+    def wrapper(self: CacheableDict, *args, **kwargs) -> T:
         result = func(self, *args, **kwargs)
         self.clear_cache()
         for key, value in self.items():
@@ -120,12 +120,12 @@ class CacheableDict(Dict[K, V], Cacheable):
     __delitem__ = _dict_update(dict.__delitem__)
     clear = _dict_update(dict.clear)
     pop = _dict_update(dict.pop)
-    popitem = _dict_update(dict.popitem)
-    setdefault = _dict_update(dict.setdefault)
+    popitem = _dict_update(dict.popitem)  # type: ignore
+    setdefault = _dict_update(dict.setdefault)  # type: ignore
     update = _dict_update(dict.update)
 
 
-def cached(func: Callable[[Any], T]) -> Callable[[Cacheable], T]:
+def cached(func: Callable[..., T]) -> Callable[..., T]:
     """Decorator to cache the return value of a method.
 
     Raises:
@@ -133,7 +133,7 @@ def cached(func: Callable[[Any], T]) -> Callable[[Cacheable], T]:
     """
     key = func.__name__
 
-    def wrapper(self):
+    def wrapper(self: Cacheable) -> T:
         if not isinstance(self, Cacheable):
             raise TypeError("@cached can only be used on Cacheable objects.")
         if key in self.__cache__:
@@ -172,7 +172,7 @@ class volatile(Generic[T]):
             def getter(self: Cacheable) -> T:
                 return getattr(self, protected_attr)
 
-            def setter(self: Cacheable, value: T):
+            def setter(self: Cacheable, value: T) -> None:
                 if not hasattr(self, protected_attr) or value != getattr(
                         self, protected_attr):
                     setattr(self, protected_attr, value)

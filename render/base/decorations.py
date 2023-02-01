@@ -110,8 +110,12 @@ class Decorations:
         return self
 
     @classmethod
-    def apply(cls, im: RenderImage, obj: RenderObject,
-              deco: Decoration) -> RenderImage:
+    def apply(
+        cls,
+        im: RenderImage,
+        obj: RenderObject,
+        deco: Decoration,
+    ) -> RenderImage:
         if isinstance(deco, InplaceDecoration):
             if deco.box_sizing == BoxSizing.CONTENT_BOX:
                 box = obj.content_box
@@ -150,17 +154,30 @@ class Decorations:
     def apply_initial(self, im: RenderImage, obj: RenderObject) -> RenderImage:
         return self.apply_stage(im, obj, "initial")
 
-    def apply_after_content(self, im: RenderImage,
-                            obj: RenderObject) -> RenderImage:
+    def apply_after_content(
+        self,
+        im: RenderImage,
+        obj: RenderObject,
+    ) -> RenderImage:
         return self.apply_stage(im, obj, "after_content")
 
-    def apply_after_padding(self, im: RenderImage,
-                            obj: RenderObject) -> RenderImage:
+    def apply_after_padding(
+        self,
+        im: RenderImage,
+        obj: RenderObject,
+    ) -> RenderImage:
         return self.apply_stage(im, obj, "after_padding")
 
-    def apply_final(self, im: RenderImage, obj: RenderObject) -> RenderImage:
+    def apply_final(
+        self,
+        im: RenderImage,
+        obj: RenderObject,
+    ) -> RenderImage:
         return self.apply_stage(im, obj, "final")
 
-    def apply_before_padding(self, im: RenderImage,
-                             obj: RenderObject) -> RenderImage:
+    def apply_before_padding(
+        self,
+        im: RenderImage,
+        obj: RenderObject,
+    ) -> RenderImage:
         return self.apply_stage(im, obj, "before_padding")
