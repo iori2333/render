@@ -57,6 +57,7 @@ class RenderObject(ABC, Cacheable):
 
     Content width and height must be determined before rendering.
     """
+
     def __init__(
         self,
         border: Border = Border.zero(),

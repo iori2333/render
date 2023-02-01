@@ -39,6 +39,7 @@ class Cacheable:
 
 def _list_update(func: Callable):
     """Apply to list methods that may change the list."""
+
     def wrapper(self, *args, **kwargs):
         result = func(self, *args, **kwargs)
         self.clear_cache()
@@ -81,6 +82,7 @@ class CacheableList(List[T], Cacheable):
 
 def _dict_update(func: Callable):
     """Apply to dict methods that may change the dict values."""
+
     def wrapper(self, *args, **kwargs):
         result = func(self, *args, **kwargs)
         self.clear_cache()
@@ -101,9 +103,7 @@ class CacheableDict(Dict[K, V], Cacheable):
         TypeError: If a key is a Cacheable object.
     """
 
-    def __init__(self,
-                 mapping: dict[K, V],
-                 *parent: Cacheable) -> None:
+    def __init__(self, mapping: dict[K, V], *parent: Cacheable) -> None:
         mapping = mapping or {}
         dict.__init__(self, mapping)
         Cacheable.__init__(self, *parent)

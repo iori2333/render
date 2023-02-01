@@ -8,6 +8,7 @@ from render.utils import PathLike, Undefined, undefined
 
 
 class TextStyle(Cacheable):
+
     def __init__(
         self,
         font: PathLike | Undefined,

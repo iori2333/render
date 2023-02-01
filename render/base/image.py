@@ -195,9 +195,7 @@ class RenderImage:
         self_g = np.array(self.base_im[:, :, 1]).astype(np.int16)
         self_b = np.array(self.base_im[:, :, 2]).astype(np.int16)
         self_a = np.array(self.base_im[:, :, 3]).astype(np.int16)
-        diff = (end.r - start.r,
-                end.g - start.g,
-                end.b - start.b)
+        diff = (end.r - start.r, end.g - start.g, end.b - start.b)
 
         transparency_r = np.zeros(
             (self.height,

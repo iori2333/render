@@ -93,6 +93,7 @@ class FixedContainer(Container):
         _height: fixed content height.
         justifyContent: how to justify children.
     """
+
     def __init__(
         self,
         width: int,
@@ -107,7 +108,7 @@ class FixedContainer(Container):
         with volatile(self):
             self.fixed_width = width
             self.fixed_height = height
-            self.justifyContent = justify_content
+            self.justify_content = justify_content
 
     @property
     @override
@@ -156,21 +157,21 @@ class FixedContainer(Container):
             space = self.content_height - sum(child.height
                                               for child in self.children)
 
-        if self.justifyContent == JustifyContent.SPACE_BETWEEN:
+        if self.justify_content == JustifyContent.SPACE_BETWEEN:
             n = len(self.children) - 1
             space = space // n if n > 0 else 0
             offset = 0
-        elif self.justifyContent == JustifyContent.SPACE_AROUND:
+        elif self.justify_content == JustifyContent.SPACE_AROUND:
             space = space // len(self.children)
             offset = space // 2
-        elif self.justifyContent == JustifyContent.SPACE_EVENLY:
+        elif self.justify_content == JustifyContent.SPACE_EVENLY:
             space = space // (len(self.children) + 1)
             offset = space
-        elif self.justifyContent == JustifyContent.CENTER:
+        elif self.justify_content == JustifyContent.CENTER:
             space = 0
             offset = (self.width - sum(child.width
                                        for child in self.children)) // 2
-        elif self.justifyContent == JustifyContent.END:
+        elif self.justify_content == JustifyContent.END:
             space = 0
             offset = self.width - sum(child.width for child in self.children)
         else:

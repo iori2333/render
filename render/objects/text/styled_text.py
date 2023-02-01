@@ -140,6 +140,7 @@ class StyledText(RenderObject):
 
     def cut(self) -> Generator[list[RenderText], None, None]:
         """Cut the text into lines. Each line is a list of RenderTexts."""
+
         def current_width():
             """Return the current acceptable width of the line."""
             if max_width is None:
