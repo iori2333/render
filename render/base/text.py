@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from enum import Flag, auto
-from typing_extensions import Self
 
 from PIL import Image, ImageDraw, ImageFont
+from typing_extensions import Self
 
 from render.utils import PathLike
+
 from .cacheable import Cacheable, cached, volatile
 from .color import Color, Palette
 from .image import RenderImage

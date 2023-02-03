@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import bisect
 from typing import Callable, Generic, Sequence, TypeVar
+
 from typing_extensions import Protocol, Self
 
 

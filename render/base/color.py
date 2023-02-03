@@ -10,6 +10,7 @@ except ImportError as e:
 
 from random import randint
 from typing import Generator, NamedTuple
+
 from typing_extensions import Self
 
 

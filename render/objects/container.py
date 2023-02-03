@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 from typing import Iterable
+
 from typing_extensions import Self, Unpack, override
 
 from render.base import (Alignment, BaseStyle, Direction, RenderImage,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Iterable
+
 from typing_extensions import Literal, Self, Unpack, override
 
 from render.base import (Alignment, BaseStyle, RenderImage, RenderObject,

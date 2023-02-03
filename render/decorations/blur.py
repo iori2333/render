@@ -1,6 +1,5 @@
-from typing_extensions import Self, override
-
 import cv2
+from typing_extensions import Self, override
 
 from render.base import BoxSizing, InplaceDecoration, RenderImage
 

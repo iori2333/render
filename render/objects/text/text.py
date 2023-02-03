@@ -3,10 +3,10 @@ from __future__ import annotations
 import string
 from functools import lru_cache
 from typing import Sequence
-from typing_extensions import Self, Unpack, override
 
 import pyphen
 from PIL.ImageFont import FreeTypeFont, truetype
+from typing_extensions import Self, Unpack, override
 
 from render.base import (Alignment, BaseStyle, Color, Direction, Palette,
                          RenderImage, RenderObject, RenderText, TextDecoration,

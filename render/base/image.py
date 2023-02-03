@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from typing import Iterable, Sequence
-from typing_extensions import Literal, Self
 
 import cv2
 import numpy as np
 import PIL.Image as PILImage
+from typing_extensions import Literal, Self
 
 from render.utils import ImageMask, PathLike
+
 from .color import Color, Palette
 from .properties import Alignment, Border, Direction, Interpolation
 

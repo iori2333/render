@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import inspect
 from typing import Any, Callable, Dict, Generic, Iterable, List, TypeVar
+
 from typing_extensions import Self
 
 T = TypeVar("T")

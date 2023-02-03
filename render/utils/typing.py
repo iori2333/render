@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Any, Union, TypeVar
+from typing import Any, TypeVar, Union
 
 import numpy as np
 

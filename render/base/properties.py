@@ -1,7 +1,7 @@
 from enum import Enum
-from typing_extensions import Self
 
 import cv2
+from typing_extensions import Self
 
 from .color import Color, Palette
 

@@ -1,8 +1,8 @@
 from enum import Enum
-from typing_extensions import Self, override
 
 import cv2
 import numpy as np
+from typing_extensions import Self, override
 
 from render.base import (Color, LayerDecoration, Overlay, RenderImage,
                          RenderObject)

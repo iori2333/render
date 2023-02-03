@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from typing import Tuple
+
 from typing_extensions import Self, TypedDict, Unpack, override
 
 from render.base import BaseStyle, RenderImage, RenderObject, cached, volatile
+
 from .utils import Box, DependencyGraph, LinearPolynomial, partition
 
 XY = Tuple[int, int]
