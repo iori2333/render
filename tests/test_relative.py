@@ -3,6 +3,9 @@ from render import *
 from data import *
 from utils import *
 
+rel_dir = Output / "relative"
+rel_dir.mkdir(exist_ok=True)
+
 
 def test_relative_prior():
     red = TestRect.of(100, 100, Palette.RED)
@@ -53,8 +56,8 @@ def test_relative_prior():
         return container
 
     prior, no_prior = make_relative(prior=True), make_relative(prior=False)
-    Container.from_children([prior, no_prior
-                             ]).render().save(Output / "relative-prior.png")
+    Container.from_children([prior,
+                             no_prior]).render().save(rel_dir / "prior.png")
 
 
 def test_relative_out_of_canvas():
@@ -76,7 +79,7 @@ def test_relative_out_of_canvas():
         [strict, non_strict],
         direction=Direction.VERTICAL,
         alignment=Alignment.END,
-    ).render().save(Output / "relative-out-of-canvas.png")
+    ).render().save(rel_dir / "out-of-canvas.png")
 
 
 def test_relative_out_of_canvas2():
@@ -113,7 +116,7 @@ def test_relative_out_of_canvas2():
         [strict, non_strict, strict_out, non_strict_out],
         direction=Direction.VERTICAL,
         alignment=Alignment.CENTER,
-    ).render().save(Output / "relative-out-of-canvas2.png")
+    ).render().save(rel_dir / "out-of-canvas2.png")
 
 
 def test_relative_failure():
@@ -122,12 +125,8 @@ def test_relative_failure():
     container = RelativeContainer()
     container.add_child(red, align_left=container, align_top=container)
     container.add_child(green, align_right=container, align_bottom=container)
-    try:
+    with assert_raises(ValueError, verbose=True):
         container.render()
-    except ValueError as e:
-        print("ValueError successfully raised: " + str(e))
-    else:
-        assert 0, "Expected ValueError"
 
 
 def test_relative_constraint():
@@ -138,7 +137,7 @@ def test_relative_constraint():
     container.add_child(green, align_right=container, align_bottom=container)
     # add extra constraint for size inference
     container.add_constraint(red, left=green, above=green)
-    container.render().save(Output / "relative-constraint.png")
+    container.render().save(rel_dir / "constraint.png")
 
 
 def test_relative_constraint2():
@@ -154,4 +153,4 @@ def test_relative_constraint2():
     # add extra constraint for size inference
     container.add_constraint(blue, right=red, below=red)
     container.add_constraint(green, right=blue, below=blue)
-    container.render().save(Output / "relative-constraint2.png")
+    container.render().save(rel_dir / "constraint2.png")

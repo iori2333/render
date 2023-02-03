@@ -3,6 +3,7 @@ from time import perf_counter
 from render import *
 
 from data import Font, Output
+from utils import assert_raises
 
 cache_dir = Output / "cache"
 cache_dir.mkdir(exist_ok=True)
@@ -164,3 +165,11 @@ def test_cache_relative():
         alignment=Alignment.CENTER,
         spacing=5,
     ).save(cache_dir / "relative.png")
+
+
+def test_cache_violation():
+    container = Container.from_children([])
+    with assert_raises(TypeError, verbose=True):
+        container.children = []  # type: ignore
+    with assert_raises(TypeError, verbose=True):
+        container.children.append([])

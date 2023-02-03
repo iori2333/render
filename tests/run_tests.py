@@ -47,7 +47,7 @@ def run_tests(
 
         profiler = cProfile.Profile()
         for f in functions:
-            print(f.__name__)
+            print(f"[{f.__name__}]")
             with profiler:
                 f()
 
@@ -65,7 +65,7 @@ def run_tests(
         stat.print_stats()
     else:
         for f in functions:
-            print(f.__name__)
+            print(f"[{f.__name__}]")
             f()
 
 

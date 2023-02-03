@@ -5,8 +5,7 @@ import numpy as np
 from render import *
 
 from data import *
-from utils import TestRect
-
+from utils import TestRect, assert_raises
 
 def make_color_rect(name: str,
                     color: Color,
@@ -147,12 +146,8 @@ def save_example(path: str):
 
 
 def test_image():
-    try:
+    with assert_raises(IOError, verbose=True):
         RenderImage.from_file("path/to/not-exist.png")
-    except IOError as e:
-        print("IOError successfully raised: {}".format(e))
-    else:
-        assert 0, "Expected IOError"
 
     path = "out.png"
     save_example(path)
