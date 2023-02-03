@@ -34,7 +34,7 @@ class NestedTextStyle:
 
     def query(self) -> TextStyle:
         """Get the style of the current scope.
-        
+
         If a style is not defined in the current scope, it will be inherited
         from the outer scope.
         """
