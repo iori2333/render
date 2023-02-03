@@ -3,15 +3,22 @@ from __future__ import annotations
 from abc import abstractmethod
 from enum import Enum
 from typing import TYPE_CHECKING, Sequence
-from typing_extensions import Literal, Self
+
+from typing_extensions import Self
 
 from .image import RenderImage
+from .object import BoundingBox
 
 if TYPE_CHECKING:
     from .object import RenderObject
 
-DecoStage = Literal["initial", "after_content", "after_padding", "final",
-                    "before_padding"]
+
+class DecoStage(Enum):
+    INITIAL = "initial"
+    AFTER_CONTENT = "after_content"
+    BEFORE_PADDING = "before_padding"
+    AFTER_PADDING = "after_padding"
+    FINAL = "final"
 
 
 class BoxSizing(Enum):
@@ -78,11 +85,11 @@ class Decorations:
 
     def __init__(self, final_deco: Sequence[Decoration]) -> None:
         self._decorations: dict[DecoStage, list[Decoration]] = {
-            "initial": [],
-            "after_content": [],
-            "before_padding": [],
-            "after_padding": [],
-            "final": list(final_deco),
+            DecoStage.INITIAL: [],
+            DecoStage.AFTER_CONTENT: [],
+            DecoStage.BEFORE_PADDING: [],
+            DecoStage.AFTER_PADDING: [],
+            DecoStage.FINAL: list(final_deco),
         }
 
     @classmethod
@@ -90,23 +97,23 @@ class Decorations:
         return cls(decorations)
 
     def initial(self, *decorations: Decoration) -> Self:
-        self._decorations["initial"].extend(decorations)
+        self._decorations[DecoStage.INITIAL].extend(decorations)
         return self
 
     def after_content(self, *decorations: Decoration) -> Self:
-        self._decorations["after_content"].extend(decorations)
+        self._decorations[DecoStage.AFTER_CONTENT].extend(decorations)
         return self
 
     def before_padding(self, *decorations: Decoration) -> Self:
-        self._decorations["before_padding"].extend(decorations)
+        self._decorations[DecoStage.BEFORE_PADDING].extend(decorations)
         return self
 
     def after_padding(self, *decorations: Decoration) -> Self:
-        self._decorations["after_padding"].extend(decorations)
+        self._decorations[DecoStage.AFTER_PADDING].extend(decorations)
         return self
 
     def final(self, *decorations: Decoration) -> Self:
-        self._decorations["final"].extend(decorations)
+        self._decorations[DecoStage.FINAL].extend(decorations)
         return self
 
     @classmethod
@@ -124,7 +131,7 @@ class Decorations:
             elif deco.box_sizing == BoxSizing.PADDING_BOX:
                 box = obj.padding_box
             elif deco.box_sizing == BoxSizing.FULL_BOX:
-                box = (0, 0, obj.width, obj.height)
+                box = BoundingBox.of(0, 0, obj.width, obj.height)
             else:
                 raise ValueError(f"Invalid box sizing {deco.box_sizing}")
             x, y, w, h = box
@@ -152,32 +159,32 @@ class Decorations:
         return im
 
     def apply_initial(self, im: RenderImage, obj: RenderObject) -> RenderImage:
-        return self.apply_stage(im, obj, "initial")
+        return self.apply_stage(im, obj, DecoStage.INITIAL)
 
     def apply_after_content(
         self,
         im: RenderImage,
         obj: RenderObject,
     ) -> RenderImage:
-        return self.apply_stage(im, obj, "after_content")
+        return self.apply_stage(im, obj, DecoStage.AFTER_CONTENT)
 
     def apply_after_padding(
         self,
         im: RenderImage,
         obj: RenderObject,
     ) -> RenderImage:
-        return self.apply_stage(im, obj, "after_padding")
+        return self.apply_stage(im, obj, DecoStage.AFTER_PADDING)
 
     def apply_final(
         self,
         im: RenderImage,
         obj: RenderObject,
     ) -> RenderImage:
-        return self.apply_stage(im, obj, "final")
+        return self.apply_stage(im, obj, DecoStage.FINAL)
 
     def apply_before_padding(
         self,
         im: RenderImage,
         obj: RenderObject,
     ) -> RenderImage:
-        return self.apply_stage(im, obj, "before_padding")
+        return self.apply_stage(im, obj, DecoStage.BEFORE_PADDING)

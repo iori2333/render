@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Iterable, Tuple
+from typing import Iterable, NamedTuple
+
 from typing_extensions import TypedDict
 
 from .cacheable import Cacheable
@@ -10,7 +11,16 @@ from .decorations import Decoration, Decorations
 from .image import RenderImage
 from .properties import Border, Space
 
-BoundingBox = Tuple[int, int, int, int]  # (x, y, w, h)
+
+class BoundingBox(NamedTuple):
+    x: int
+    y: int
+    w: int
+    h: int
+
+    @classmethod
+    def of(cls, x: int, y: int, w: int, h: int) -> BoundingBox:
+        return cls(x, y, w, h)
 
 
 class BaseStyle(TypedDict, total=False):
@@ -116,23 +126,30 @@ class RenderObject(ABC, Cacheable):
 
     @property
     def border_box(self) -> BoundingBox:
-        return (self.margin.left, self.margin.top, self.content_width +
-                self.padding.width + self.border.width * 2,
-                self.content_height + self.padding.height +
-                self.border.width * 2)
+        return BoundingBox.of(
+            self.margin.left,
+            self.margin.top,
+            self.content_width + self.padding.width + self.border.width * 2,
+            self.content_height + self.padding.height + self.border.width * 2,
+        )
 
     @property
     def padding_box(self) -> BoundingBox:
-        return (self.margin.left + self.border.width,
-                self.margin.top + self.border.width,
-                self.content_width + self.padding.width,
-                self.content_height + self.padding.height)
+        return BoundingBox.of(
+            self.margin.left + self.border.width,
+            self.margin.top + self.border.width,
+            self.content_width + self.padding.width,
+            self.content_height + self.padding.height,
+        )
 
     @property
     def content_box(self) -> BoundingBox:
-        return (self.margin.left + self.border.width + self.padding.left,
-                self.margin.top + self.border.width + self.padding.top,
-                self.content_width, self.content_height)
+        return BoundingBox.of(
+            self.margin.left + self.border.width + self.padding.left,
+            self.margin.top + self.border.width + self.padding.top,
+            self.content_width,
+            self.content_height,
+        )
 
     def render(self) -> RenderImage:
         """Render an object to image.
@@ -155,14 +172,14 @@ class RenderObject(ABC, Cacheable):
         canvas = self.decorations.apply_initial(canvas, self)
 
         content = self.render_content()
-        canvas = canvas.paste(content_box[0], content_box[1], content)
+        canvas = canvas.paste(content_box.x, content_box.y, content)
         canvas = self.decorations.apply_after_content(canvas, self)
 
         padding = RenderImage.empty(self.width, self.height).fill(
-            padding_box[0],
-            padding_box[1],
-            padding_box[2],
-            padding_box[3],
+            padding_box.x,
+            padding_box.y,
+            padding_box.w,
+            padding_box.h,
             color=self.background,
         )
         padding = self.decorations.apply_before_padding(padding, self)
@@ -170,10 +187,10 @@ class RenderObject(ABC, Cacheable):
         canvas = self.decorations.apply_after_padding(canvas, self)
 
         canvas = canvas.draw_border(
-            padding_box[0],
-            padding_box[1],
-            padding_box[2] - 1,
-            padding_box[3] - 1,
+            padding_box.x,
+            padding_box.y,
+            padding_box.w - 1,
+            padding_box.h - 1,
             self.border,
         )
         canvas = self.decorations.apply_final(canvas, self)
