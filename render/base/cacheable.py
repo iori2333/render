@@ -37,6 +37,20 @@ class Cacheable:
         return f"{self.__class__.__name__}"
 
 
+def _assert_not_list_or_dict(value: Any):
+    """Raise TypeError if value is a list or dict.
+
+    Modifying a list or dict in place will not trigger the cache update.
+    Thus, we do not allow them to be used as values in Cacheable.
+    """
+    if isinstance(value, list) and not isinstance(value, CacheableList):
+        raise TypeError(
+            f"Builtin list is not supported. Use CacheableList instead.")
+    if isinstance(value, dict) and not isinstance(value, CacheableDict):
+        raise TypeError(
+            f"Builtin dict is not supported. Use CacheableDict instead.")
+
+
 def _list_update(func: Callable[..., T]) -> Callable[..., T]:
     """Apply to list methods that may change the list."""
 
@@ -46,6 +60,7 @@ def _list_update(func: Callable[..., T]) -> Callable[..., T]:
         for item in self:
             if isinstance(item, Cacheable):
                 item.add_parent(self)
+            _assert_not_list_or_dict(item)
         return result
 
     return wrapper
@@ -60,6 +75,7 @@ class CacheableList(List[T], Cacheable):
         for item in iterable:
             if isinstance(item, Cacheable):
                 item.add_parent(self)
+            _assert_not_list_or_dict(item)
 
     def __repr__(self) -> str:
         return Cacheable.__repr__(self) + list.__repr__(self)
@@ -89,6 +105,7 @@ def _dict_update(func: Callable[..., T]) -> Callable[..., T]:
         for key, value in self.items():
             if isinstance(value, Cacheable):
                 value.add_parent(self)
+            _assert_not_list_or_dict(value)
             if isinstance(key, Cacheable):
                 raise TypeError("CacheableDict keys must be immutable.")
         return result
@@ -110,6 +127,7 @@ class CacheableDict(Dict[K, V], Cacheable):
         for key, value in mapping.items():
             if isinstance(value, Cacheable):
                 value.add_parent(self)
+            _assert_not_list_or_dict(value)
             if isinstance(key, Cacheable):
                 raise TypeError("CacheableDict keys must be immutable.")
 
@@ -173,6 +191,7 @@ class volatile(Generic[T]):
                 return getattr(self, protected_attr)
 
             def setter(self: Cacheable, value: T) -> None:
+                _assert_not_list_or_dict(value)
                 if not hasattr(self, protected_attr) or value != getattr(
                         self, protected_attr):
                     setattr(self, protected_attr, value)
@@ -212,15 +231,6 @@ class volatile(Generic[T]):
             if not attr.startswith("_") and attr not in self.attr_names:
                 new_attr[attr] = getattr(self.obj, attr)
         for attr, value in new_attr.items():
-            if isinstance(value,
-                          list) and not isinstance(value, CacheableList):
-                raise TypeError(
-                    f"{attr} is a list, use self.{attr} = volatile.list(value)."
-                )
-            if isinstance(value,
-                          dict) and not isinstance(value, CacheableDict):
-                raise TypeError(
-                    f"{attr} is a dict, use self.{attr} = volatile.dict(value)."
-                )
+            _assert_not_list_or_dict(value)
             self.create_property(self.obj, attr, value)
         return False  # don't suppress exceptions
