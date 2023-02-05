@@ -2,3 +2,6 @@ venv/
 .vscode/
 **/__pycache__/**
 test.py
+render.egg-info
+tests/output/
+tests/fonts/
