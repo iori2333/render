@@ -173,3 +173,27 @@ def test_cache_violation():
         container.children = []  # type: ignore
     with assert_raises(TypeError, verbose=True):
         container.children.append([])
+
+
+def test_cache_image():
+    im = Image.from_color(100, 100, Palette.RED)
+    container = Container.from_children([im])
+    with assert_raises(ValueError, verbose=True):
+        im.im.base_im[:50, :50] = Palette.GREEN
+    with assert_raises(ValueError, verbose=True):
+        im.im.resize(50, 50)
+    # render 1
+    im1 = container.render()
+    # render 2
+    with im.modify():
+        im.im.base_im[:50, :50] = Palette.GREEN
+    im2 = container.render()
+    # render 3
+    with im.modify():
+        im.im.resize(50, 50)
+    im3 = container.render()
+    # compare results
+    RenderImage.concat_horizontal(
+        [im1, im2, im3],
+        alignment=Alignment.CENTER,
+    ).save(cache_dir / "image.png")
