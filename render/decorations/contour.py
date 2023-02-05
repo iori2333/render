@@ -2,10 +2,12 @@ from enum import Enum
 
 import cv2
 import numpy as np
+import numpy.typing as npt
 from typing_extensions import Self, override
 
 from render.base import (Color, LayerDecoration, Overlay, RenderImage,
                          RenderObject)
+from render.utils import cast
 
 
 class ContourType(Enum):
@@ -56,7 +58,8 @@ class Contour(LayerDecoration):
 
     @override
     def render_layer(self, im: RenderImage, obj: RenderObject) -> RenderImage:
-        threshed = im.base_im[:, :, 3] > self.threshold  # type: ignore
+        base_rgb = cast[npt.NDArray[np.uint8]](im.base_im[:, :, :3])
+        threshed = base_rgb > self.threshold
         foreground = threshed.astype(np.uint8) * 255
         if self.dilation > 0:
             foreground = cv2.dilate(

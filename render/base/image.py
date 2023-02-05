@@ -4,10 +4,11 @@ from typing import Callable, Iterable, Sequence
 
 import cv2
 import numpy as np
+import numpy.typing as npt
 import PIL.Image as PILImage
 from typing_extensions import Literal, Self
 
-from render.utils import ImageMask, PathLike
+from render.utils import ImageMask, PathLike, cast
 
 from .color import Color, Palette
 from .properties import Alignment, Border, Direction, Interpolation
@@ -245,8 +246,8 @@ class RenderImage:
         mask = new_a == 0
         new_rgb = self.base_im[:, :, :3]
         new_rgb[mask] = (0, 0, 0)
-
-        self.base_im[:, :, :3] = np.around(new_rgb)  # type: ignore
+        new_rgb = cast[npt.NDArray[np.uint8]](new_rgb)
+        self.base_im[:, :, :3] = np.around(new_rgb)
         self.base_im[:, :, 3] = np.around(new_a)
 
         return self

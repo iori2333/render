@@ -14,4 +14,5 @@ __all__ = [
     "bisect_left",
     "bisect_right",
     "undefined",
+    "cast"
 ]
