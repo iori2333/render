@@ -58,8 +58,8 @@ class Contour(LayerDecoration):
 
     @override
     def render_layer(self, im: RenderImage, obj: RenderObject) -> RenderImage:
-        base_rgb = cast[npt.NDArray[np.uint8]](im.base_im[:, :, :3])
-        threshed = base_rgb > self.threshold
+        base_a = cast[npt.NDArray[np.uint8]](im.base_im[:, :, 3])
+        threshed = base_a > self.threshold
         foreground = threshed.astype(np.uint8) * 255
         if self.dilation > 0:
             foreground = cv2.dilate(
