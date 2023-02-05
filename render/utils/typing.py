@@ -6,7 +6,7 @@ from typing import Any, Generic, TypeVar, Union
 import numpy as np
 import numpy.typing as npt
 
-ImageMask = npt.NDArray[np.uint8]
+ImageMask = Union[npt.NDArray[np.uint8], npt.NDArray[np.bool_]]
 PathLike = Union[str, Path]
 
 T = TypeVar("T")

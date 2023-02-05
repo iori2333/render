@@ -381,11 +381,15 @@ class RenderImage:
         Alpha channel of the image will be multiplied by the mask.
 
         Args:
-            mask: a 2D numpy array of shape (height, width) with values in [0, 255].
+            mask: a 2D numpy array of shape (height, width) with values in [0, 255]
+                or a boolean array of shape (height, width).
 
         Raises:
             ValueError: if mask size is not same as image size.
         """
+        if mask.dtype == np.bool_:
+            mask_ = mask.astype(np.uint8) * 255
+            mask = cast[ImageMask](mask_)
         h, w = mask.shape
         if h != self.height or w != self.width:
             raise ValueError("Mask size must be same as image size")
@@ -393,6 +397,22 @@ class RenderImage:
         coef = mask[indices] / 255.0
         self.base_im[indices, 3] = self.base_im[indices, 3] * coef
         return self
+
+    @property
+    def red(self) -> ImageMask:
+        return cast[ImageMask](self.base_im[:, :, 0])
+
+    @property
+    def green(self) -> ImageMask:
+        return cast[ImageMask](self.base_im[:, :, 1])
+
+    @property
+    def blue(self) -> ImageMask:
+        return cast[ImageMask](self.base_im[:, :, 2])
+
+    @property
+    def alpha(self) -> ImageMask:
+        return cast[ImageMask](self.base_im[:, :, 3])
 
     def save(self, path: PathLike) -> None:
         save_im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2BGRA)

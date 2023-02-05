@@ -7,6 +7,7 @@ from render import *
 from data import *
 from utils import TestRect, assert_raises
 
+
 def make_color_rect(name: str,
                     color: Color,
                     size: int = 160,
@@ -180,3 +181,19 @@ def test_padding():
             RectCrop.of(border_radius=10, box_sizing=BoxSizing.FULL_BOX)
         ])
     container.render().save(Output / "padding.png")
+
+
+def test_mask():
+    text = Text.of("Hello World", font=Font.one(), size=24)
+    im = text.render()
+
+    canvas = RenderImage.empty_like(im, color=Palette.BLACK)
+    canvas.mask(im.alpha)
+    canvas2 = RenderImage.empty_like(im, color=Palette.BLACK)
+    canvas2.mask(255 - im.alpha)
+    canvas3 = RenderImage.empty_like(im, color=Palette.BLACK)
+    canvas3.mask(im.alpha > 128)  # damage anti-aliasing
+    RenderImage.concat_vertical(
+        [canvas, canvas2, canvas3],
+        alignment=Alignment.CENTER,
+    ).save(Output / "mask.png")
