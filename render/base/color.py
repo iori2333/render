@@ -42,8 +42,8 @@ class Color(NamedTuple):
         r, g, b, a = (randint(0, 255) for _ in range(4))
         return cls.of(r, g, b, a if rand_alpha else 255)
 
-    def of_alpha(self, a: int) -> Self:
-        return self.__class__(self.r, self.g, self.b, a)
+    def of_alpha(self, a: int | float) -> Self:
+        return self.of(self.r, self.g, self.b, a)
 
     def as_hex(self, lower: bool = False) -> str:
         if lower:

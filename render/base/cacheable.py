@@ -46,10 +46,10 @@ def _assert_not_list_or_dict(value: Any):
     """
     if isinstance(value, list) and not isinstance(value, CacheableList):
         raise TypeError(
-            f"Builtin list is not supported. Use CacheableList instead.")
+            "Builtin list is not supported. Use CacheableList instead.")
     if isinstance(value, dict) and not isinstance(value, CacheableDict):
         raise TypeError(
-            f"Builtin dict is not supported. Use CacheableDict instead.")
+            "Builtin dict is not supported. Use CacheableDict instead.")
 
 
 def _list_update(func: Callable[..., T]) -> Callable[..., T]:
