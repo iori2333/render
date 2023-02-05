@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Iterable, Sequence
+from typing import Callable, Iterable, Sequence
 
 import cv2
 import numpy as np
@@ -11,6 +11,17 @@ from render.utils import ImageMask, PathLike
 
 from .color import Color, Palette
 from .properties import Alignment, Border, Direction, Interpolation
+
+
+def check_writeable(
+        func: Callable[..., RenderImage]) -> Callable[..., RenderImage]:
+
+    def wrapper(self: RenderImage, *args, **kwargs) -> RenderImage:
+        if not self.base_im.flags.writeable:
+            raise ValueError("RenderImage is read-only")
+        return func(self, *args, **kwargs)
+
+    return wrapper
 
 
 class RenderImage:
@@ -147,6 +158,7 @@ class RenderImage:
     def height(self) -> int:
         return self.base_im.shape[0]
 
+    @check_writeable
     def paste(self, x: int, y: int, im: Self) -> Self:
         """Pastes the image onto this image at the given coordinates.
         Considering alpha channels of both images.
@@ -158,6 +170,7 @@ class RenderImage:
         self.base_im = np.array(im_self)
         return self
 
+    @check_writeable
     def cover(self, x: int, y: int, im: Self) -> Self:
         """Pastes the image onto this image at the given coordinates
         only where the cover image is not transparent.
@@ -174,6 +187,7 @@ class RenderImage:
                      max(l, 0):min(r, self.width)][mask] = im_cropped[mask]
         return self
 
+    @check_writeable
     def overlay(self, x: int, y: int, im: Self) -> Self:
         """Pastes the image onto this image at the given coordinates
         no matter what the alpha channel is."""
@@ -186,6 +200,7 @@ class RenderImage:
                      max(l, 0):min(r, self.width)] = im_cropped
         return self
 
+    @check_writeable
     def set_transparency(
         self,
         start: Color = Palette.WHITE,
@@ -236,6 +251,7 @@ class RenderImage:
 
         return self
 
+    @check_writeable
     def draw_border(
         self,
         x: int,
@@ -256,6 +272,7 @@ class RenderImage:
         )
         return self
 
+    @check_writeable
     def resize(
         self,
         width: int = -1,
@@ -290,6 +307,7 @@ class RenderImage:
         )
         return self
 
+    @check_writeable
     def rescale(
         self,
         scale: float,
@@ -307,6 +325,7 @@ class RenderImage:
             interpolation=interpolation,
         )
 
+    @check_writeable
     def thumbnail(
         self,
         max_width: int = -1,
@@ -342,6 +361,7 @@ class RenderImage:
         """
         return self.__class__(self.base_im.copy())
 
+    @check_writeable
     def fill(
         self,
         x: int,
@@ -353,6 +373,7 @@ class RenderImage:
         self.base_im[y:y + height, x:x + width] = color
         return self
 
+    @check_writeable
     def mask(self, mask: ImageMask) -> Self:
         """Apply mask to image inplace.
 
