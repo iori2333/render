@@ -1,9 +1,34 @@
 from __future__ import annotations
 
 import inspect
-from typing import Any, Callable, Dict, Generic, Iterable, List, TypeVar
+import sys
+from typing import Any, Callable, Generic, Iterable, TypeVar
 
 from typing_extensions import Self
+
+if sys.version_info < (3, 9):
+    # Python 3.9+ has built-in support for generic collections.
+    # This is a backport for Python 3.8 and below.
+    from collections import UserDict as _UserDict
+    from collections import UserList as _UserList
+
+    class UserList(_UserList):
+
+        def __init__(self, iterable: Iterable) -> None:
+            super().__init__(iterable)
+
+        def __class_getitem__(cls, item):
+            return cls
+
+    class UserDict(_UserDict):
+
+        def __init__(self, mapping: dict) -> None:
+            super().__init__(mapping)
+
+        def __class_getitem__(cls, item):
+            return cls
+else:
+    from collections import UserDict, UserList
 
 T = TypeVar("T")
 K = TypeVar("K")
@@ -67,34 +92,34 @@ def _list_update(func: Callable[..., T]) -> Callable[..., T]:
     return wrapper
 
 
-class CacheableList(List[T], Cacheable):
+class CacheableList(UserList[T], Cacheable):
     """A cacheable list sensitive to changes in its items."""
 
     def __init__(self, iterable: Iterable[T], *parent: Cacheable) -> None:
-        list.__init__(self, iterable)
         Cacheable.__init__(self, *parent)
+        UserList[T].__init__(self, iterable)
         for item in iterable:
             if isinstance(item, Cacheable):
                 item.add_parent(self)
             _assert_not_list_or_dict(item)
 
     def __repr__(self) -> str:
-        return Cacheable.__repr__(self) + list.__repr__(self)
+        return Cacheable.__repr__(self) + UserList[T].__repr__(self)
 
-    __setitem__ = _list_update(list.__setitem__)
-    __delitem__ = _list_update(list.__delitem__)
-    __add__ = _list_update(list.__add__)
-    __iadd__ = _list_update(list.__iadd__)
-    __mul__ = _list_update(list.__mul__)
-    __imul__ = _list_update(list.__imul__)
-    __rmul__ = _list_update(list.__rmul__)
-    append = _list_update(list.append)
-    extend = _list_update(list.extend)
-    insert = _list_update(list.insert)
-    pop = _list_update(list.pop)
-    remove = _list_update(list.remove)
-    reverse = _list_update(list.reverse)
-    sort = _list_update(list.sort)
+    __setitem__ = _list_update(UserList[T].__setitem__)
+    __delitem__ = _list_update(UserList[T].__delitem__)
+    __add__ = _list_update(UserList[T].__add__)
+    __iadd__ = _list_update(UserList[T].__iadd__)
+    __mul__ = _list_update(UserList[T].__mul__)
+    __imul__ = _list_update(UserList[T].__imul__)
+    __rmul__ = _list_update(UserList[T].__rmul__)
+    append = _list_update(UserList[T].append)
+    extend = _list_update(UserList[T].extend)
+    insert = _list_update(UserList[T].insert)
+    pop = _list_update(UserList[T].pop)
+    remove = _list_update(UserList[T].remove)
+    reverse = _list_update(UserList[T].reverse)
+    sort = _list_update(UserList[T].sort)
 
 
 def _dict_update(func: Callable[..., T]) -> Callable[..., T]:
@@ -114,7 +139,7 @@ def _dict_update(func: Callable[..., T]) -> Callable[..., T]:
     return wrapper
 
 
-class CacheableDict(Dict[K, V], Cacheable):
+class CacheableDict(UserDict[K, V], Cacheable):
     """A cacheable dict sensitive to changes in its values.
 
     Raises:
@@ -123,8 +148,8 @@ class CacheableDict(Dict[K, V], Cacheable):
 
     def __init__(self, mapping: dict[K, V], *parent: Cacheable) -> None:
         mapping = mapping or {}
-        dict.__init__(self, mapping)
         Cacheable.__init__(self, *parent)
+        UserDict[K, V].__init__(self, mapping)
         for key, value in mapping.items():
             if isinstance(value, Cacheable):
                 value.add_parent(self)
@@ -133,15 +158,15 @@ class CacheableDict(Dict[K, V], Cacheable):
                 raise TypeError("CacheableDict keys must be immutable.")
 
     def __repr__(self) -> str:
-        return Cacheable.__repr__(self) + dict.__repr__(self)
+        return Cacheable.__repr__(self) + UserDict[K, V].__repr__(self)
 
-    __setitem__ = _dict_update(dict.__setitem__)
-    __delitem__ = _dict_update(dict.__delitem__)
-    clear = _dict_update(dict.clear)
-    pop = _dict_update(dict.pop)
-    popitem = _dict_update(dict.popitem)  # type: ignore
-    setdefault = _dict_update(dict.setdefault)  # type: ignore
-    update = _dict_update(dict.update)
+    __setitem__ = _dict_update(UserDict[K, V].__setitem__)
+    __delitem__ = _dict_update(UserDict[K, V].__delitem__)
+    clear = _dict_update(UserDict[K, V].clear)
+    pop = _dict_update(UserDict[K, V].pop)
+    popitem = _dict_update(UserDict[K, V].popitem)
+    setdefault = _dict_update(UserDict[K, V].setdefault)
+    update = _dict_update(UserDict[K, V].update)
 
 
 def cached(func: Callable[..., T]) -> Callable[..., T]:

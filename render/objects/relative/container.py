@@ -5,6 +5,7 @@ from typing import Tuple
 from typing_extensions import Self, TypedDict, Unpack, override
 
 from render.base import BaseStyle, RenderImage, RenderObject, cached, volatile
+from render.base.cacheable import CacheableList
 from render.utils import cast
 
 from .utils import Box, DependencyGraph, LinearPolynomial, partition
@@ -73,7 +74,7 @@ class RelativeContainer(RenderObject):
         super().__init__(**kwargs)
         with volatile(self) as vlt:
             self.strict = strict
-            self.children: list[RenderObject] = vlt.list()
+            self.children: CacheableList[RenderObject] = vlt.list()
         # The following attributes should not be accessed directly
         self._offsets: dict[RenderObject, XY] = {}
         self._graph = DependencyGraph[RenderObject, str]().add_node(self)
