@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Iterable, NamedTuple
+from typing import Iterable
 
 from typing_extensions import TypedDict
 
@@ -9,18 +9,7 @@ from .cacheable import Cacheable
 from .color import Color, Palette
 from .decorations import Decoration, Decorations
 from .image import RenderImage
-from .properties import Border, Space
-
-
-class BoundingBox(NamedTuple):
-    x: int
-    y: int
-    w: int
-    h: int
-
-    @classmethod
-    def of(cls, x: int, y: int, w: int, h: int) -> BoundingBox:
-        return cls(x, y, w, h)
+from .properties import Border, BoundingBox, Space
 
 
 class BaseStyle(TypedDict, total=False):

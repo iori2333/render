@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Sequence
 from typing_extensions import Self
 
 from .image import RenderImage
-from .object import BoundingBox
+from .properties import BoundingBox
 
 if TYPE_CHECKING:
     from .object import RenderObject
