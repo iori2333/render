@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-import sys
 from pathlib import Path
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar, Union
 
 import numpy as np
 import numpy.typing as npt
 
 ImageMask = npt.NDArray[np.uint8]
-PathLike = str | Path
+PathLike = Union[str, Path]
 
 T = TypeVar("T")
 
@@ -42,4 +41,10 @@ class cast(Generic[T]):
         return value
 
 
-__all__ = ["ImageMask", "PathLike", "Undefined", "undefined", "cast"]
+__all__ = [
+    "ImageMask",
+    "PathLike",
+    "Undefined",
+    "cast",
+    "undefined",
+]

@@ -5,6 +5,7 @@ from typing import Tuple
 from typing_extensions import Self, TypedDict, Unpack, override
 
 from render.base import BaseStyle, RenderImage, RenderObject, cached, volatile
+from render.utils import cast
 
 from .utils import Box, DependencyGraph, LinearPolynomial, partition
 
@@ -95,7 +96,8 @@ class RelativeContainer(RenderObject):
             raise ValueError("Child already added")
         self.children.append(child)
         for relation, target in kwargs.items():
-            self._graph.add_edge(target, child, relation)  # type: ignore
+            target = cast[RenderObject](target)
+            self._graph.add_edge(target, child, relation)
         self._offsets[child] = offset
         return self
 
@@ -111,7 +113,8 @@ class RelativeContainer(RenderObject):
             **kwargs: The constraint between the object and other objects.
         """
         for relation, target in kwargs.items():
-            self._constraints.append((obj, relation, target))  # type: ignore
+            target = cast[RenderObject](target)
+            self._constraints.append((obj, relation, target))
         return self
 
     def set_offset(self, child: RenderObject, offset: XY) -> Self:

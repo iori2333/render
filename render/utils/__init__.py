@@ -13,6 +13,6 @@ __all__ = [
     "Undefined",
     "bisect_left",
     "bisect_right",
+    "cast",
     "undefined",
-    "cast"
 ]

@@ -38,7 +38,7 @@ class Cacheable:
         return f"{self.__class__.__name__}"
 
 
-def _assert_not_list_or_dict(value: Any):
+def _assert_not_list_or_dict(value: Any) -> None:
     """Raise TypeError if value is a list or dict.
 
     Modifying a list or dict in place will not trigger the cache update.
