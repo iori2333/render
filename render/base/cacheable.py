@@ -5,7 +5,7 @@ import sys
 from types import TracebackType
 from typing import Any, Callable, Generic, Iterable, Type, TypeVar
 
-from typing_extensions import Self
+from typing_extensions import Literal, Self
 
 T = TypeVar("T")
 K = TypeVar("K")
@@ -100,9 +100,6 @@ class CacheableList(UserList[T], Cacheable):
 
     def __repr__(self) -> str:
         return Cacheable.__repr__(self) + UserList[T].__repr__(self)
-
-    def __class_getitem__(cls, item: T) -> Type[CacheableList[T]]:
-        return cls
 
     __setitem__ = _list_update(UserList[T].__setitem__)
     __delitem__ = _list_update(UserList[T].__delitem__)
@@ -257,7 +254,7 @@ class volatile:
         exc_type: Type[BaseException] | None,
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
-    ) -> bool | None:
+    ) -> Literal[False]:
         # compare which attributes have been created,
         # create property for each new attribute
         new_attr = {}
