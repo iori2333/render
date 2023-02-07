@@ -133,7 +133,7 @@ class Decorations:
             elif deco.box_sizing == BoxSizing.FULL_BOX:
                 box = BoundingBox.of(0, 0, obj.width, obj.height)
             else:
-                raise ValueError(f"Invalid box sizing {deco.box_sizing}")
+                raise ValueError(f"Invalid box sizing: {deco.box_sizing!r}")
             x, y, w, h = box
             cropped = RenderImage.from_raw(im.base_im[y:y + h, x:x + w])
             im = im.overlay(x, y, deco.apply(cropped))
@@ -147,9 +147,9 @@ class Decorations:
             elif deco.overlay == Overlay.BELOW_OVERLAY:
                 im = deco.render_layer(im, obj).overlay(0, 0, im)
             else:
-                raise ValueError(f"Invalid overlay {deco.overlay}")
+                raise ValueError(f"Invalid overlay: {deco.overlay!r}")
         else:
-            raise ValueError(f"Invalid decoration type {deco}")
+            raise ValueError(f"Invalid decoration: {type(deco)!r}")
         return im
 
     def apply_stage(self, im: RenderImage, obj: RenderObject,

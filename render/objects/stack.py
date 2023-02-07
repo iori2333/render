@@ -94,5 +94,5 @@ class Stack(RenderObject):
             elif self.paste_mode == "cover":
                 im = im.cover(x, y, child)
             else:
-                raise ValueError(f"Unknown paste mode: {self.paste_mode}")
+                raise ValueError(f"Invalid paste mode: {self.paste_mode}")
         return im

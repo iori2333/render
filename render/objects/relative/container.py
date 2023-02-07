@@ -94,7 +94,7 @@ class RelativeContainer(RenderObject):
             **kwargs: The child object's relative position to other objects.
         """
         if child in self.children:
-            raise ValueError("Child already added")
+            raise ValueError(f"Child already added: {child!r}")
         self.children.append(child)
         for relation, target in kwargs.items():
             target = cast[RenderObject](target)

@@ -109,7 +109,7 @@ class StyledText(RenderObject):
             if match:
                 name = match.group(1)
                 if name not in styles:
-                    raise ValueError(f"Style {name} used but not defined")
+                    raise ValueError(f"Style used but not defined: {name}")
                 style.push(name, styles[name])
                 index = match.end()
                 continue

@@ -133,7 +133,8 @@ def _dict_update(func: Callable[..., T]) -> Callable[..., T]:
                 value.add_parent(self)
             _assert_not_list_or_dict(value)
             if isinstance(key, Cacheable):
-                raise TypeError("CacheableDict keys must be immutable.")
+                raise TypeError(
+                    f"CacheableDict keys cannot be cacheable: {key!r}")
         return result
 
     return wrapper
@@ -155,7 +156,8 @@ class CacheableDict(UserDict[K, V], Cacheable):
                 value.add_parent(self)
             _assert_not_list_or_dict(value)
             if isinstance(key, Cacheable):
-                raise TypeError("CacheableDict keys must be immutable.")
+                raise TypeError(
+                    f"CacheableDict keys cannot be cacheable: {key!r}")
 
     def __repr__(self) -> str:
         return Cacheable.__repr__(self) + UserDict[K, V].__repr__(self)
@@ -179,7 +181,8 @@ def cached(func: Callable[..., T]) -> Callable[..., T]:
 
     def wrapper(self: Cacheable) -> T:
         if not isinstance(self, Cacheable):
-            raise TypeError("@cached can only be used on Cacheable objects.")
+            raise TypeError(
+                f"@cached must be used on a Cacheable object: {type(self)}")
         if key in self.__cache__:
             return self.__cache__[key]
         return self.__cache__.setdefault(key, func(self))
@@ -240,10 +243,12 @@ class volatile(Generic[T]):
         frame = inspect.currentframe()
         back = None if frame is None else frame.f_back
         if back is None:
-            raise RuntimeError("volatile must be used in Cacheable.__init__")
+            raise RuntimeError(
+                "volatile must be used in Cacheable.__init__: None")
         caller = back.f_code.co_name
         if caller != "__init__":
-            raise RuntimeError("volatile must be used in Cacheable.__init__")
+            raise RuntimeError(
+                f"volatile must be used in Cacheable.__init__: {caller}")
 
     def __enter__(self) -> Self:
         self.attr_names = list(self.obj.__dict__.keys())

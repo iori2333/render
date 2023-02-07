@@ -81,7 +81,8 @@ class Text(RenderObject):
         if cls._calculate_width(font, text[:bound], stroke_width) > max_width:
             bound -= 1
         if bound <= 0:
-            raise ValueError("Text is too long to fit in the given width")
+            raise ValueError(f"Text is too long to fit in the given width: "
+                             f"font_size={font.size}, text={text!r}")
         if bound == len(text):
             return text, "", bad_split
 

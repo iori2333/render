@@ -152,7 +152,7 @@ class LinearPolynomial:
     @property
     def var(self) -> str:
         if not self.is_variable:
-            raise ValueError("Not a variable")
+            raise ValueError(f"Not a variable: {self}")
         return next(iter(self.symbols.keys()))
 
 
@@ -211,7 +211,7 @@ class Inequality(LinearPolynomial):
             ValueError: If the inequality is not solvable.
         """
         if not self.solvable:
-            raise ValueError("Not solvable")
+            raise ValueError(f"Not solvable: {self}")
         var = self.var
         return var, self.symbols[var] > 0, -self.const / self.symbols[var]
 

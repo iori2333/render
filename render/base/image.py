@@ -294,7 +294,9 @@ class RenderImage:
 
         Args:
             width: The new width of the image.
+                -1 to keep the original aspect ratio.
             height: The new height of the image.
+                -1 to keep the original aspect ratio.
             interpolation: The interpolation method to use.
 
         Raises:
@@ -399,7 +401,9 @@ class RenderImage:
             mask = cast[ImageMask](mask_)
         h, w = mask.shape
         if h != self.height or w != self.width:
-            raise ValueError("Mask size must be same as image size")
+            raise ValueError(f"Mask size must be same as image size: "
+                             f"expected ({self.height}, {self.width}), "
+                             f"got ({h}, {w})")
         indices = mask != 255
         coef = mask[indices] / 255.0
         self.base_im[indices, 3] = self.base_im[indices, 3] * coef
