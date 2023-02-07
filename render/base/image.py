@@ -449,3 +449,8 @@ class RenderImage:
     def to_grayscale(self) -> Self:
         im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2GRAY)
         return self.__class__.from_raw(im)
+
+    def _repr_png_(self) -> bytes:
+        """iPython display hook support"""
+        im = self.to_pil()
+        return im._repr_png_()  # type: ignore
