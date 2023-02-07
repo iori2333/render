@@ -94,3 +94,21 @@ class Image(RenderObject):
     @override
     def render_content(self) -> RenderImage:
         return self.im
+
+    def resize(self, width: int, height: int) -> Self:
+        """Resize the wrapped RenderImage."""
+        with self.modify():
+            self.im.resize(width, height)
+        return self
+
+    def rescale(self, scale: float) -> Self:
+        """Rescale the wrapped RenderImage."""
+        with self.modify():
+            self.im.rescale(scale)
+        return self
+
+    def thumbnail(self, width: int, height: int) -> Self:
+        """Thumbnail the wrapped RenderImage."""
+        with self.modify():
+            self.im.thumbnail(width, height)
+        return self
