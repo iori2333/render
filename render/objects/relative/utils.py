@@ -361,11 +361,11 @@ class DependencyGraph(Generic[Node, Edge]):
 
     def __init__(self) -> None:
         # node -> successors
-        self.graph: dict[Any, set[Any]] = {}
+        self.graph: dict[Node, set[Node]] = {}
         # node -> predecessors
-        self.reverse_graph: dict[Any, set[Any]] = {}
+        self.reverse_graph: dict[Node, set[Node]] = {}
         # (node, successor) -> edges
-        self.edge: dict[tuple[Any, Any], set[Edge]] = {}
+        self.edge: dict[tuple[Node, Node], set[Edge]] = {}
 
     def add_node(self, node: Node) -> Self:
         self.graph.setdefault(node, set())
@@ -403,7 +403,7 @@ class DependencyGraph(Generic[Node, Edge]):
             node for node, predecessors in reverse_graph.items()
             if len(predecessors) == 0
         ]
-        result = []
+        result: list[Node] = []
         while queue:
             node = queue.pop()
             result.append(node)
@@ -430,7 +430,8 @@ def partition(
         A tuple of (list of items satisfying the predicate,
         list of items not satisfying the predicate).
     """
-    x, y = [], []
+    x: list[T] = []
+    y: list[T] = []
     for item in iterable:
         (x if predicate(item) else y).append(item)
     return x, y

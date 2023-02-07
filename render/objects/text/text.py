@@ -139,7 +139,7 @@ class Text(RenderObject):
         max_width: int,
         hyphenation: bool,
     ) -> Sequence[str]:
-        split_lines = []
+        split_lines: list[str] = []
         while text:
             # ignore bad_split flag
             line, remain, _ = cls.split_once(font, text, stroke_width,

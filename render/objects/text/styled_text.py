@@ -85,7 +85,7 @@ class StyledText(RenderObject):
 
     @override
     def render_content(self) -> RenderImage:
-        rendered_lines = []
+        rendered_lines: list[RenderImage] = []
         for line in self.cut():
             rendered_lines.append(self.text_concat(line))
         return RenderImage.concat_vertical(
