@@ -35,4 +35,8 @@ class Font:
 Output = Path(__file__).parent / "output"
 Output.mkdir(exist_ok=True)
 
+# check if any font is available
+if not Font.fonts():
+    raise RuntimeError("Please put some fonts in the fonts folder.")
+
 __all__ = ["Font", "Output"]

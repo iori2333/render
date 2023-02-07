@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Callable, Iterable, Sequence
+from urllib.request import urlopen
 
 import cv2
 import numpy as np
@@ -43,7 +44,7 @@ class RenderImage:
         """
         im = cv2.imread(str(path), cv2.IMREAD_UNCHANGED)
         if im is None:
-            raise IOError(f"Invalid image path: {path}")
+            raise IOError(f"Cannot load image from {path!r}")
         return cls.from_raw(im, bgr=True)
 
     @classmethod
@@ -87,7 +88,13 @@ class RenderImage:
     @classmethod
     def from_pil(cls, im: PILImage.Image) -> Self:
         im = im.convert("RGBA")
-        return cls.from_raw(np.asarray(im))
+        return cls.from_raw(np.array(im))
+
+    @classmethod
+    def from_url(cls, url: str) -> Self:
+        with urlopen(url) as response:
+            im = PILImage.open(response)
+            return cls.from_pil(im)
 
     @classmethod
     def concat(
@@ -417,7 +424,7 @@ class RenderImage:
     def save(self, path: PathLike) -> None:
         save_im = cv2.cvtColor(self.base_im, cv2.COLOR_RGBA2BGRA)
         if not cv2.imwrite(str(path), save_im):
-            raise IOError(f"Failed to save image to {path}")
+            raise IOError(f"Cannnot save image to {path!r}")
 
     def show(self, lib: Literal["cv2", "PIL"] = "PIL") -> None:
         if lib == "PIL":

@@ -77,6 +77,31 @@ def test_grayscale():
 
 
 def test_box_shadow():
+    image = Image.from_url("https://www.w3schools.com/css/rock600x400.jpg",
+                           resize=(250, -1))
+    text_im = Text.of(
+        "Hardanger, Norway",
+        Font.get("YAHEI"),
+        16,
+        color=Palette.BLACK,
+        padding=Space.all(10),
+    )
+    container_im = Container.from_children(
+        [
+            image,
+            text_im,
+        ],
+        direction=Direction.VERTICAL,
+        alignment=Alignment.CENTER,
+        background=Palette.WHITE,
+        decorations=[
+            BoxShadow.of(blur_radius=51,
+                         spread=4,
+                         color=Color.of(0, 0, 0, 0.8))
+        ],
+        margin=Space.all(50),
+    )
+
     text1 = Text.of("31", Font.get("YAHEI"), 64, color=Palette.WHITE)
     text2 = Text.of(
         "January 31, 2023",
@@ -89,7 +114,7 @@ def test_box_shadow():
         [
             FixedContainer.from_children(
                 250,
-                250,
+                image.height,
                 [text1],
                 alignment=Alignment.CENTER,
                 justify_content=JustifyContent.CENTER,
@@ -107,8 +132,9 @@ def test_box_shadow():
         ],
         margin=Space.all(50),
     )
+
     Container.from_children(
-        [container],
+        [container, container_im],
         padding=Space.all(10),
         background=Palette.WHITE,
     ).render().save(deco_dir / "shadow-box.png")

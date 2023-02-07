@@ -53,6 +53,21 @@ class Image(RenderObject):
         return Image(im, **kwargs)
 
     @classmethod
+    def from_url(
+        cls,
+        url: str,
+        resize: float | tuple[int, int] | None = None,
+        **kwargs: Unpack[BaseStyle],
+    ) -> Self:
+        im = RenderImage.from_url(url)
+        if resize is not None:
+            if isinstance(resize, tuple):
+                im = im.resize(*resize)
+            else:
+                im = im.resize(int(im.width * resize), int(im.height * resize))
+        return Image(im, **kwargs)
+
+    @classmethod
     def from_image(cls, im: RenderImage, **kwargs: Unpack[BaseStyle]) -> Self:
         """Create a new Image from an existing RenderImage.
 
