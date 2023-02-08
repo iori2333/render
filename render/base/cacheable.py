@@ -219,7 +219,7 @@ class volatile:
     """
 
     @classmethod
-    def create_property(cls, obj: Cacheable, attr: str, initial: T) -> None:
+    def create_property(cls, obj: Cacheable, attr: str, initial: Any) -> None:
         """Create a property named `attr` on `obj.__class__` that is volatile.
 
         `property.getter` will return `obj._attr` and
@@ -232,10 +232,12 @@ class volatile:
         # if already a property, don't override
         if not isinstance(getattr(obj.__class__, attr, None), property):
 
-            def getter(self: Cacheable) -> T:
+            _T = Type[type(initial)]
+
+            def getter(self: Cacheable) -> _T:
                 return getattr(self, protected_attr)
 
-            def setter(self: Cacheable, value: T) -> None:
+            def setter(self: Cacheable, value: _T) -> None:
                 _assert_not_list_or_dict(value)
                 if not hasattr(self, protected_attr) or value != getattr(
                         self, protected_attr):
