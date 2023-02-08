@@ -219,7 +219,7 @@ class volatile:
     """
 
     @classmethod
-    def create_property(cls, obj: Cacheable, attr: str, initial: T) -> None:
+    def create_property(cls, obj: Cacheable, attr: str, initial: T) -> T:
         """Create a property named `attr` on `obj.__class__` that is volatile.
 
         `property.getter` will return `obj._attr` and
@@ -243,6 +243,9 @@ class volatile:
                     self.clear_cache()
 
             setattr(obj.__class__, attr, property(getter, setter))
+
+        # return this just to suppress pylance warning
+        return initial
 
     def list(self, value: Iterable[T] | None = None) -> CacheableList[T]:
         value = value or []
