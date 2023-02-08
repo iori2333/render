@@ -49,12 +49,24 @@ def test_cache_text():
     world.text = "Mundo"
     im2, elapsed2 = render()
 
+    vertical = Container.from_children(
+        [
+            Text.of("Hello", Font.one(), 18, color=Palette.AQUA.of_alpha(0.5)),
+            Text.of(
+                "Holla", Font.one(), 18, color=Palette.SKY_BLUE.of_alpha(0.5))
+        ],
+        alignment=Alignment.CENTER,
+        direction=Direction.VERTICAL,
+    )
+    hello.replace(vertical)
+    im3, _ = render()
+
     print(f"Original: {elapsed1:.4f}s")
     print(f"Cached  : {elapsed_cache:.4f}s")
     print(f"Changed : {elapsed2:.4f}s")
 
     RenderImage.concat_horizontal(
-        [im1, im2],
+        [im1, im2, im3],
         alignment=Alignment.CENTER,
     ).save(cache_dir / "text.png")
 

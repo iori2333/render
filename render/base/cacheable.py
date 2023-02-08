@@ -57,6 +57,27 @@ class Cacheable:
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}"
 
+    def replace(self, other: Cacheable) -> None:
+        """Replace this object with another object at all parent occurences.
+
+        Used when an object inside a container needs to be replaced.
+        """
+        for parent in self._cache_parent_:
+            if isinstance(parent, CacheableList):
+                for i, item in enumerate(parent):
+                    if item is self:
+                        parent[i] = other
+                        other.add_parent(parent)
+            elif isinstance(parent, CacheableDict):
+                for k, item in parent.items():
+                    if item is self:
+                        parent[k] = other
+                        other.add_parent(parent)
+            else:
+                raise TypeError(
+                    f"Unsupported parent type: {type(parent).__name__}")
+        self._cache_parent_ = []
+
 
 def _assert_not_list_or_dict(value: Any) -> None:
     """Raise TypeError if value is a list or dict.
@@ -201,8 +222,8 @@ class volatile:
     def create_property(cls, obj: Cacheable, attr: str, initial: T) -> None:
         """Create a property named `attr` on `obj.__class__` that is volatile.
 
-        Property getter will return obj._attr
-        Property setter will set obj._attr and notify obj of the change.
+        `property.getter` will return `obj._attr` and
+        `property.setter` will set `obj._attr` and notify `obj` of the change.
         """
 
         protected_attr = "_" + attr
