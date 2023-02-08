@@ -48,8 +48,9 @@ def run_tests(
         profiler = cProfile.Profile()
         for f in functions:
             print(f"[{f.__name__}]")
-            with profiler:
-                f()
+            profiler.enable()
+            f()
+            profiler.disable()
 
         print("=" * 80)
         stat = pstats.Stats(profiler).sort_stats("cumulative")

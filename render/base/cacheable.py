@@ -2,9 +2,14 @@ from __future__ import annotations
 
 import inspect
 import sys
-from typing import Any, Callable, Generic, Iterable, TypeVar
+from types import TracebackType
+from typing import Any, Callable, Generic, Iterable, Type, TypeVar
 
-from typing_extensions import Self
+from typing_extensions import Literal, Self
+
+T = TypeVar("T")
+K = TypeVar("K")
+V = TypeVar("V")
 
 if sys.version_info < (3, 9):
     # Python 3.9+ has built-in support for generic collections.
@@ -12,27 +17,17 @@ if sys.version_info < (3, 9):
     from collections import UserDict as _UserDict
     from collections import UserList as _UserList
 
-    class UserList(_UserList):
+    class UserList(_UserList, Generic[T]):
 
-        def __init__(self, iterable: Iterable) -> None:
-            super().__init__(iterable)
-
-        def __class_getitem__(cls, item):
+        def __class_getitem__(cls, item: T) -> Type[_UserList[T]]:
             return cls
 
-    class UserDict(_UserDict):
+    class UserDict(_UserDict, Generic[K, V]):
 
-        def __init__(self, mapping: dict) -> None:
-            super().__init__(mapping)
-
-        def __class_getitem__(cls, item):
+        def __class_getitem__(cls, item: tuple[K, V]) -> Type[_UserDict[K, V]]:
             return cls
 else:
     from collections import UserDict, UserList
-
-T = TypeVar("T")
-K = TypeVar("K")
-V = TypeVar("V")
 
 
 class Cacheable:
@@ -41,22 +36,22 @@ class Cacheable:
     Cache can be cleared recursively by calling `clear_cache()`.
 
     Attributes:
-        __cache__: Mapping from names to cached values.
-        __cache_parent__: List of parent Cacheable objects.
+        _cache_: Mapping from names to cached values.
+        _cache_parent_: List of parent Cacheable objects.
     """
 
     def __init__(self, *parent: Cacheable) -> None:
-        self.__cache__: dict[str, Any] = {}
-        self.__cache_parent__ = list(parent)
+        self._cache_: dict[str, Any] = {}
+        self._cache_parent_ = list(parent)
 
     def clear_cache(self) -> None:
-        self.__cache__ = {}
-        for p in self.__cache_parent__:
+        self._cache_ = {}
+        for p in self._cache_parent_:
             p.clear_cache()
 
     def add_parent(self, parent: Cacheable) -> Self:
-        if parent not in self.__cache_parent__:
-            self.__cache_parent__.append(parent)
+        if parent not in self._cache_parent_:
+            self._cache_parent_.append(parent)
         return self
 
     def __repr__(self) -> str:
@@ -183,14 +178,14 @@ def cached(func: Callable[..., T]) -> Callable[..., T]:
         if not isinstance(self, Cacheable):
             raise TypeError(
                 f"@cached must be used on a Cacheable object: {type(self)}")
-        if key in self.__cache__:
-            return self.__cache__[key]
-        return self.__cache__.setdefault(key, func(self))
+        if key in self._cache_:
+            return self._cache_[key]
+        return self._cache_.setdefault(key, func(self))
 
     return wrapper
 
 
-class volatile(Generic[T]):
+class volatile:
     """A context manager that used in Cacheable.__init__ method
     to create volatile properties.
 
@@ -254,7 +249,12 @@ class volatile(Generic[T]):
         self.attr_names = list(self.obj.__dict__.keys())
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+    def __exit__(
+        self,
+        exc_type: Type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> Literal[False]:
         # compare which attributes have been created,
         # create property for each new attribute
         new_attr = {}

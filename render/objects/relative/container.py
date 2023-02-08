@@ -237,7 +237,7 @@ class RelativeContainer(RenderObject):
         if self.strict:
             # remove objects that are partially outside the container
             # and recalculate the size
-            inside_box = {}
+            inside_box: dict[RenderObject, Box] = {}
             for obj, box in boxes.items():
                 _x1 = box.x1.eval(x=0, y=0, w=width_c, h=height_c)
                 _x2 = box.x2.eval(x=0, y=0, w=width_c, h=height_c)

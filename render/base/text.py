@@ -112,7 +112,7 @@ class RenderText(Cacheable):
             stroke_fill=self.stroke_color,
         )
         # 3. draw decoration
-        lines_y = []
+        lines_y: list[int] = []
         thick = self.decoration_thickness
         half_thick = thick // 2 + 1
         if self.decoration & TextDecoration.UNDERLINE:
