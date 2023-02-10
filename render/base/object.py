@@ -1,29 +1,30 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from functools import lru_cache
 from typing import Iterable
+
 from typing_extensions import TypedDict
 
-from .decorations import Decoration, Decorations
+from .cacheable import Cacheable
 from .color import Color, Palette
+from .decorations import Decoration, Decorations
 from .image import RenderImage
-from .properties import Space, Border
+from .properties import Border, BoundingBox, Space
 
 
 class BaseStyle(TypedDict, total=False):
-    background: Color
-    border: Border
-    margin: Space
-    padding: Space
-    decorations: Iterable[Decoration]
+    """Base style of a render object.
 
-
-class RenderObject(ABC):
-    """
-    Base class of all renderable objects.
+    Fields:
+        background: background color filled inside the border
+        padding: padding (px) of the object
+        border: width (px) and color of the border
+        margin: margin (px) of the object
+        decorations: decorations of the object
 
     Box model:
         margin -> border -> padding -> content
-        
+
         +-------------------+
         | margin            |
         | +---------------+ |
@@ -37,12 +38,22 @@ class RenderObject(ABC):
         | | | +-------+ | | |
         | | +-----------+ | |
         | +---------------+ |
+    """
+    background: Color
+    margin: Space
+    border: Border
+    padding: Space
+    decorations: Iterable[Decoration] | Decorations
+
+
+class RenderObject(ABC, Cacheable):
+    """Base class of all renderable objects.
 
     Abstract Methods:
         content_width: int - width of the object
         content_height: int - height of the object
         render_content(): RenderImage - render the object
-    
+
     Content width and height must be determined before rendering.
     """
 
@@ -51,14 +62,18 @@ class RenderObject(ABC):
         border: Border = Border.zero(),
         margin: Space = Space.zero(),
         padding: Space = Space.zero(),
-        decorations: Iterable[Decoration] = (),
+        decorations: Iterable[Decoration] | Decorations = (),
         background: Color = Palette.TRANSPARENT,
     ) -> None:
+        Cacheable.__init__(self)
         self.border = border
         self.margin = margin
         self.padding = padding
-        self.decorations = Decorations.of(*decorations)
         self.background = background
+        if isinstance(decorations, Decorations):
+            self.decorations = decorations
+        else:
+            self.decorations = Decorations.of(*decorations)
 
     @property
     @abstractmethod
@@ -75,62 +90,97 @@ class RenderObject(ABC):
         raise NotImplementedError()
 
     @property
-    @lru_cache()
     def width(self) -> int:
-        width = self.content_width + self.padding.width + self.margin.width + self.border.width * 2
+        """Width of the object.
+
+        Note:
+            This method should NOT be @cached.
+            Add @cached to `content_width`.
+        """
+        width = (self.content_width + self.padding.width + self.margin.width +
+                 self.border.width * 2)
         return width
 
     @property
-    @lru_cache()
     def height(self) -> int:
-        height = self.content_height + self.padding.height + self.margin.height + self.border.width * 2
+        """Height of the object.
+
+        Note:
+            This method should NOT be @cached.
+            Add @cached to `content_height`.
+        """
+        height = (self.content_height + self.padding.height +
+                  self.margin.height + self.border.width * 2)
         return height
 
-    def render(self) -> RenderImage:
-        """
-        Render an object to image.
-
-        Render process:
-        1. Render content (implemented by subclasses)
-        2. Apply content decorations
-        3. Draw border
-        4. Apply full decorations
-        5. Apply background decorations if needed
-        """
-
-        im = RenderImage.empty(self.width, self.height, self.background)
-        content = self.render_content()
-        content = self.decorations.apply_content(content)
-
-        content_width = self.content_width + self.padding.width
-        content_height = self.content_height + self.padding.height
-        offset_x = self.margin.left + self.border.width
-        offset_y = self.margin.top + self.border.width
-        im = im.draw_border(
-            offset_x,
-            offset_y,
-            content_width - 1,
-            content_height - 1,
-            self.border,
-        ).fill(
-            offset_x,
-            offset_y,
-            content_width,
-            content_height,
-            self.background,
-        ).paste(
-            offset_x + self.padding.left,
-            offset_y + self.padding.top,
-            content,
+    @property
+    def border_box(self) -> BoundingBox:
+        return BoundingBox.of(
+            self.margin.left,
+            self.margin.top,
+            self.content_width + self.padding.width + self.border.width * 2,
+            self.content_height + self.padding.height + self.border.width * 2,
         )
 
-        im = self.decorations.apply_full(im)
-        if self.decorations.has_bg_decorations:
-            bg = RenderImage.empty(
-                self.width,
-                self.height,
-                color=Palette.TRANSPARENT,
-            )
-            bg = self.decorations.apply_background(im, bg, self)
-            im = bg.paste(0, 0, im)
-        return im
+    @property
+    def padding_box(self) -> BoundingBox:
+        return BoundingBox.of(
+            self.margin.left + self.border.width,
+            self.margin.top + self.border.width,
+            self.content_width + self.padding.width,
+            self.content_height + self.padding.height,
+        )
+
+    @property
+    def content_box(self) -> BoundingBox:
+        return BoundingBox.of(
+            self.margin.left + self.border.width + self.padding.left,
+            self.margin.top + self.border.width + self.padding.top,
+            self.content_width,
+            self.content_height,
+        )
+
+    def render(self) -> RenderImage:
+        """Render an object to image.
+
+        Render / Decorate steps:
+            1. Create an empty canvas   / Apply initial decorations
+            2. Render content to canvas / Apply after content decorations
+            3. Fill padding area        / Apply before padding to padding only
+                                        / Apply after padding to canvas
+            4. Draw border              / Apply final decorations
+
+        Note:
+            This method should NOT be @cached.
+            Add @cached to `render_content`.
+        """
+        content_box = self.content_box
+        padding_box = self.padding_box
+
+        canvas = RenderImage.empty(self.width, self.height)
+        canvas = self.decorations.apply_initial(canvas, self)
+
+        content = self.render_content()
+        canvas = canvas.paste(content_box.x, content_box.y, content)
+        canvas = self.decorations.apply_after_content(canvas, self)
+
+        padding = RenderImage.empty(self.width, self.height).fill(
+            padding_box.x,
+            padding_box.y,
+            padding_box.w,
+            padding_box.h,
+            color=self.background,
+        )
+        padding = self.decorations.apply_before_padding(padding, self)
+        canvas = padding.paste(0, 0, canvas)
+        canvas = self.decorations.apply_after_padding(canvas, self)
+
+        canvas = canvas.draw_border(
+            padding_box.x,
+            padding_box.y,
+            padding_box.w - 1,
+            padding_box.h - 1,
+            self.border,
+        )
+        canvas = self.decorations.apply_final(canvas, self)
+        return canvas

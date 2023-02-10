@@ -1,6 +1,9 @@
-from typing import Callable, Generic, Optional, Sequence, TypeVar
-from typing_extensions import Self, Protocol
+from __future__ import annotations
+
 import bisect
+from typing import Callable, Generic, Sequence, TypeVar
+
+from typing_extensions import Protocol, Self
 
 
 class Comparable(Protocol):
@@ -18,13 +21,13 @@ class Comparable(Protocol):
         ...
 
 
-T = TypeVar('T')
+T = TypeVar('T', Comparable, int, float, str)
 V = TypeVar('V', Comparable, int, float, str)
 
 
 class BisectKeyWrapper(Generic[T, V]):
     """A wrapper class that allows to use a key function with bisect.
-    
+
     Python 3.10 introduced the `key` parameter."""
 
     def __init__(self, obj: V, key: Callable[[T], V]) -> None:
@@ -44,20 +47,20 @@ class BisectKeyWrapper(Generic[T, V]):
         return self.obj >= self.key(other)
 
 
-def find_leftmost(
+def bisect_left(
     seq: Sequence[T],
     obj: V,
-    key: Optional[Callable[[T], V]] = None,
+    key: Callable[[T], V] | None = None,
 ) -> int:
     """Find the leftmost index of the object in the sequence."""
     wrapper = BisectKeyWrapper(obj, key) if key else obj
     return bisect.bisect_left(seq, wrapper)
 
 
-def find_rightmost(
+def bisect_right(
     seq: Sequence[T],
     obj: V,
-    key: Optional[Callable[[T], V]] = None,
+    key: Callable[[T], V] | None = None,
 ) -> int:
     """Find the rightmost index of the object in the sequence."""
     wrapper = BisectKeyWrapper(obj, key) if key else obj

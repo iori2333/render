@@ -1,7 +1,8 @@
 from enum import Enum
-from typing_extensions import Self
+from typing import NamedTuple
 
 import cv2
+from typing_extensions import Self
 
 from .color import Color, Palette
 
@@ -79,3 +80,14 @@ class Space:
     @property
     def height(self) -> int:
         return self.top + self.bottom
+
+
+class BoundingBox(NamedTuple):
+    x: int
+    y: int
+    w: int
+    h: int
+
+    @classmethod
+    def of(cls, x: int, y: int, w: int, h: int) -> Self:
+        return cls(x, y, w, h)

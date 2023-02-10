@@ -1,10 +1,13 @@
 from enum import Enum
-from typing_extensions import Self, override
 
 import cv2
 import numpy as np
+import numpy.typing as npt
+from typing_extensions import Self, override
 
-from render.base import BoxSizing, ForegroundDecoration, RenderImage, Color
+from render.base import (Color, LayerDecoration, Overlay, RenderImage,
+                         RenderObject)
+from render.utils import cast
 
 
 class ContourType(Enum):
@@ -12,7 +15,17 @@ class ContourType(Enum):
     ALL = cv2.RETR_TREE
 
 
-class Contour(ForegroundDecoration):
+class Contour(LayerDecoration):
+    """Draw a contour around the foreground of the image.
+
+    Attributes:
+        color: color of the contour
+        thickness: thickness of the contour
+        dilation: size of the dilation kernel
+        contour_type: type of the contour, either EXTERNAL or ALL
+        threshold: threshold of alpha channel for foreground
+        overlay: layer relationship to the decorated image
+    """
 
     def __init__(
         self,
@@ -21,14 +34,14 @@ class Contour(ForegroundDecoration):
         dilation: int,
         contour_type: ContourType,
         threshold: int,
-        box_sizing: BoxSizing,
+        overlay: Overlay,
     ) -> None:
-        super(Contour, self).__init__(box_sizing)
+        super().__init__(overlay)
         self.color = color
         self.thickness = thickness
         self.dilation = dilation
-        self.threshold = threshold
         self.contour_type = contour_type
+        self.threshold = threshold
 
     @classmethod
     def of(
@@ -38,43 +51,32 @@ class Contour(ForegroundDecoration):
         dilation: int = 0,
         contour_type: ContourType = ContourType.EXTERNAL,
         threshold: int = 0,
-        box_sizing: BoxSizing = BoxSizing.CONTENT_BOX,
+        overlay: Overlay = Overlay.ABOVE_COMPOSITE,
     ) -> Self:
-        """Create a new Contour decoration
-
-        Args:
-            thickness (int): thickness of the contour
-            dilation (int): size of the dilation kernel
-            contour_type (ContourType): type of contour to draw, either EXTERNAL or ALL
-            threshold (int): threshold of alpha channel to differentiate between foreground and background
-            box_sizing (BoxSizing): box sizing
-
-        Returns:
-            Contour: contour decoration
-        """
         return cls(color, thickness, dilation, contour_type, threshold,
-                   box_sizing)
+                   overlay)
 
     @override
-    def apply(self, obj: RenderImage) -> RenderImage:
-        threshed = obj.base_im[:, :, 3] > self.threshold  # type: ignore
-        fore = threshed.astype(np.uint8) * 255
+    def render_layer(self, im: RenderImage, obj: RenderObject) -> RenderImage:
+        base_a = cast[npt.NDArray[np.uint8]](im.base_im[:, :, 3])
+        threshed = base_a > self.threshold
+        foreground = threshed.astype(np.uint8) * 255
         if self.dilation > 0:
-            fore = cv2.dilate(
-                fore, np.ones((self.dilation, self.dilation), np.uint8))
+            foreground = cv2.dilate(
+                foreground, np.ones((self.dilation, self.dilation), np.uint8))
 
+        layer = RenderImage.empty_like(im)
         contours, _ = cv2.findContours(
-            fore,
+            foreground,
             self.contour_type.value,
             cv2.CHAIN_APPROX_NONE,
         )
-        im_with_contour = cv2.drawContours(
-            obj.base_im,
+        layer.base_im = cv2.drawContours(
+            layer.base_im,
             contours,
             -1,
             self.color,
             self.thickness,
             cv2.LINE_AA,
         )
-        obj.base_im = im_with_contour
-        return obj
+        return layer
