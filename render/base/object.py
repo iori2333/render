@@ -38,6 +38,7 @@ class BaseStyle(TypedDict, total=False):
         | | | +-------+ | | |
         | | +-----------+ | |
         | +---------------+ |
+        +-------------------+
     """
     background: Color
     margin: Space
