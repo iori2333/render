@@ -3,6 +3,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Iterable
 
+import cv2
+import numpy as np
+import PIL.Image as PILImage
 from typing_extensions import TypedDict
 
 from .cacheable import Cacheable
@@ -67,6 +70,9 @@ class RenderObject(ABC, Cacheable):
         background: Color = Palette.TRANSPARENT,
     ) -> None:
         Cacheable.__init__(self)
+        self.tree_nodes = []
+        self.depth = 1
+        self.offset_from_origin = (0, 0)
         self.border = border
         self.margin = margin
         self.padding = padding
@@ -141,6 +147,15 @@ class RenderObject(ABC, Cacheable):
             self.content_height,
         )
 
+    def render_tree_preparation(self, depth: int, offset: tuple[int, int]) -> bool:
+        self.tree_nodes = []
+        self.depth = depth
+        self.offset_from_origin = offset
+        return False
+    
+    def render_self(self) -> cv2.Mat:
+        raise NotImplementedError()
+    
     def render(self) -> RenderImage:
         """Render an object to image.
 
@@ -155,33 +170,50 @@ class RenderObject(ABC, Cacheable):
             This method should NOT be @cached.
             Add @cached to `render_content`.
         """
-        content_box = self.content_box
-        padding_box = self.padding_box
+        self.render_tree_preparation(1, (0, 0))
+        curernt_layer, next_layer = self.tree_nodes, []
+        final_image = PILImage.fromarray(self.render_self())
+        depth = self.depth
+        while depth > 0 and curernt_layer:
+            depth = max([i.depth for i in curernt_layer])
+            for item in curernt_layer:
+                if item.depth != depth:
+                    next_layer.append(item)
+                elif item.decorations:
+                    offset = item.offset_from_origin
+                    final_image.alpha_composite(PILImage.fromarray(item.render().base_im), offset)
+                else:
+                    offset = item.offset_from_origin
+                    for node in item.tree_nodes:
+                        next_layer.append(node)
+                    final_image.alpha_composite(PILImage.fromarray(item.render_self()), offset)
+            curernt_layer, next_layer = next_layer, []
+            depth -= 1
+        if self.decorations:
+            content_box = self.content_box
+            padding_box = self.padding_box
+            canvas = self.decorations.apply_initial(RenderImage.empty(self.width, self.height), self)
+            canvas = canvas.paste(content_box.x, content_box.y, RenderImage(np.array(final_image)))
+            canvas = self.decorations.apply_after_content(canvas, self)
 
-        canvas = RenderImage.empty(self.width, self.height)
-        canvas = self.decorations.apply_initial(canvas, self)
+            padding = RenderImage.empty(self.width, self.height).fill(
+                padding_box.x,
+                padding_box.y,
+                padding_box.w,
+                padding_box.h,
+                color=self.background,
+            )
+            canvas = self.decorations.apply_before_padding(padding, self).paste(0, 0, canvas)
+            canvas = self.decorations.apply_after_padding(canvas, self)
 
-        content = self.render_content()
-        canvas = canvas.paste(content_box.x, content_box.y, content)
-        canvas = self.decorations.apply_after_content(canvas, self)
-
-        padding = RenderImage.empty(self.width, self.height).fill(
-            padding_box.x,
-            padding_box.y,
-            padding_box.w,
-            padding_box.h,
-            color=self.background,
-        )
-        padding = self.decorations.apply_before_padding(padding, self)
-        canvas = padding.paste(0, 0, canvas)
-        canvas = self.decorations.apply_after_padding(canvas, self)
-
-        canvas = canvas.draw_border(
-            padding_box.x,
-            padding_box.y,
-            padding_box.w - 1,
-            padding_box.h - 1,
-            self.border,
-        )
-        canvas = self.decorations.apply_final(canvas, self)
-        return canvas
+            canvas = canvas.draw_border(
+                padding_box.x,
+                padding_box.y,
+                padding_box.w - 1,
+                padding_box.h - 1,
+                self.border,
+            )
+            final_image = self.decorations.apply_final(canvas, self)
+        else:
+            final_image = RenderImage(np.array(final_image))
+        return final_image

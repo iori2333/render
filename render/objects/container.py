@@ -3,10 +3,14 @@ from __future__ import annotations
 from enum import Enum
 from typing import Iterable
 
+from copy import deepcopy
+import cv2
+import numpy as np
+from sys import getrefcount
 from typing_extensions import Self, Unpack, override
 
-from render.base import (Alignment, BaseStyle, Direction, RenderImage,
-                         RenderObject, cached, volatile)
+from render.base import (Alignment, BaseStyle, Direction, Palette,
+                         RenderImage, RenderObject, cached, volatile)
 
 
 class Container(RenderObject):
@@ -67,6 +71,55 @@ class Container(RenderObject):
         rendered = map(lambda child: child.render(), self.children)
         concat = RenderImage.concat(rendered, self.direction, self.alignment)
         return concat
+    
+    def render_tree_preparation(self, depth: int, offset: tuple[int, int]) -> bool:
+        self.tree_nodes = []
+        self.offset_from_origin = offset
+        if not self.children:
+            self.depth = depth
+            return True
+        # if getrefcount(self.children) > 2:
+        #     self.children = deepcopy(self.children)
+        additional_offset = 0
+        if self.direction == Direction.HORIZONTAL:
+            max_height = max(map(lambda child: child.height, self.children))
+            for child in self.children:
+                if self.alignment == Alignment.START:
+                    offset_v = 0
+                elif self.alignment == Alignment.END:
+                    offset_v = max_height - child.height
+                else:
+                    offset_v = int((max_height - child.height) / 2)
+                if child.render_tree_preparation(depth, (offset[0] + additional_offset, offset[1] + offset_v)):
+                    for child_node in child.tree_nodes:
+                        self.tree_nodes.append(child_node)
+                else:
+                    self.tree_nodes.append(child)
+                self.depth = max(self.depth, child.depth)
+                additional_offset += child.width
+        else:
+            max_width = max(map(lambda child: child.width, self.children))
+            for child in self.children:
+                if self.alignment == Alignment.START:
+                    offset_h = 0
+                elif self.alignment == Alignment.END:
+                    offset_h = max_width - child.width
+                else:
+                    offset_h = int((max_width - child.width) / 2)
+                if child.render_tree_preparation(depth, (offset[0] + offset_h, offset[1] + additional_offset)):
+                    for child_node in child.tree_nodes:
+                        self.tree_nodes.append(child_node)
+                else:
+                    self.tree_nodes.append(child)
+                self.depth = max(self.depth, child.depth)
+                additional_offset += child.height
+        self.depth += 1
+        return False
+    
+    def render_self(self) -> cv2.Mat:
+        im = np.zeros((self.height, self.width, 4), dtype=np.uint8)
+        im[:] = Palette.TRANSPARENT
+        return im
 
 
 class JustifyContent(Enum):

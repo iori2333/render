@@ -1,6 +1,7 @@
+import cv2
 from typing_extensions import Self, override
 
-from render.base import RenderImage, RenderObject, cached, volatile
+from render.base import Color, Palette, RenderImage, RenderObject, cached, volatile
 
 
 class Spacer(RenderObject):
@@ -30,4 +31,7 @@ class Spacer(RenderObject):
     @cached
     @override
     def render_content(self) -> RenderImage:
+        return RenderImage.empty(self.space_width, self.space_height)
+    
+    def render_self(self) -> cv2.Mat:
         return RenderImage.empty(self.space_width, self.space_height)

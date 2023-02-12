@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Generator
+import cv2
+from typing import Generator, Union
 from typing_extensions import Self, Unpack, override
 
 from render.base import BaseStyle, Color, RenderImage, RenderObject, volatile
@@ -112,3 +113,6 @@ class Image(RenderObject):
         with self.modify():
             self.im.thumbnail(width, height)
         return self
+    
+    def render_self(self) -> cv2.Mat:
+        return self.im.base_im
