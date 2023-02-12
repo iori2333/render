@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import Generator, Iterable
 
+import cv2
 from PIL import ImageFont
 from typing_extensions import Self, Unpack, override
 
@@ -268,3 +269,6 @@ class StyledText(RenderObject):
             raise ValueError("Missing default style")
 
         return cls(text, styles, max_width, alignment, line_spacing, **kwargs)
+    
+    def render_self(self) -> cv2.Mat:
+        return self.render_content().base_im

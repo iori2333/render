@@ -91,6 +91,9 @@ class Decorations:
             DecoStage.AFTER_PADDING: [],
             DecoStage.FINAL: list(final_deco),
         }
+    
+    def __bool__(self) -> bool:
+        return any(value for value in self._decorations.values())
 
     @classmethod
     def of(cls, *decorations: Decoration) -> Self:

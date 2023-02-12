@@ -4,6 +4,7 @@ import string
 from functools import lru_cache
 from typing import Sequence
 
+import cv2
 import pyphen
 from PIL.ImageFont import FreeTypeFont, truetype
 from typing_extensions import Self, Unpack, override
@@ -260,3 +261,6 @@ class Text(RenderObject):
             alignment=self.alignment,
             spacing=self.line_spacing,
         )
+    
+    def render_self(self) -> cv2.Mat:
+        return self.render_content().base_im
