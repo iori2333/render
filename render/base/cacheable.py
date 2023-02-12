@@ -246,6 +246,9 @@ class volatile:
 
             setattr(obj.__class__, attr, property(getter, setter))
 
+        # return this just to suppress pylance warning
+        return initial
+
     def list(self, value: Iterable[T] | None = None) -> CacheableList[T]:
         value = value or []
         return CacheableList(value, self.obj)
