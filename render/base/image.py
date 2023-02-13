@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from typing import Callable, Iterable, Sequence
+from typing_extensions import Literal, Self
 from urllib.request import urlopen
 
 import cv2
 import numpy as np
 import numpy.typing as npt
 import PIL.Image as PILImage
-from typing_extensions import Literal, Self
+import cv_extensions as cvx
 
 from render.utils import ImageMask, PathLike, cast
 
@@ -172,10 +173,23 @@ class RenderImage:
         Considering alpha channels of both images.
 
         Based on PIL.Image.alpha_composite."""
-        im_self = PILImage.fromarray(self.base_im)
-        im_paste = PILImage.fromarray(im.base_im)
-        im_self.alpha_composite(im_paste, (x, y))
-        self.base_im = np.array(im_self)
+        b, t, l, r = (y, y + im.height, x, x + im.width)
+        if b >= self.height or t < 0 or l >= self.width or r < 0:
+            return self
+
+        im_cropped = im.base_im[max(-b, 0):min(self.height - b, im.height),
+                                max(-l, 0):min(self.width - l, im.width)]
+
+        im_self = self.base_im[max(b, 0):min(t, self.height),
+                               max(l, 0):min(r, self.width)]
+        # memory issue with np
+        im_self = np.ascontiguousarray(im_self)
+        im_cropped = np.ascontiguousarray(im_cropped)
+        im_self = cvx.alpha_composite(im_self, im_cropped)
+
+        self.base_im[max(b, 0):min(t, self.height),
+                     max(l, 0):min(r, self.width)] = im_self
+
         return self
 
     @check_writeable

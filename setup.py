@@ -1,4 +1,8 @@
 from setuptools import setup, find_packages
+import os.path as osp
+
+cwd = osp.dirname(osp.abspath(__file__))
+cvext_path = osp.join(cwd, "cvext")
 
 setup(
     name="render",
@@ -12,5 +16,6 @@ setup(
         "pymixbox==2.0.0",
         "Pyphen>=0.13.2",
         "typing_extensions>=3.10.0.2",
+        f"cv_extensions @ file://{cvext_path}",
     ],
 )

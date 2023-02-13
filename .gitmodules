@@ -1,0 +1,3 @@
+[submodule "cvext"]
+	path = cvext
+	url = https://github.com/iori2333/cv_extensions.git
