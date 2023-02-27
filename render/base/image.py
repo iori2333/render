@@ -1,25 +1,32 @@
 from __future__ import annotations
 
 from typing import Callable, Iterable, Sequence
-from typing_extensions import Literal, Self
 from urllib.request import urlopen
 
 import cv2
+import cv_extensions as cvx
 import numpy as np
 import numpy.typing as npt
 import PIL.Image as PILImage
-import cv_extensions as cvx
+from typing_extensions import Concatenate, Literal, ParamSpec, Self
 
 from render.utils import ImageMask, PathLike, cast
 
 from .color import Color, Palette
 from .properties import Alignment, Border, Direction, Interpolation
 
+_P = ParamSpec("_P")
+
 
 def check_writeable(
-        func: Callable[..., RenderImage]) -> Callable[..., RenderImage]:
+    func: Callable[Concatenate[RenderImage, _P], RenderImage]
+) -> Callable[Concatenate[RenderImage, _P], RenderImage]:
 
-    def wrapper(self: RenderImage, *args, **kwargs) -> RenderImage:
+    def wrapper(
+        self: RenderImage,
+        *args: _P.args,
+        **kwargs: _P.kwargs,
+    ) -> RenderImage:
         if not self.base_im.flags.writeable:
             raise ValueError("RenderImage is read-only")
         return func(self, *args, **kwargs)
